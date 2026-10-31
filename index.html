@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f0e6">
+  <meta name="description" content="CaeRogue：基于 HTML、CSS 与本地资产的卡牌战斗、技能流程设计实验场。">
+  <title>CaeRogue · 卡牌战术实验场</title>
+  <link rel="icon" href="assets/pictures/brand-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <header class="topbar" id="topbar"></header>
+    <main class="screen" id="screen" tabindex="-1">
+      <div class="boot-screen">
+        <img src="assets/pictures/brand-mark.svg" alt="" width="64" height="64">
+        <p class="eyebrow">CAEROGUE</p>
+        <h1>正在装载战术档案</h1>
+        <p class="muted">首次打开会在本地建立基础牌组与设置。</p>
+      </div>
+    </main>
+    <footer class="app-footer" id="app-footer"></footer>
+    <div class="overlay-layer" id="overlay-root"></div>
+    <div class="toast-layer" id="toast-root" aria-live="polite" aria-atomic="false"></div>
+  </div>
+  <noscript>
+    <div class="noscript">本项目需要启用 JavaScript 才能运行。</div>
+  </noscript>
+  <script src="scripts/data.js"></script>
+  <script src="scripts/store.js"></script>
+  <script src="scripts/engine.js"></script>
+  <script src="scripts/editor.js"></script>
+  <script src="scripts/modes.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+</html>

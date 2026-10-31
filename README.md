@@ -1,1 +1,199 @@
 # CaeRogue
+
+CaeRogue 是一个基于原生 HTML、CSS 与 JavaScript 构建的浅色主题卡牌战术单页应用。它把技能、高级效果和状态计数抽象为可解释的数据流程，包含人机与同屏双人对战、卡牌库、牌组构筑、可视化技能流程编辑器、扩展包管理和本地创意工坊。
+
+项目没有构建步骤、第三方依赖、外部字体或远程接口。界面所需的插图、导航图标和纸张纹理全部位于 `assets/`。
+
+## 运行
+
+推荐通过本地 HTTP 服务打开：
+
+```bash
+cd /storage/emulated/0/vibec/projects/CaeRogue
+python3 -m http.server 8765 --bind 0.0.0.0
+```
+
+然后访问 `http://<本机局域网地址>:8765/index.html`。
+
+直接双击 `index.html` 也可以加载大部分界面；分享码复制和部分浏览器下载行为可能在 `file://` 下受限，因此本地 HTTP 更稳定。所有卡牌、构筑、扩展、草稿和对局记录默认保存在浏览器 `localStorage` 的 `caerogue.state.v1` 中。
+
+## 已实现功能
+
+- 主菜单：十个入口、已加载扩展数、卡牌总数和版本信息。
+- 面对面对战：同屏双人，敌方先手，单链式回合与行动推进。
+- 自定义对战：双方以初始构筑直接入场，不执行抽牌流程。
+- 标准对战配置：初始抽牌、重复角色、退场回牌堆、战斗中补充抽牌、场地上限。
+- 卡牌库：按类型、品质和关键词筛选角色、装备与符文；查看技能自然语言描述和流程结构。
+- 牌组构筑：角色、装备、符文分栏构筑；规则校验；右侧技能档案与流程预览。
+- 战斗界面：双方场地、行动选择、目标选择、确认、伤害跳字、手牌与牌堆区域、战斗日志、状态计数和触发预览。
+- 战斗系统：主动技、被动技、附加技；计数；效果层数；伤害公式；阵营共享数据；入场、回合、攻击、致伤、退场与恢复等触发。
+- 技能与高级效果编辑器：触发、释放条件、目标、变量、条件分支、循环、召唤、强制退场、修改属性等步骤；拖拽或按钮排序；草稿保存与导出。
+- 扩展包管理：JSON 与 CAE1 分享码导入、导出、启用、禁用、内容查看、ID 冲突和引用完整性检查。
+- 创意工坊：本地索引、分享码导入导出、收藏、说明编辑、把编辑器草稿发布为本地扩展。
+- 肉鸽：起始编队选择、节点地图、战斗/精英/商店/事件/休整/首领、战斗奖励三选一、队内资源和强化保留。
+- 挑战：三组预设连续战斗，阶段奖励、失败记录和重新挑战。
+- 无尽：按层递增的随机敌方配置、胜利奖励选择、层数记录与失败结算。
+- 设置：减少动效、紧凑日志、危险操作确认、伤害公式显示、AI 行动节奏、本地数据维护。
+
+## 目录
+
+```
+index.html              单页入口
+css/base.css            主题令牌、排版与基础重置
+css/app.css             页面、卡牌、战斗、编辑器与响应式样式
+scripts/data.js         色彩/品质/枚举、默认卡牌与默认构筑
+scripts/store.js        本地存档、索引合并、扩展校验、分享码
+scripts/engine.js       同步战斗引擎、公式解析、触发与步骤解释器
+scripts/editor.js       可视化技能/高级效果编辑器
+scripts/modes.js        肉鸽、挑战与无尽模式控制
+scripts/app.js          单页路由、全部主要界面和战斗界面
+assets/icons/           导航与工具图标
+assets/pictures/        徽记、纹理、卡面插图、卡背和符文图
+assets/music/           预留音频目录
+assets/sounds/          预留音效目录
+```
+
+## 数据模型
+
+角色、技能、高级效果、装备和符文都按 ID 独立存储。角色只引用技能、装备和符文。
+
+```js
+// 角色
+{
+  id: 'catgirl_jk', packId: 'core', name: '一般猫娘(jk)',
+  quality: 'blue', counted: true,
+  hp: 9, attack: 2,
+  resistance: { type: 'general', value: 1 },
+  skills: ['cat_sweep', 'cat_burst'],
+  faction: 'sakura'
+}
+
+// 技能
+{
+  id: 'cat_burst', packId: 'core', name: '樱落斩',
+  type: 'active', op: 'attack',
+  trigger: { event: 'manual' },
+  requirements: [{ scope: 'unit', countId: 'sakurafade', op: 'gte', value: '3' }],
+  targetMode: 'enemy',
+  steps: [
+    { kind: 'damage', target: 'chosen', damageType: 'physical', formula: '4' },
+    { kind: 'modifyCount', scope: 'unit', countId: 'sakurafade', mode: 'add', formula: '-3' }
+  ]
+}
+
+// 高级效果
+{
+  id: 'undying', packId: 'core', name: '不死诅咒',
+  type: 'special', removable: false, stackable: false,
+  mods: { finalDmgPct: -99999 },
+  trigger: { event: 'fatalDamage' },
+  steps: [
+    { kind: 'immuneDamage' },
+    { kind: 'heal', target: 'self', formula: '$hpMax - $hp' }
+  ]
+}
+```
+
+### 计数与变量
+
+- 全场计数：整场战斗共享。
+- 阵营计数：同阵营共享。
+- 角色计数：按绝对独立战斗 ID 存储，同名角色的计数互不影响。
+- 效果层数：挂在对应战斗单位的独立效果实例上。
+- 角色临时属性：通过修改属性步骤写入，参与下一次数值读取与伤害结算。
+
+公式支持数字、百分比、`+ - * /`、括号、`min/max/floor/ceil/round/abs` 以及比较运算。常用变量：
+
+```
+$atk         当前攻击力
+$hpMax       当前生命上限
+$hp          当前生命
+$resist      当前抗性
+$lastHitCount 最近一次伤害命中目标数
+$multiplier  技能倍率，100 表示 1 倍
+$targetCount 当前目标数量
+$count.ha       角色计数
+$sideCount.ha   阵营计数
+$globalCount.ha 全场计数
+$effect.poem    效果层数
+$var.name       临时变量
+```
+
+### 伤害
+
+伤害结算顺序：
+
+```
+基础值
+→ 攻击方伤害提升百分比与提升值
+→ 攻击方最终伤害提升百分比与提升值
+→ 减去防御方对应属性抗性（真实伤害忽略）
+→ 防御方受伤降低或提高
+→ 向下限零取整
+```
+
+物理、精神、真实对应的跳字颜色分别为 `#FF0000`、`#0000FF` 和 `#00FF00`。
+
+## 结算模型
+
+战斗引擎完全同步执行，不使用 `async` 或并发写入战斗数据。高层操作按调用顺序进入同一同步批次；伤害造成的生命归零不会立刻移除单位，而是记入当前批次的待退场队列，等攻击、受击触发和同批次被动结算完成后统一处理。这样可以避免层数丢失、重复触发和同名角色状态串用。
+
+主要步骤类型：
+
+```
+damage / heal / addEffect / removeEffect / modifyCount / readCount
+branch / selectTarget / forEach / loop / castSkill / skipAction
+immuneDamage / forceRetreat / summon / modifyStat / setVar
+```
+
+被动技由事件触发并检查 `trigger.event`、可选触发条件与释放条件。主动技只在自身行动时可用；附加技在满足条件时可用且不占用行动。条件只在对应操作发生时检查一次，不做逐帧轮询。
+
+## 视觉编辑器
+
+在「技能与效果编辑器」中：
+
+1. 左侧切换技能/高级效果，选择内置参考内容或新建草稿。
+2. 中间编辑名字、类型、操作、触发事件、释放条件和步骤流程。
+3. 右侧校验结果、变量面板、目标来源、条件符和流程预览。
+4. 点击变量可插入到最近聚焦的公式输入框。
+5. 步骤可拖拽排序，也可使用上下按钮；嵌套步骤在条件分支、遍历或循环块中编辑。
+6. 草稿以 `draft.local` 包命名空间保存在本地；可在创意工坊发布为本地扩展，或从当前页导出整包 JSON。
+
+## 扩展包格式
+
+```json
+{
+  "format": "caerogue.expansion",
+  "id": "demo.frost",
+  "name": "霜与诗",
+  "version": "0.1.0",
+  "author": "本地作者",
+  "description": "扩展说明",
+  "dependencies": ["core"],
+  "countDefs": { "frost": "霜痕" },
+  "content": {
+    "units": [],
+    "skills": [],
+    "effects": [],
+    "equipment": [],
+    "runes": []
+  }
+}
+```
+
+导入时会检查格式、包内与跨包 ID 冲突、依赖是否存在和是否成环、角色技能/召唤/效果引用是否完整。所有扩展内容使用包命名空间；当前版本会拒绝与内置内容同 ID 的条目，不提供隐式覆盖。
+
+## 设计说明
+
+- 为保持玩法闭环，装备与符文按战前整备处理，不进入角色抽牌堆。角色卡才被抽取与替补入场。
+- 每个回合开始时自动从手牌按品质补入空余场地。场上已无计数角色时，系统触发紧急入场；若手牌无计数角色，则判定失败。
+- 场上单位达到上限时，召唤会受上限限制；死亡被动召唤也遵循同一限制。
+- 面对面对战与自定义对战中双方都由本地玩家控制。肉鸽、挑战与无尽中的敌方由自动决策器控制。
+- 挑战各阶段会重置战斗状态，使用在挑战开始时捕获的牌组；阶段规则修正会应用到敌方。
+- 扩展包分享码使用 UTF-8 JSON 的 Base64URL 编码，以 `CAE1.` 开头。工坊不依赖后端。
+
+## 浏览器要求
+
+建议使用支持 `backdrop-filter`、CSS 自定义属性和 ES2020 的现代浏览器。若浏览器不支持这些特性，页面仍可运行，但部分模糊、渐变边框或粘贴板回退行为会降级。
+
+项目内所有 SVG 插图与图标均为本项目原创资产，未使用表情符号。
