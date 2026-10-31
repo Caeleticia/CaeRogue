@@ -746,7 +746,23 @@ class Battle {
     const starting = ((this.modifiers[sideId] && this.modifiers[sideId].startingEffects) || []).filter(item => !item.unitId || item.unitId === cardId);
     for (const item of starting) {
       if (this.maps.effects.has(item.effectId)) {
-        this.addEffect(unit, item.effectId, Number(item.stacks) || 1, null, { silent: true });
+        const applied = this.addEffect(unit, item.effectId, Number(item.stacks) || 1, null, { silent: true });
+        if (applied) {
+          const def = this.maps.effects.get(item.effectId);
+          this.recordVisual({
+            kind: 'effect',
+            action: 'apply',
+            sourceUid: unit.battleId,
+            targetUid: unit.battleId,
+            sourceName: unit.name,
+            targetName: unit.name,
+            self: true,
+            name: def ? def.name : item.effectId,
+            effectType: def ? (def.type || 'special') : 'special',
+            sourceSide: unit.side,
+            targetSide: unit.side
+          });
+        }
       }
     }
     const gearNames = ['weapon', 'accessory'].map(slot => unit.equipment[slot]).filter(Boolean).map(item => item.name);
@@ -944,14 +960,46 @@ class Battle {
           const skill = candidate.skill;
           this.pushTrigger(candidate.unit, '技能', skill.name, eventName);
           this.log('passive', candidate.unit.name + ' 触发被动「' + skill.name + '」。', { side: candidate.unit.side });
+          const visualStart = this.visualSeq;
           const ctx = this.createContext(candidate.unit, skill, eventData.targets || [], { eventData, eventName });
           this.executeSteps(skill.steps || [], ctx);
+          if (this.visualSeq === visualStart) {
+            this.recordVisual({
+              kind: 'skill',
+              sourceUid: candidate.unit.battleId,
+              targetUid: candidate.unit.battleId,
+              sourceName: candidate.unit.name,
+              targetName: candidate.unit.name,
+              self: true,
+              name: skill.name,
+              op: skill.op || 'special',
+              skillType: 'passive',
+              sourceSide: candidate.unit.side,
+              targetSide: candidate.unit.side
+            });
+          }
         } else {
           const def = candidate.def;
           this.pushTrigger(candidate.unit, '效果', def.name, eventName);
           this.log('trigger', candidate.unit.name + ' 的效果「' + def.name + '」触发。', { side: candidate.unit.side });
+          const visualStart = this.visualSeq;
           const ctx = this.createContext(candidate.unit, null, eventData.targets || [], { eventData, eventName, effectId: def.id });
           this.executeSteps(def.steps || [], ctx);
+          if (this.visualSeq === visualStart) {
+            this.recordVisual({
+              kind: 'effect',
+              action: 'trigger',
+              sourceUid: candidate.unit.battleId,
+              targetUid: candidate.unit.battleId,
+              sourceName: candidate.unit.name,
+              targetName: candidate.unit.name,
+              self: true,
+              name: def.name,
+              effectType: def.type || 'special',
+              sourceSide: candidate.unit.side,
+              targetSide: candidate.unit.side
+            });
+          }
         }
         if (this.status !== 'active') break;
       }
@@ -988,6 +1036,7 @@ class Battle {
     if (!unit.alive && !options.allowDeadSource) return null;
     this.log('skill', unit.name + ' 释放「' + skill.name + '」。', { side: unit.side });
     this.lastSkill = { unitId: unit.battleId, skillId: skill.id };
+    const visualStart = this.visualSeq;
     const ctx = this.createContext(unit, skill, chosen, options);
     if ((skill.type === 'active' || skill.type === 'extra') && skill.op === 'support') {
       const supportTargets = (chosen || []).filter(item => item && item.side === unit.side);
@@ -1012,6 +1061,21 @@ class Battle {
         this.triggerEvent('selfAttack', { attacker: unit, targets: livingTargets.slice() });
         this.triggerEvent('allyAttack', { attacker: unit, targets: livingTargets.slice() });
       }
+    }
+    if (this.visualSeq === visualStart) {
+      this.recordVisual({
+        kind: 'skill',
+        sourceUid: unit.battleId,
+        targetUid: unit.battleId,
+        sourceName: unit.name,
+        targetName: unit.name,
+        self: true,
+        name: skill.name,
+        op: skill.op || 'special',
+        skillType: skill.type || 'active',
+        sourceSide: unit.side,
+        targetSide: unit.side
+      });
     }
     return ctx;
   }
@@ -1106,21 +1170,56 @@ class Battle {
         case 'addEffect': {
           const targets = this.getTargetsForStep(ctx.unit, step, ctx);
           const stacks = Math.max(0, Math.round(this.evalFormula(step.stacks || '1', ctx)));
+          const def = this.maps.effects.get(step.effectId);
           for (const target of targets) {
             if (stacks <= 0) continue;
-            this.addEffect(target, step.effectId, stacks, ctx.unit);
+            const applied = this.addEffect(target, step.effectId, stacks, ctx.unit);
+            if (applied) {
+              this.recordVisual({
+                kind: 'effect',
+                action: 'apply',
+                sourceUid: ctx.unit.battleId,
+                targetUid: target.battleId,
+                sourceName: ctx.unit.name,
+                targetName: target.name,
+                self: target === ctx.unit,
+                name: def ? def.name : step.effectId,
+                effectType: def ? (def.type || 'special') : 'special',
+                sourceSide: ctx.unit.side,
+                targetSide: target.side
+              });
+            }
           }
           break;
         }
         case 'removeEffect': {
           const targets = this.getTargetsForStep(ctx.unit, step, ctx);
           const amount = Math.max(0, Math.round(this.evalFormula(step.stacks || '9999', ctx)));
+          const recordRemoval = (target, def) => {
+            this.recordVisual({
+              kind: 'effect',
+              action: 'remove',
+              sourceUid: ctx.unit.battleId,
+              targetUid: target.battleId,
+              sourceName: ctx.unit.name,
+              targetName: target.name,
+              self: target === ctx.unit,
+              name: def ? def.name : (step.effectId || '效果'),
+              effectType: def ? (def.type || 'special') : 'special',
+              sourceSide: ctx.unit.side,
+              targetSide: target.side
+            });
+          };
           for (const target of targets) {
-            if (step.effectId) this.removeEffect(target, step.effectId, amount, step.force);
-            else {
+            if (step.effectId) {
+              const def = this.maps.effects.get(step.effectId);
+              if (this.removeEffect(target, step.effectId, amount, step.force)) recordRemoval(target, def);
+            } else {
               for (const inst of target.effects.slice()) {
                 const def = this.maps.effects.get(inst.effectId);
-                if (def && (def.removable !== false || step.force)) this.removeEffect(target, inst.effectId, amount, step.force);
+                if (def && (def.removable !== false || step.force) && this.removeEffect(target, inst.effectId, amount, step.force)) {
+                  recordRemoval(target, def);
+                }
               }
             }
           }
@@ -1596,6 +1695,19 @@ class Battle {
       unit.extraActionUsed = true;
       this.log('turn', '结束阶段：' + unit.name + ' 获得一次额外行动。', { side: unit.side });
       this.pushTrigger(unit, '效果', '额外行动', 'roundEnd');
+      this.recordVisual({
+        kind: 'effect',
+        action: 'trigger',
+        sourceUid: unit.battleId,
+        targetUid: unit.battleId,
+        sourceName: unit.name,
+        targetName: unit.name,
+        self: true,
+        name: '额外行动',
+        effectType: 'positive',
+        sourceSide: unit.side,
+        targetSide: unit.side
+      });
     }
     const preferred = candidates.find(unit => unit.side === this.currentSide) || candidates[0];
     this.currentSide = preferred.side;

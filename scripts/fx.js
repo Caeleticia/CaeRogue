@@ -24,7 +24,8 @@ const BattleFX = {
     true: ['#00FF00', '#27D96A', '#007E3B', '#8BFF9A', '#D9FFD9', '#00B85A'],
     gold: ['#E3BF69', '#B88A38', '#FFF0B8', '#F7D98D', '#8C6726', '#FFF8DF'],
     heal: ['#B7F4C0', '#7DDC9A', '#E3FFE7', '#4CAF76', '#CFF7D9', '#9FE8C7'],
-    burn: ['#4E0707', '#771414', '#A3261D', '#C24A2E', '#2B0303', '#E07A4A']
+    burn: ['#4E0707', '#771414', '#A3261D', '#C24A2E', '#2B0303', '#E07A4A'],
+    violet: ['#665170', '#8F7A9B', '#B9A8C8', '#4D3A58', '#E6DCEC', '#9980A8']
   },
 
   color(type, index) {
@@ -132,6 +133,20 @@ const BattleFX = {
           });
         }
         offset += 80;
+      } else if (event.kind === 'skill') {
+        const source = this.posFor(event, 'source', positions);
+        this.pending.push({
+          at: offset,
+          run: () => this.spawnCastPulse(source, this.castPalette(event), event.name || '技能', false)
+        });
+        offset += 80;
+      } else if (event.kind === 'effect') {
+        const target = this.posFor(event, 'target', positions);
+        this.pending.push({
+          at: offset,
+          run: () => this.spawnCastPulse(target, this.castPalette(event), event.name || '效果', event.action === 'remove')
+        });
+        offset += 70;
       }
     }
     this.pending.sort((a, b) => a.at - b.at);
@@ -417,6 +432,77 @@ const BattleFX = {
           ctx.arc(x, y, 1.2 + (i % 3) * 0.5, 0, Math.PI * 2);
           ctx.fill();
         }
+        ctx.restore();
+      }
+    });
+  },
+
+  castPalette(event) {
+    if (event.kind === 'effect') {
+      if (event.action === 'remove') return 'violet';
+      if (event.effectType === 'negative') return 'violet';
+      if (event.effectType === 'positive') return 'gold';
+      return 'mental';
+    }
+    switch (event.op) {
+      case 'attack': return 'physical';
+      case 'heal': return 'heal';
+      case 'support': return 'gold';
+      case 'debuff': return 'violet';
+      default: return 'mental';
+    }
+  },
+
+  spawnCastPulse(position, paletteName, label, collapsed) {
+    const color = this.color(paletteName, 0);
+    const soft = this.color(paletteName, 2);
+    const life = 0.72;
+    let age = 0;
+    this.effects.push({
+      update: (dt) => { age += dt; return age < life; },
+      draw: (ctx) => {
+        const progress = Math.min(1, age / life);
+        const fade = Math.max(0, 1 - progress);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const glow = ctx.createRadialGradient(position.x, position.y, 0, position.x, position.y, 38);
+        glow.addColorStop(0, color + '44');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(position.x, position.y, 38, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = fade * 0.8;
+        ctx.strokeStyle = color;
+        for (let ring = 0; ring < 2; ring += 1) {
+          const local = Math.max(0, progress - ring * 0.18);
+          const radius = collapsed ? Math.max(2, 28 - local * 24) : 7 + local * (22 + ring * 12);
+          ctx.lineWidth = 1 + (1 - local) * 1.2;
+          ctx.beginPath();
+          ctx.arc(position.x, position.y, radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = fade * 0.65;
+        ctx.fillStyle = soft;
+        for (let i = 0; i < 8; i += 1) {
+          const angle = (i / 8) * Math.PI * 2 + progress * 1.8;
+          const radius = (collapsed ? 24 - progress * 16 : 10 + progress * 24) + (i % 3) * 3;
+          const x = position.x + Math.cos(angle) * radius;
+          const y = position.y + Math.sin(angle) * radius * 0.55 - (collapsed ? 0 : progress * 16);
+          ctx.beginPath();
+          ctx.arc(x, y, 1.1 + (i % 2) * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = Math.max(0, 1 - progress * 1.7);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '600 10px "PingFang SC", "Noto Sans CJK SC", sans-serif';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255,252,244,.92)';
+        ctx.strokeText(label, position.x, position.y - 30 - progress * 14);
+        ctx.fillStyle = color;
+        ctx.fillText(label, position.x, position.y - 30 - progress * 14);
         ctx.restore();
       }
     });

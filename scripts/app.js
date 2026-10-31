@@ -1443,29 +1443,47 @@ App.finishBattleEngineAction = function () {
   const previousPositions = this._battlePreRects || {};
   this._battlePreRects = null;
   const visuals = this.drainBattleVisuals();
-  this._battleFxActive = visuals.length > 0;
-  this.render();
-  if (!visuals.length || !window.BattleFX) {
+  const shouldAnimate = visuals.length > 0 && !!window.BattleFX && typeof BattleFX.play === 'function';
+  this._battleFxActive = shouldAnimate;
+  if (!shouldAnimate) {
     this._battleFxActive = false;
+    this.render();
     this.afterBattleRender();
     return;
+  }
+
+  // Keep the pre-action DOM on screen while the attack animation plays.
+  // Engine state is already resolved synchronously, but the visible HP bars,
+  // hand, turn indicator and logs are committed only when the FX completes.
+  const page = document.querySelector('.battle-page');
+  if (page) {
+    page.classList.add('fx-locked');
+    page.setAttribute('aria-busy', 'true');
   }
   const token = ++this._fxToken;
   const currentPositions = this.captureBattleUnitPositions();
   const positions = Object.assign({}, previousPositions, currentPositions);
-  requestAnimationFrame(() => {
-    if (token !== this._fxToken || this.route !== 'battle' || this.battle !== battle || !this._battleFxActive) return;
-    BattleFX.play(visuals, positions, () => {
-      if (token !== this._fxToken || this.route !== 'battle' || this.battle !== battle) return;
-      this._battleFxActive = false;
-      this.afterBattleRender();
-    });
+  BattleFX.play(visuals, positions, () => {
+    if (token !== this._fxToken || this.route !== 'battle' || this.battle !== battle) return;
+    this._battleFxActive = false;
+    const currentPage = document.querySelector('.battle-page');
+    if (currentPage) {
+      currentPage.classList.remove('fx-locked');
+      currentPage.removeAttribute('aria-busy');
+    }
+    this.render();
+    this.afterBattleRender();
   });
 };
 
 App.cancelBattleFx = function () {
   this._fxToken = (this._fxToken || 0) + 1;
   this._battleFxActive = false;
+  const page = document.querySelector('.battle-page');
+  if (page) {
+    page.classList.remove('fx-locked');
+    page.removeAttribute('aria-busy');
+  }
   if (window.BattleFX) BattleFX.cancel();
 };
 
@@ -2564,10 +2582,7 @@ App.handleChangeEvent = function (event) {
 };
 
 App.handleAction = function (action, el, event) {
-  if (this._battleFxActive && action && action.startsWith('battle-')) {
-    const allowed = ['battle-log-toggle', 'battle-unit-info', 'battle-unit-counts', 'battle-unit-gear', 'battle-show-result', 'battle-deck-info'];
-    if (!allowed.includes(action)) return;
-  }
+  if (this._battleFxActive && action && action.startsWith('battle-')) return;
   if (window.EditorUI && typeof EditorUI.handleAction === 'function' && EditorUI.handleAction(action, el, this, event)) return;
   if (window.ModesUI && typeof ModesUI.handleAction === 'function' && ModesUI.handleAction(action, el, this, event)) return;
   const data = el.dataset;
