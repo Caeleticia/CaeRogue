@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#faf0f3"/><stop offset="1" stop-color="#e9d6e8"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop stop-color="#fff6cf" stop-opacity=".85"/><stop offset="1" stop-color="#fff6cf" stop-opacity="0"/></radialGradient>
+    <linearGradient id="dress" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff7fa"/><stop offset=".55" stop-color="#f4cfde"/><stop offset="1" stop-color="#db9fc2"/></linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fbe0e8"/><stop offset="1" stop-color="#edafc8"/></linearGradient>
+    <linearGradient id="hair" x1=".2" y1="0" x2=".8" y2="1"><stop stop-color="#f5c7df"/><stop offset="1" stop-color="#bd8ed8"/></linearGradient>
+  </defs>
+  <rect width="240" height="300" fill="url(#bg)"/>
+  <circle cx="120" cy="145" r="98" fill="url(#glow)"/>
+  <g fill="none" stroke="#c79ac0" stroke-width=".7" opacity=".55">
+    <circle cx="120" cy="146" r="85" stroke-dasharray="2 7"/>
+    <circle cx="120" cy="146" r="73"/>
+    <path d="M120 40v18M120 234v18M28 146h18M194 146h18"/>
+  </g>
+  <path d="M0 242c44-24 74 4 111-6 41-10 71-18 129 1v63H0Z" fill="#d8c0d5" opacity=".45"/>
+  <ellipse cx="126" cy="225" rx="51" ry="12" fill="#b98cb0" opacity=".22"/>
+  <g stroke="#b47c9b" stroke-width="1.6">
+    <path d="M86 81c-18-44-7-62 3-62 14 0 13 27 21 48Z" fill="url(#ear)"/>
+    <path d="M151 82c10-45 28-58 35-53 11 7-4 31-17 52Z" fill="url(#ear)"/>
+    <path d="M93 55c-4-20-1-27 3-28 4-1 3 15 8 30Z" fill="#e49ebd" opacity=".65"/>
+    <path d="M164 54c5-19 11-25 14-23 4 3-1 15-6 28Z" fill="#e49ebd" opacity=".65"/>
+  </g>
+  <path d="M82 120c-7-36 13-57 43-57 31 0 49 23 43 57-2 17-8 30-19 39l-5 20H107l-7-20c-11-9-16-23-18-39Z" fill="#fff3f7" stroke="#c694b6" stroke-width="1.3"/>
+  <path d="M91 100c1-21 9-33 21-35-9 8-12 20-8 36 2 12-4 17-13-1ZM150 99c2-17 6-29 14-33 6 13 4 30-4 43-5 9-9 2-10-10Z" fill="url(#hair)" opacity=".95"/>
+  <g fill="#3c2f38">
+    <ellipse cx="105" cy="112" rx="12" ry="15"/>
+    <ellipse cx="137" cy="111" rx="12" ry="15"/>
+  </g>
+  <g fill="#c9a6e9">
+    <circle cx="104" cy="109" r="6"/><circle cx="136" cy="108" r="6"/>
+  </g>
+  <g fill="#fff6fa">
+    <path d="M104 103l2 4 4 1-4 2-2 4-2-4-4-2 4-1Z"/>
+    <path d="M136 102l2 4 4 1-4 2-2 4-2-4-4-2 4-1Z"/>
+    <circle cx="109" cy="114" r="1.5"/><circle cx="141" cy="113" r="1.5"/>
+  </g>
+  <path d="M118 128c3 2 7 2 10 0" fill="none" stroke="#b2738e" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M113 140c5 4 12 4 17 0" fill="none" stroke="#c885a2" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M87 165c-12 12-20 31-21 53 14 8 24 11 33 11l6-13c8 9 17 13 27 13l9-12c11 5 24 4 36-5-6-22-13-39-26-50Z" fill="url(#dress)" stroke="#c99bb9" stroke-width="1.4"/>
+  <path d="M75 190c13 4 27 3 40-2 18 7 37 8 53 1" fill="none" stroke="#bd89ae" stroke-width="1"/>
+  <g fill="#fffaf1" stroke="#d6b0c9" stroke-width=".8">
+    <path d="M71 197c-15 4-18 22-5 29 12 7 24-4 19-16-2-7-7-15-14-13Z"/>
+    <path d="M174 193c15 2 20 18 8 28-12 9-24-1-20-14 2-8 6-15 12-14Z"/>
+    <path d="M99 170c-15 1-23 16-14 27 8 10 23 4 24-8 1-9-3-18-10-19Z"/>
+    <path d="M146 172c15 0 22 15 14 26-7 10-22 5-23-7-1-9 3-18 9-19Z"/>
+  </g>
+  <path d="M126 205c-9 17-4 38 14 54 10-12 15-26 12-39-7 1-18-4-26-15Z" fill="#e7b2cd" stroke="#b47c9b" stroke-width="1"/>
+  <path d="M140 259c23 7 41 0 51-14" fill="none" stroke="#d191b4" stroke-width="8" stroke-linecap="round" opacity=".9"/>
+  <path d="M188 243c8-5 18 1 16 10-2 8-13 10-18 2" fill="#f0b8d2" stroke="#bd84a5" stroke-width="1"/>
+  <g fill="#d3b4ef" opacity=".9">
+    <path d="M61 113l3 8 8 3-8 3-3 8-3-8-8-3 8-3Z"/>
+    <path d="M184 129l3 8 8 3-8 3-3 8-3-8-8-3 8-3Z"/>
+    <circle cx="57" cy="168" r="2"/><circle cx="194" cy="95" r="2.2"/>
+  </g>
+  <g fill="#fff8dc">
+    <circle cx="52" cy="138" r="2.4"/><circle cx="176" cy="76" r="1.8"/><circle cx="200" cy="164" r="2"/>
+  </g>
+</svg>

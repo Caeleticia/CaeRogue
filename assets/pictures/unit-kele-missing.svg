@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300">
+  <rect width="240" height="300" fill="#d9d9d9"/>
+  <rect x="17" y="17" width="206" height="266" fill="none" stroke="#aaa" stroke-width="1"/>
+  <g transform="translate(120 120)" fill="none" stroke="#888" stroke-width="3" stroke-linejoin="round">
+    <rect x="-48" y="-34" width="96" height="70" rx="4" fill="#ececec"/>
+    <circle cx="-23" cy="-13" r="8" fill="#bbb" stroke="none"/>
+    <path d="M-44 28l28-29 17 17 12-12 31 24"/>
+    <path d="M-58 -44l116 88" stroke="#a34a45" stroke-width="4"/>
+  </g>
+  <text x="120" y="211" text-anchor="middle" font-family="'PingFang SC','Noto Sans CJK SC',sans-serif" font-size="14" fill="#666">图片被可莱吃掉了</text>
+  <text x="120" y="234" text-anchor="middle" font-family="'PingFang SC','Noto Sans CJK SC',sans-serif" font-size="9" letter-spacing="2" fill="#999">IMAGE MISSING</text>
+  <path d="M44 257h152" stroke="#bbb" stroke-width="1"/>
+</svg>

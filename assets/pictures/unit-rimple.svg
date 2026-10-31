@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9e3f2"/><stop offset=".48" stop-color="#d8e5e2"/><stop offset="1" stop-color="#e7d5e8"/></linearGradient>
+    <linearGradient id="hair" x1=".1" y1="0" x2=".9" y2="1">
+      <stop stop-color="#e8b4ce"/><stop offset=".32" stop-color="#cba8e6"/><stop offset=".65" stop-color="#9fc9d1"/><stop offset="1" stop-color="#a8d5c0"/>
+    </linearGradient>
+    <linearGradient id="dress" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffdf8"/><stop offset=".55" stop-color="#f2eee8"/><stop offset="1" stop-color="#d8e5e2"/></linearGradient>
+    <radialGradient id="halo" cx=".5" cy=".5" r=".5"><stop stop-color="#fff6ca" stop-opacity=".8"/><stop offset="1" stop-color="#fff6ca" stop-opacity="0"/></radialGradient>
+    <linearGradient id="eye" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d6a0ef"/><stop offset=".55" stop-color="#8f6dc9"/><stop offset="1" stop-color="#62a8a4"/></linearGradient>
+    <linearGradient id="shoe" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#d3aaf0"/><stop offset="1" stop-color="#8253ad"/></linearGradient>
+  </defs>
+  <rect width="240" height="300" fill="url(#bg)"/>
+  <circle cx="120" cy="132" r="103" fill="url(#halo)"/>
+  <g fill="none" stroke="#b7a5c8" stroke-width=".7" opacity=".6">
+    <circle cx="120" cy="141" r="89" stroke-dasharray="2 7"/>
+    <path d="M120 34v20M120 231v20M22 141h20M198 141h20"/>
+    <path d="M56 73l14 14M184 73l-14 14M51 194l16-16M189 194l-16-16"/>
+  </g>
+  <path d="M0 249c37-25 69-1 105-8 43-9 71-19 135 1v58H0Z" fill="#bccfc9" opacity=".45"/>
+  <path d="M68 247c-3-60 13-97 52-100 43-3 65 38 61 102l-19 36H84Z" fill="url(#dress)" stroke="#b4b8b2" stroke-width="1.4"/>
+  <path d="M76 211c20 8 50 9 78 2 8 10 13 24 17 44-24 17-68 18-95 2 3-17 7-34 16-48Z" fill="#d9e4e0" opacity=".7"/>
+  <path d="M74 181c6-28 21-44 48-47 28-3 48 15 55 45 4 18-2 35-13 47l-13 20-53 2-19-24c-9-14-11-27-5-43Z" fill="#f2d8ce" stroke="#c29b8c" stroke-width="1"/>
+  <path d="M86 104c-26 29-28 87-9 130 8 20 22 33 42 43-3-31-1-60 3-87 3 28 9 58 19 89 18-12 30-29 35-52 6-29 1-70-17-113-15-36-49-46-73-10Z" fill="url(#hair)" stroke="#a28bb6" stroke-width="1"/>
+  <path d="M72 168c-17 34-17 78-2 111M178 168c17 35 16 78-1 111" fill="none" stroke="url(#hair)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M84 82c-9-19-5-31 6-33 10-1 17 9 21 26M149 79c8-19 20-24 28-17 8 7 3 20-9 30" fill="#f0d8d0" stroke="#b98c86" stroke-width="1.3"/>
+  <path d="M84 87c-8-22-4-43 12-50 11-5 21 4 24 21 3-25 19-35 33-27 15 8 16 30 7 57Z" fill="url(#hair)"/>
+  <path d="M91 99c6-27 18-40 34-40 18 0 30 17 30 43 0 27-15 44-35 44-21 0-34-18-29-47Z" fill="#f5dfd3"/>
+  <path d="M96 94c-9 15-10 44-1 62-18-11-22-41-11-60 3-5 7-8 12-2ZM148 93c12 17 12 44 2 61 17-11 19-39 9-57-4-6-8-7-11-4Z" fill="url(#hair)"/>
+  <path d="M87 72c-5-18 2-27 10-28 7 0 10 9 9 25M144 66c6-17 15-22 21-17 6 5 2 14-8 25" fill="none" stroke="#b8a4c9" stroke-width="1.2"/>
+  <g fill="#f9f4e8" stroke="#b9c6c0" stroke-width="1">
+    <path d="M76 54c11-9 18-18 22-29 3 12 7 22 14 32-11 2-23 1-36-3Z"/>
+    <path d="M118 39c9-10 14-20 15-30 4 12 10 22 18 30-13 5-24 5-33 0Z"/>
+    <path d="M153 49c8-10 13-19 16-29 4 11 10 20 18 27-12 6-23 7-34 2Z"/>
+  </g>
+  <g fill="#a8c2c4">
+    <circle cx="89" cy="47" r="2"/><circle cx="119" cy="31" r="2"/><circle cx="150" cy="33" r="2"/><circle cx="171" cy="47" r="2"/>
+  </g>
+  <g fill="#f9f3ff" stroke="#d2b8d7" stroke-width=".7">
+    <path d="M96 109c-8 6-8 17 0 24-13-2-19-15-13-27 5-9 15-9 23-2-5 1-8 3-10 5Z"/>
+    <path d="M146 109c8 6 8 17 0 24 13-2 19-15 13-27-5-9-15-9-23-2 5 1 8 3 10 5Z"/>
+  </g>
+  <ellipse cx="77" cy="78" rx="10" ry="14" fill="#f0d8d0" stroke="#bf938a" stroke-width="1" transform="rotate(-27 77 78)"/>
+  <ellipse cx="166" cy="76" rx="9" ry="13" fill="#f0d8d0" stroke="#bf938a" stroke-width="1" transform="rotate(25 166 76)"/>
+  <g fill="url(#eye)">
+    <ellipse cx="106" cy="122" rx="7.5" ry="11"/><ellipse cx="137" cy="121" rx="7.5" ry="11"/>
+  </g>
+  <g fill="#432e50">
+    <circle cx="106" cy="122" r="3.2"/><circle cx="137" cy="121" r="3.2"/>
+  </g>
+  <g fill="#fff">
+    <circle cx="103" cy="117" r="2.2"/><circle cx="134" cy="116" r="2.2"/>
+    <path d="M101 129l2 2 2-2M133 128l2 2 2-2" stroke="#fff" stroke-width=".8" fill="none"/>
+  </g>
+  <path d="M100 100c5-4 11-4 15 0M132 99c5-4 11-3 15 1" fill="none" stroke="#a68bb5" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M118 134c3 2 6 2 9 0" fill="none" stroke="#c08d83" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M110 143c6 4 13 4 19 0" fill="none" stroke="#bc7d7f" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M97 162c12 10 30 11 45 0" fill="none" stroke="#e7e3da" stroke-width="2"/>
+  <path d="M93 164c-24 6-38 26-43 56M158 164c22 9 34 28 38 55" fill="none" stroke="#d4c3d2" stroke-width="1.2"/>
+  <g fill="none" stroke="#c8b8a7" stroke-width="2">
+    <path d="M48 195c6 1 11 5 14 11M195 192c-7 2-12 6-15 12"/>
+  </g>
+  <g fill="#b48ed5">
+    <circle cx="60" cy="205" r="3"/><circle cx="187" cy="204" r="3"/>
+  </g>
+  <path d="M104 267l7 25 10-6-7-20M141 267l-6 25-10-6 6-20" fill="url(#shoe)" stroke="#6e4b88" stroke-width="1"/>
+  <path d="M96 287h20M126 287h20" stroke="#4a345c" stroke-width="2" stroke-linecap="round"/>
+  <g fill="#fff7d9">
+    <path d="M188 118l3 8 8 3-8 3-3 8-3-8-8-3 8-3Z"/>
+    <path d="M47 139l2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/>
+    <circle cx="198" cy="86" r="2.4"/><circle cx="205" cy="218" r="2"/>
+  </g>
+</svg>
