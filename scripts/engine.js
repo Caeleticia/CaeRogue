@@ -417,6 +417,26 @@ class Battle {
   getEnemies(unit) { return this.getFieldUnits(unit.side === 'A' ? 'B' : 'A'); }
   getLivingAllies(unit) { return this.getFieldUnits(unit.side); }
 
+  getAutoUnits(sideId) {
+    return this.getFieldUnits(sideId).filter(unit => !unit.acted && unit.card && unit.card.autoAttack);
+  }
+
+  autoUnitPlan(unit) {
+    if (!unit || !unit.alive || unit.acted || !unit.card || !unit.card.autoAttack) return null;
+    const skills = this.getActiveSkills(unit).filter(skill => skill.op === 'attack');
+    for (const skill of skills) {
+      const state = this.getSkillState(unit, skill);
+      if (!state.usable) continue;
+      let targetUid = null;
+      if ((skill.targetMode === 'enemy' || skill.targetMode === 'ally') && state.targets.length) {
+        const picked = state.targets[Math.floor(Math.random() * state.targets.length)];
+        targetUid = picked ? picked.battleId : null;
+      }
+      return { unitId: unit.battleId, skillId: skill.id, targetUid };
+    }
+    return { unitId: unit.battleId, skillId: null, targetUid: null };
+  }
+
   countLabel(id) {
     return (this.content.countDefs && this.content.countDefs[id]) || id;
   }
@@ -1194,12 +1214,13 @@ class Battle {
         case 'summon': {
           const amount = Math.max(0, Math.min(ENGINE_LIMITS.summonCount, Math.round(this.evalFormula(step.count || '1', ctx))));
           const sideId = ctx.unit.side;
+          const ignoreFieldLimit = !!step.ignoreFieldLimit;
           for (let i = 0; i < amount; i += 1) {
-            if (this.sides[sideId].units.length >= this.rules.maxField) {
+            if (!ignoreFieldLimit && this.sides[sideId].units.length >= this.rules.maxField) {
               this.log('summon', '场地已满，召唤「' + ((this.maps.units.get(step.unitId) || {}).name || step.unitId) + '」被推迟。', { side: sideId });
               break;
             }
-            const summoned = this.deploySummon(sideId, step.unitId);
+            const summoned = this.deploySummon(sideId, step.unitId, { ignoreFieldLimit });
             if (!summoned) break;
           }
           break;
@@ -1231,11 +1252,12 @@ class Battle {
     }
   }
 
-  deploySummon(sideId, unitId) {
+  deploySummon(sideId, unitId, options) {
+    options = options || {};
     const card = this.maps.units.get(unitId);
     if (!card) { this.log('summon', '召唤失败：单位 ID 不存在。'); return null; }
     const side = this.sides[sideId];
-    if (side.units.length >= this.rules.maxField) return null;
+    if (!options.ignoreFieldLimit && side.units.length >= this.rules.maxField) return null;
     const unit = this.createBattleUnit(card);
     unit.side = sideId;
     side.units.push(unit);
@@ -1664,6 +1686,8 @@ class Battle {
     const units = this.sides[sideId].units.filter(unit => unit.alive && !unit.acted && !unit.pendingDefeat);
     if (!units.length) return null;
     const ordered = units.slice().sort((a, b) => (QUALITY_RANK[b.quality] || 0) - (QUALITY_RANK[a.quality] || 0));
+    const autoUnit = ordered.find(unit => unit.card && unit.card.autoAttack);
+    if (autoUnit) return this.autoUnitPlan(autoUnit);
     for (const unit of ordered) {
       const skills = this.getActiveSkills(unit).filter(skill => {
         const state = this.getSkillState(unit, skill);

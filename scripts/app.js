@@ -198,6 +198,99 @@ function renderStepMini(steps) {
 }
 
 /* ---------- App ---------- */
+
+/* ---------- Minimal DOM patching ----------
+   Reuses matching nodes and replaces only changed content, so in-page
+   updates do not recreate the whole screen or restart page animations. */
+function domNodesCompatible(oldNode, newNode) {
+  if (!oldNode || !newNode || oldNode.nodeType !== newNode.nodeType) return false;
+  if (oldNode.nodeType === 1) return oldNode.tagName === newNode.tagName && oldNode.namespaceURI === newNode.namespaceURI;
+  return true;
+}
+
+function syncTextInputValue(el, value) {
+  if (el.value === value) return;
+  const focused = document.activeElement === el;
+  let start = null;
+  let end = null;
+  if (focused && typeof el.selectionStart === 'number') {
+    start = el.selectionStart;
+    end = el.selectionEnd;
+  }
+  el.value = value;
+  if (focused && start != null && typeof el.setSelectionRange === 'function') {
+    try { el.setSelectionRange(start, end); } catch (error) { /* inputs without selection */ }
+  }
+}
+
+function morphDomNode(oldNode, newNode) {
+  if (!oldNode || !newNode) return;
+  if (oldNode.nodeType !== newNode.nodeType) {
+    if (oldNode.parentNode) oldNode.parentNode.replaceChild(newNode.cloneNode(true), oldNode);
+    return;
+  }
+  if (oldNode.nodeType === 3 || oldNode.nodeType === 4) {
+    if (oldNode.nodeValue !== newNode.nodeValue) oldNode.nodeValue = newNode.nodeValue;
+    return;
+  }
+  if (oldNode.nodeType === 8) {
+    if (oldNode.nodeValue !== newNode.nodeValue) oldNode.nodeValue = newNode.nodeValue;
+    return;
+  }
+  if (oldNode.nodeType !== 1) return;
+  if (oldNode.tagName !== newNode.tagName || oldNode.namespaceURI !== newNode.namespaceURI) {
+    if (oldNode.parentNode) oldNode.parentNode.replaceChild(newNode.cloneNode(true), oldNode);
+    return;
+  }
+  const isInput = oldNode.tagName === 'INPUT';
+  const isTextarea = oldNode.tagName === 'TEXTAREA';
+  const isSelect = oldNode.tagName === 'SELECT';
+
+  const oldAttrs = Array.from(oldNode.attributes || []);
+  const newAttrs = Array.from(newNode.attributes || []);
+  const nextAttrs = new Set();
+  for (const attr of newAttrs) {
+    nextAttrs.add(attr.name);
+    if ((isInput || isTextarea || isSelect) && (attr.name === 'value' || attr.name === 'selected')) continue;
+    if (oldNode.getAttribute(attr.name) !== attr.value) oldNode.setAttribute(attr.name, attr.value);
+  }
+  for (const attr of oldAttrs) {
+    if (!nextAttrs.has(attr.name)) oldNode.removeAttribute(attr.name);
+  }
+
+  morphDomChildren(oldNode, newNode);
+
+  if (isInput) {
+    if (newNode.type === 'checkbox' || newNode.type === 'radio') {
+      const checked = newNode.hasAttribute('checked');
+      if (oldNode.checked !== checked) oldNode.checked = checked;
+    } else if (newNode.hasAttribute('value')) {
+      syncTextInputValue(oldNode, newNode.getAttribute('value') || '');
+    }
+  } else if (isTextarea) {
+    syncTextInputValue(oldNode, newNode.value);
+  } else if (isSelect) {
+    const value = newNode.value;
+    if (oldNode.value !== value) oldNode.value = value;
+  }
+}
+
+function morphDomChildren(oldParent, newParent) {
+  const oldNodes = Array.from(oldParent.childNodes);
+  const newNodes = Array.from(newParent.childNodes);
+  const common = Math.min(oldNodes.length, newNodes.length);
+  for (let i = 0; i < common; i += 1) {
+    if (domNodesCompatible(oldNodes[i], newNodes[i])) morphDomNode(oldNodes[i], newNodes[i]);
+    else oldParent.replaceChild(newNodes[i].cloneNode(true), oldNodes[i]);
+  }
+  for (let i = oldNodes.length - 1; i >= newNodes.length; i -= 1) {
+    if (oldNodes[i].parentNode === oldParent) oldParent.removeChild(oldNodes[i]);
+  }
+  for (let i = oldNodes.length; i < newNodes.length; i += 1) {
+    oldParent.appendChild(newNodes[i].cloneNode(true));
+  }
+}
+
 const App = {
   route: 'home',
   setupMode: 'versus',
@@ -243,6 +336,7 @@ const App = {
 
   enterRoute(route, initial) {
     this.clearAiTimer();
+    this.clearAutoTimer();
     if (this.route !== route) this.cancelBattleFx();
     this.closeModal(true);
     if (route === 'battle' && !this.battle) route = 'home';
@@ -280,7 +374,7 @@ const App = {
     let context = '';
     if (this.route === 'home') context = '<strong>主菜单</strong><span>战术档案总览</span>';
     else context = '<strong>' + esc(this.routeTitle()) + '</strong><span>' + (this.route === 'battle' && this.battle ? '第 ' + this.battle.round + ' 回合' : 'CAEROGUE / 本地实验场') + '</span>';
-    top.innerHTML = '' +
+    const topHtml = '' +
       '<div class="topbar-inner">' +
         '<button class="brand" type="button" data-action="goto-home" aria-label="返回主菜单">' +
           '<img src="assets/pictures/brand-mark.svg" alt="">' +
@@ -299,16 +393,22 @@ const App = {
           '<button class="btn btn-sm" type="button" data-action="quick-battle">快速对战</button>' +
         '</div>' +
       '</div>';
+    if (top._caeHtml === topHtml) return;
+    top._caeHtml = topHtml;
+    top.innerHTML = topHtml;
   },
 
   renderFooter() {
     const idx = Store.index;
     const footer = document.getElementById('app-footer');
     if (!footer) return;
-    footer.innerHTML = '' +
+    const footerHtml = '' +
       '<div class="footer-brand"><img src="assets/pictures/brand-mark.svg" alt=""><span>CAEROGUE · 本地战术档案</span></div>' +
       '<div class="footer-mid"><span>已启用 ' + idx.packCount + ' 个扩展</span><span class="footer-line"></span><span>卡牌 ' + idx.cards + '</span><span class="footer-line"></span><span>版本 ' + APP_VERSION + '</span></div>' +
       '<div><button class="footer-link" type="button" data-action="open-route" data-route="settings">设置</button><span class="dot">·</span><button class="footer-link" type="button" data-action="open-route" data-route="expansions">扩展包</button></div>';
+    if (footer._caeHtml === footerHtml) return;
+    footer._caeHtml = footerHtml;
+    footer.innerHTML = footerHtml;
   },
 
   renderScreen() {
@@ -330,7 +430,18 @@ const App = {
       case 'endless': html = window.ModesUI ? ModesUI.render(this.route, this) : this.renderMissingModule('模式模块未载入'); break;
       default: html = this.renderHome();
     }
-    screen.innerHTML = html;
+    const routeChanged = this._screenRoute !== this.route;
+    if (!routeChanged && this._screenHtml === html && screen.childElementCount) {
+      // Nothing visible changed; keep the existing DOM and focus untouched.
+    } else if (routeChanged || !screen.childElementCount) {
+      screen.innerHTML = html;
+    } else {
+      const template = document.createElement('template');
+      template.innerHTML = html;
+      morphDomChildren(screen, template.content);
+    }
+    this._screenRoute = this.route;
+    this._screenHtml = html;
     if (this.route === 'battle' && this.battle) {
       this.scrollLogToBottom();
       this.scheduleAiIfNeeded();
@@ -916,7 +1027,7 @@ const App = {
     const root = document.getElementById('overlay-root');
     if (!root) return;
     const closeButton = options.closable === false ? '' : '<button class="modal-close" type="button" data-action="modal-close" aria-label="关闭">×</button>';
-    root.innerHTML = '' +
+    const modalHtml = '' +
       '<div class="modal-backdrop" data-action="modal-backdrop">' +
         '<section class="modal ' + (options.size === 'small' ? 'small ' : options.size === 'large' ? 'large ' : '') + '" role="dialog" aria-modal="true" aria-label="' + attr(options.title || '对话框') + '">' +
           '<div class="modal-head"><div><h2>' + esc(options.title || '') + '</h2>' + (options.subtitle ? '<p>' + esc(options.subtitle) + '</p>' : '') + '</div>' + closeButton + '</div>' +
@@ -924,6 +1035,13 @@ const App = {
           (options.foot ? '<div class="modal-foot">' + options.foot + '</div>' : '') +
         '</section>' +
       '</div>';
+    if (root.classList.contains('active') && root.firstElementChild) {
+      const template = document.createElement('template');
+      template.innerHTML = modalHtml;
+      morphDomChildren(root, template.content);
+    } else {
+      root.innerHTML = modalHtml;
+    }
     root.classList.add('active');
     this.modalOpen = true;
     document.body.style.overflow = 'hidden';
@@ -947,6 +1065,7 @@ const App = {
 
   pauseBattleInteraction() {
     this.clearAiTimer();
+    this.clearAutoTimer();
     this._battleInteractionPause = true;
   },
 
@@ -1013,6 +1132,8 @@ const App = {
 App.startBattle = function (config) {
   config = config || {};
   try {
+    this.clearAiTimer();
+    this.clearAutoTimer();
     const settings = Store.state.settings || {};
     const rules = Object.assign({}, DEFAULT_RULES, config.rules || {}, { showFormula: settings.showFormula !== false });
     const battle = new Battle({
@@ -1031,9 +1152,12 @@ App.startBattle = function (config) {
     this._battleFxActive = false;
     this._battleInteractionPause = false;
     this._battlePreRects = null;
+    this.clearAutoTimer();
     this._fxToken = (this._fxToken || 0) + 1;
     this._battleVisualCursor = battle.visualFeed.length ? battle.visualFeed[battle.visualFeed.length - 1].id : 0;
     if (window.BattleFX) BattleFX.cancel();
+    this._screenRoute = null;
+    this._screenHtml = null;
     this.route = 'battle';
     this.go('battle');
   } catch (error) {
@@ -1140,9 +1264,9 @@ App.renderBattleField = function (sideId) {
       '<div class="panel field-panel' + (isActive ? ' side-active' : '') + '">' +
         '<div class="field-head">' +
           '<div class="field-head-left"><span class="field-side-mark">' + (sideId === 'A' ? '我' : '敌') + '</span><div><h2>' + sideLabel + '</h2><div class="field-sub">' + side.name + ' · ' + (isHuman ? '玩家控制' : '自动控制') + '</div></div></div>' +
-          '<div class="field-status"><span class="chip ' + (isActive ? 'gold' : '') + '">' + esc(activeLabel || '待机') + '</span><span class="chip">' + units.length + '/' + battle.rules.maxField + '</span></div>' +
+          '<div class="field-status"><span class="chip ' + (isActive ? 'gold' : '') + '">' + esc(activeLabel || '待机') + '</span><span class="chip' + (units.length > battle.rules.maxField ? ' over-limit' : '') + '">' + units.length + '/' + battle.rules.maxField + (units.length > battle.rules.maxField ? ' · 超限' : '') + '</span></div>' +
         '</div>' +
-        '<div class="field-body"><div class="unit-stack">' + (units.length ? units.map(unit => this.renderBattleUnit(unit)).join('') : '<div class="field-empty"><span>该区域暂无单位</span><span class="tiny">单位将在回合开始或紧急轮换时入场</span></div>') + slotHtml + '</div></div>' +
+        '<div class="field-body"><div class="unit-stack">' + (units.length ? units.map(unit => this.renderBattleUnit(unit)).join('') : '<div class="field-empty"><span>该区域暂无单位</span><span class="tiny">玩家点击空缺位置手动补入；自动控制方会自行入场</span></div>') + slotHtml + '</div></div>' +
         '<div class="field-footer"><span>装备 ' + side.equipmentPool.length + ' · 手牌 ' + side.hand.length + '</span>' + runeFooter + '</div>' +
       '</div>' +
     '</section>';
@@ -1156,7 +1280,9 @@ App.renderBattleUnit = function (unit) {
   const isSelected = ui.selectedUid === unit.battleId && !ui.skillId;
   const isOwnTurn = battle.currentSide === unit.side && battle.status === 'active';
   const isHuman = battle.controllers[unit.side] === 'human';
-  const canSelect = isOwnTurn && !unit.acted && isHuman && !ui.skillId;
+  const isAutoUnit = !!(unit.card && unit.card.autoAttack);
+  const autoWaiting = isOwnTurn && isHuman && battle.getAutoUnits(unit.side).some(item => !item.acted);
+  const canSelect = isOwnTurn && !unit.acted && isHuman && !ui.skillId && !isAutoUnit && !autoWaiting;
   const res = battle.resistanceSummary(unit);
   const effects = unit.effects.map(inst => {
     const def = battle.maps.effects.get(inst.effectId);
@@ -1177,10 +1303,11 @@ App.renderBattleUnit = function (unit) {
   if (isTargetChosen) classes.push('target-selected');
   if (unit.acted) classes.push('acted');
   if (unit.pendingDefeat) classes.push('pending-defeat');
+  if (isAutoUnit) classes.push('auto-unit');
   return '' +
     '<article class="' + classes.join(' ') + '" data-action="battle-unit" data-uid="' + attr(unit.battleId) + '" role="button" tabindex="0" aria-label="' + attr(unit.name) + '">' +
       (isTarget ? '<span class="target-flag">选择目标</span>' : '') +
-      '<div class="unit-top"><div class="unit-name-wrap"><div class="unit-name"><strong>' + esc(unit.name) + '</strong><span class="unit-uid">' + esc(unit.battleId) + '</span></div><div class="unit-tags">' + qualityBadge(unit.quality) + '<span class="chip">' + (unit.counted ? '计数' : '不计数') + '</span>' + (unit.acted ? '<span class="unit-acted-label">已行动</span>' : '') + '</div></div></div>' +
+      '<div class="unit-top"><div class="unit-name-wrap"><div class="unit-name"><strong>' + esc(unit.name) + '</strong><span class="unit-uid">' + esc(unit.battleId) + '</span></div><div class="unit-tags">' + qualityBadge(unit.quality) + '<span class="chip">' + (unit.counted ? '计数' : '不计数') + '</span>' + (isAutoUnit ? '<span class="unit-acted-label auto-label">自动</span>' : '') + (unit.acted ? '<span class="unit-acted-label">已行动</span>' : '') + '</div></div></div>' +
       '<div class="unit-body"><div class="unit-portrait"><img src="' + attr(cardArt(unit.card)) + '" alt=""><span class="unit-counted-mark">' + (unit.counted ? '计' : '不') + '</span></div><div class="unit-info">' +
         '<div class="unit-hp-line"><span class="hp-label">生命</span><span class="hp-num' + (unit.hp < unit.maxHp ? ' hurt' : '') + '">' + unit.hp + '<small> / ' + unit.maxHp + '</small></span></div>' +
         '<div class="hp-bar' + (hpPct > 50 ? ' green' : '') + '"><span style="width:' + hpPct + '%"></span></div>' +
@@ -1246,14 +1373,19 @@ App.renderBattleActionPanel = function () {
       }).join('') + '</div></div>' : '');
     footer = '<div class="turn-help">点击敌方或友方单位切换目标；主动技结算后该单位本回合不可再次行动。</div><button class="btn btn-sm" type="button" data-action="battle-pass" data-uid="' + attr(selectedUnit.battleId) + '">待机</button>';
   } else {
-    const selectable = current ? battle.getFieldUnits(current.id).filter(unit => !unit.acted) : [];
-    const extraLines = current ? battle.getFieldUnits(current.id).flatMap(unit => battle.getExtraSkills(unit).map(skill => ({ unit, skill }))) : [];
+    const allUnacted = current ? battle.getFieldUnits(current.id).filter(unit => !unit.acted) : [];
+    const autoUnits = current ? allUnacted.filter(unit => unit.card && unit.card.autoAttack) : [];
+    const selectable = autoUnits.length ? [] : allUnacted;
+    const extraLines = autoUnits.length ? [] : (current ? battle.getFieldUnits(current.id).flatMap(unit => battle.getExtraSkills(unit).map(skill => ({ unit, skill }))) : []);
     const extras = extraLines.length ? '<div class="extra-area"><div class="extra-head"><span>附加技 · 全场地</span><span>' + extraLines.length + '</span></div><div class="extra-list">' + extraLines.map(({ unit, skill }) => {
       const state = battle.getSkillState(unit, skill);
       return '<button class="extra-skill-btn" type="button" data-action="battle-extra" data-uid="' + attr(unit.battleId) + '" data-skill="' + attr(skill.id) + '"' + (state.usable ? '' : ' disabled title="' + attr(state.reason) + '"') + '>' + esc(unit.name) + ' · ' + esc(skill.name) + '</button>';
     }).join('') + '</div></div>' : '';
     const canRefill = current && battle.controllers[current.id] === 'human' && current.hand.length && battle.getFieldUnits(current.id).length < battle.rules.maxField;
-    body = '<div class="action-empty"><div class="ae-icon">行</div><h3>' + (selectable.length ? '选择行动单位' : '本回合没有可行动单位') + '</h3><p>' + (selectable.length ? '点击任意未行动单位。也可以先释放满足条件的附加技，附加技不占用行动。' : '可行动单位可能已待机或退场。系统会按顺序推进回合。') + '</p>' + (canRefill ? '<p class="field-hint">场上有空缺位置。点击空缺位置，从手牌指定补入一名角色；补牌不会结束当前行动。</p>' : '') + extras + '</div>';
+    const autoText = autoUnits.length ? '<h3>区正在自行行动</h3><p>轮到区时，它会强制随机选择一名敌方目标自动攻击，玩家无法代为选择。</p>' : '';
+    body = autoUnits.length
+      ? '<div class="action-empty auto-action"><div class="ae-icon">区</div>' + autoText + (canRefill ? '<p class="field-hint">场上有空缺位置。点击空缺位置，从手牌指定补入一名角色；补牌不会结束当前行动。</p>' : '') + '</div>'
+      : '<div class="action-empty"><div class="ae-icon">行</div><h3>' + (selectable.length ? '选择行动单位' : '本回合没有可行动单位') + '</h3><p>' + (selectable.length ? '点击任意未行动单位。也可以先释放满足条件的附加技，附加技不占用行动。' : '可行动单位可能已待机或退场。系统会按顺序推进回合。') + '</p>' + (canRefill ? '<p class="field-hint">场上有空缺位置。点击空缺位置，从手牌指定补入一名角色；补牌不会结束当前行动。</p>' : '') + extras + '</div>';
     footer = '<div class="turn-help">当前行动方：' + esc(current ? current.name : '') + ' · 未行动 ' + remainingCountLabel(this.battle) + '</div><button class="btn btn-sm" type="button" data-action="battle-log-toggle">日志</button>';
   }
   return '<div class="battle-action"><div class="action-panel">' +
@@ -1430,8 +1562,16 @@ App.scrollLogToBottom = function () {
   if (log) log.scrollTop = log.scrollHeight;
 };
 
+App.autoUnitWaiting = function () {
+  if (!this.battle || this.battle.status !== 'active' || this.battle.phase !== 'awaiting') return false;
+  const side = this.battle.currentSide;
+  if (!side || this.battle.controllers[side] !== 'human') return false;
+  return this.battle.getAutoUnits(side).length > 0;
+};
+
 App.selectBattleUnit = function (uid) {
   if (!this.battle || this.battle.status !== 'active') return;
+  if (this._autoPendingUid || this.autoUnitWaiting()) { this.toast('区会在自己的行动时随机攻击，无法由玩家操作。', 'error'); return; }
   const ui = this.battleUI;
   const unit = this.battle.getUnit(uid);
   if (!unit) return;
@@ -1480,6 +1620,7 @@ App.selectBattleUnit = function (uid) {
 
 App.chooseBattleSkill = function (uid, skillId, kind) {
   if (!this.battle || this.battle.status !== 'active') return;
+  if (this._autoPendingUid || this.autoUnitWaiting()) { this.toast('区会在自己的行动时随机攻击，无法由玩家操作。', 'error'); return; }
   const actor = this.battle.getUnit(uid);
   if (!actor) return;
   const skill = this.battle.getSkillForUnit(actor, skillId);
@@ -1515,6 +1656,7 @@ App.chooseBattleSkill = function (uid, skillId, kind) {
 
 App.confirmBattleSkill = function () {
   if (!this.battle || this.battle.status !== 'active') return;
+  if (this._autoPendingUid || this.autoUnitWaiting()) return;
   const context = this.battleSkillContext();
   if (!context) return;
   const { actor, skill, kind } = context;
@@ -1552,6 +1694,7 @@ App.cancelBattleSkill = function () {
 
 App.passBattleAction = function (uid) {
   if (!this.battle || this.battle.status !== 'active') return;
+  if (this._autoPendingUid || this.autoUnitWaiting()) { this.toast('区会在自己的行动时随机攻击，无法由玩家操作。', 'error'); return; }
   this.beginBattleEngineAction();
   const result = this.battle.passAction(uid);
   if (!result.ok) { this._battlePreRects = null; this.toast(result.error, 'error'); return; }
@@ -1846,6 +1989,7 @@ App.afterBattleRender = function () {
   if (!this.battle) return;
   if (this.battle.status === 'ended') {
     this.clearAiTimer();
+    this.clearAutoTimer();
     if (this._resultShownFor !== this.battle) {
       this._resultShownFor = this.battle;
       const self = this;
@@ -1853,7 +1997,70 @@ App.afterBattleRender = function () {
     }
     return;
   }
+  this.scheduleAutoUnitIfNeeded();
   this.scheduleAiIfNeeded();
+};
+
+App.clearAutoTimer = function () {
+  if (this._autoTimer) {
+    clearTimeout(this._autoTimer);
+    this._autoTimer = null;
+  }
+  this._autoPendingUid = null;
+};
+
+App.scheduleAutoUnitIfNeeded = function () {
+  this.clearAutoTimer();
+  if (!this.battle || this.route !== 'battle' || this.battle.status !== 'active') return;
+  if (this._battleFxActive || this._battleInteractionPause) return;
+  if (this.battle.phase !== 'awaiting') return;
+  const side = this.battle.currentSide;
+  if (!side || this.battle.controllers[side] !== 'human') return;
+  const unit = this.battle.getAutoUnits(side)[0];
+  if (!unit) return;
+  this._autoPendingUid = unit.battleId;
+  this._autoTimer = setTimeout(() => {
+    this._autoTimer = null;
+    this.runAutoUnitTurn(unit.battleId);
+  }, 420);
+};
+
+App.runAutoUnitTurn = function (unitId) {
+  if (!this.battle || this.route !== 'battle' || this.battle.status !== 'active' || this.battle.phase !== 'awaiting') { this._autoPendingUid = null; return; }
+  if (this._battleFxActive || this._battleInteractionPause) { this._autoPendingUid = null; return; }
+  const unit = this.battle.getUnit(unitId);
+  if (!unit || !unit.alive || unit.acted || unit.side !== this.battle.currentSide || !unit.card.autoAttack) {
+    this._autoPendingUid = null;
+    this.afterBattleRender();
+    return;
+  }
+  this._autoPendingUid = null;
+  this.beginBattleEngineAction();
+  this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
+  const prep = this.battle.prepareUnit(unitId);
+  if (!prep.ok) {
+    this._battlePreRects = null;
+    this.finishBattleEngineAction();
+    return;
+  }
+  if (prep.skipped || this.battle.status !== 'active' || this.battle.phase !== 'awaiting') {
+    this.finishBattleEngineAction();
+    return;
+  }
+  const plan = this.battle.autoUnitPlan(unit);
+  let result = null;
+  if (!plan || !plan.skillId) {
+    result = this.battle.passAction(unitId);
+  } else {
+    result = this.battle.useSkill(unitId, plan.skillId, plan.targetUid);
+    if (!result.ok) result = this.battle.passAction(unitId);
+  }
+  if (!result || !result.ok) {
+    this._battlePreRects = null;
+    this.finishBattleEngineAction();
+    return;
+  }
+  this.finishBattleEngineAction();
 };
 
 App.clearAiTimer = function () {
@@ -1924,6 +2131,7 @@ App.leaveBattle = function (skipConfirm, destination) {
     let modeRoute = null;
     if (window.ModesUI && typeof ModesUI.onBattleAbort === 'function') modeRoute = ModesUI.onBattleAbort(context, this);
     this.clearAiTimer();
+    this.clearAutoTimer();
     this.cancelBattleFx();
     this.battle = null;
     this.battleUI = null;
@@ -1961,6 +2169,7 @@ App.surrenderBattle = function () {
 App.retryBattle = function () {
   const context = this.battleContext;
   this.clearAiTimer();
+  this.clearAutoTimer();
   this.battle = null;
   this.battleUI = null;
   this.battleContext = null;
@@ -1975,6 +2184,7 @@ App.retryBattle = function () {
 
 App.exitBattleTo = function (route) {
   this.clearAiTimer();
+  this.clearAutoTimer();
   this.closeModal(true);
   this.battle = null;
   this.battleUI = null;

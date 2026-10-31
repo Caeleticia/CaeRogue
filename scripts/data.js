@@ -186,6 +186,7 @@ const CORE_PACK = {
       {
         id: 'qu', packId: CORE_PACK_ID, name: '区', quality: 'rainbow',
         type: 'unit', faction: 'caterpillar', counted: true, hp: 1, attack: 0,
+        autoAttack: true,
         resistance: { type: 'general', value: 0 },
         skills: ['qu_arrive', 'qu_hungry'],
         equip: [],
@@ -327,7 +328,7 @@ const CORE_PACK = {
       {
         id: 'qu_arrive', packId: CORE_PACK_ID, name: '区到你了', type: 'active', op: 'attack',
         quality: 'rainbow', targetMode: 'enemy', multiplier: 100,
-        description: '主动技，攻击。造成 1 点无视抗性的精神伤害。',
+        description: '主动技，攻击。区轮到自己时会随机选择一名敌人，造成 1 点无视抗性的精神伤害。',
         trigger: { event: 'manual' }, requirements: [],
         steps: [
           { kind: 'damage', target: 'chosen', damageType: 'mental', formula: '1', ignoreResistance: true }
@@ -336,10 +337,10 @@ const CORE_PACK = {
       {
         id: 'qu_hungry', packId: CORE_PACK_ID, name: '饿啊', type: 'passive', op: 'special',
         quality: 'rainbow', targetMode: 'none', multiplier: 100,
-        description: '被动技。被击败时变成两个「区」。',
+        description: '被动技。被击败时变成两个「区」。区不受一方场地上限限制，可以无限叠加。',
         trigger: { event: 'defeated' }, requirements: [],
         steps: [
-          { kind: 'summon', unitId: 'qu', count: '2' }
+          { kind: 'summon', unitId: 'qu', count: '2', ignoreFieldLimit: true }
         ]
       },
       {
