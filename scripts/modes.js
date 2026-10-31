@@ -95,6 +95,28 @@ const ModesUI = {
     };
   },
 
+  ensureRunLoadout(run) {
+    const ownedEquipment = [...new Set((run.deck && run.deck.equipment) || [])];
+    const ownedRunes = [...new Set((run.deck && run.deck.runes) || [])];
+    if (!Array.isArray(run.activeEquipment)) run.activeEquipment = ownedEquipment.slice();
+    else run.activeEquipment = run.activeEquipment.filter(id => ownedEquipment.includes(id));
+    if (!Array.isArray(run.activeRunes)) run.activeRunes = ownedRunes.slice(0, 3);
+    else run.activeRunes = run.activeRunes.filter(id => ownedRunes.includes(id)).slice(0, 3);
+    return run;
+  },
+
+  battleLoadout(run) {
+    this.ensureRunLoadout(run);
+    const equipment = run.activeEquipment.filter(id => Store.index.maps.equipment.has(id));
+    const activeRunes = run.activeRunes.filter(id => Store.index.maps.runes.has(id));
+    return {
+      units: (run.deck.units || []).slice(),
+      equipment,
+      runes: [...new Set(run.deck.runes || [])],
+      activeRunes
+    };
+  },
+
   makeBattleRules(extra) {
     return Object.assign({}, DEFAULT_RULES, {
       initialDraw: 10,
@@ -231,7 +253,7 @@ const ModesUI = {
       const gear = modeRandom(Store.index.equipment);
       rewards.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: '装备加入本局整备区。' + (modSummary(gear.mods, true) || '') });
     }
-    if ((run.deck.runes || []).length < 3 && Store.index.runes.length) {
+    if ((run.deck.runes || []).length < 6 && Store.index.runes.length) {
       const rune = modeRandom(Store.index.runes);
       rewards.push({ kind: 'rune', id: rune.id, title: rune.name, desc: '符文对阵营全体生效。' + (modSummary(rune.mods, true) || '') });
     }
@@ -268,8 +290,18 @@ const ModesUI = {
   applyReward(app, run, reward) {
     if (!reward) return;
     if (reward.kind === 'unit') { run.deck.units.push(reward.id); app.toast('角色「' + reward.title + '」加入牌组。', 'success'); }
-    else if (reward.kind === 'equipment') { run.deck.equipment.push(reward.id); app.toast('装备已加入整备区。', 'success'); }
-    else if (reward.kind === 'rune') { run.deck.runes.push(reward.id); app.toast('符文已加入本局。', 'success'); }
+    else if (reward.kind === 'equipment') {
+      run.deck.equipment.push(reward.id);
+      this.ensureRunLoadout(run);
+      if (!run.activeEquipment.includes(reward.id)) run.activeEquipment.push(reward.id);
+      app.toast('装备已加入整备区，可在战前整备中调整携行。', 'success');
+    }
+    else if (reward.kind === 'rune') {
+      run.deck.runes.push(reward.id);
+      this.ensureRunLoadout(run);
+      if (!run.activeRunes.includes(reward.id) && run.activeRunes.length < 3) run.activeRunes.push(reward.id);
+      app.toast('符文已加入本局，可在战前整备中调整启用。', 'success');
+    }
     else if (reward.kind === 'effect') { run.upgrades.startEffects = run.upgrades.startEffects || []; run.upgrades.startEffects.push({ effectId: reward.id, stacks: 2 }); app.toast('祝福已记录，下一场战斗生效。', 'success'); }
     else if (reward.kind === 'upgradeHp') { run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + 2; app.toast('本局角色生命上限 +2。', 'success'); }
     else if (reward.kind === 'upgradeDmg') { run.upgrades.dmgFlat = modeNumber(run.upgrades.dmgFlat) + 1; app.toast('本局伤害提升值 +1。', 'success'); }
@@ -370,9 +402,9 @@ const ModesUI = {
     const counted = selectedUnits.filter(unit => unit.counted !== false).length;
     const error = !selectedUnits.length ? '至少选择一名角色。' : !counted ? '起始队伍至少需要一名计数角色。' : '';
     const cardButton = (type, card, selected) => '<button class="choice-card' + (selected ? ' selected' : '') + '" type="button" data-action="mode-rogue-draft" data-type="' + type + '" data-id="' + attr(card.id) + '"><span class="choice-mark">' + (selected ? '选' : '+') + '</span><span class="choice-main"><strong>' + esc(card.name) + '</strong><small>' + qualityBadge(card.quality) + ' ' + (type === 'unit' ? '生命 ' + card.hp + ' · ' + ((RESISTANCE_TYPES[card.resistance.type] || { label: '抗性' }).label) + ' ' + card.resistance.value + ' · ' + (card.counted === false ? '不计数' : '计数') : (modSummary(card.mods, true) || '无数值')) + '</small></span></button>';
-    const unitPool = Store.index.units.slice(0, 8);
-    const gearPool = Store.index.equipment.slice(0, 5);
-    const runePool = Store.index.runes.slice(0, 5);
+    const unitPool = Store.index.units.slice();
+    const gearPool = Store.index.equipment.slice();
+    const runePool = Store.index.runes.slice();
     const lastSummary = previous && !previous.active ? '<section class="panel"><div class="panel-head"><div><h3>上一次探索</h3><div class="panel-sub">' + (previous.completed ? '已抵达终点' : '未能抵达终点') + '</div></div><span class="chip">' + (previous.completed ? '通关' : '失败') + '</span></div><div class="panel-body"><div class="run-stat-row"><span>抵达层数</span><b>' + (modeNumber(previous.currentLayer) + 1) + ' / 7</b></div><div class="run-stat-row"><span>战斗胜利</span><b>' + modeNumber(previous.wins) + '</b></div><div class="run-stat-row"><span>获得金币</span><b>' + modeNumber(previous.gold) + '</b></div></div></section>' : '';
     return '' +
       '<div class="page-wrap mode-page">' +
@@ -391,6 +423,7 @@ const ModesUI = {
   },
 
   renderRogueRun(app, run) {
+    this.ensureRunLoadout(run);
     const map = run.map && Array.isArray(run.map.layers) ? run.map : { layers: this.createRogueMap() };
     if (!run.map) { run.map = map; this.storeRun('rogue', run); }
     const layersHtml = map.layers.map((nodes, layerIndex) => {
@@ -424,7 +457,7 @@ const ModesUI = {
               '<div class="run-stat-row"><span>伤害强化</span><b>+' + modeNumber(upgrades.dmgFlat) + '</b></div>' +
               '<div class="detail-section-title">整局祝福<span class="line"></span></div><div class="run-relic-list">' + (startEffects.length ? startEffects.map(item => '<span class="chip violet">' + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('') : '<span class="faint tiny">尚无祝福</span>') + '</div>' +
             '</div></section>' +
-            '<section class="panel"><div class="panel-head"><div><h3>当前牌组</h3><div class="panel-sub">' + deckCards.units.length + ' 角色 · ' + deckCards.equipment.length + ' 装备 · ' + deckCards.runes.length + ' 符文</div></div></div><div class="panel-body"><div class="run-deck-list">' + deckCards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + deckCards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + deckCards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></section>' +
+            '<section class="panel"><div class="panel-head"><div><h3>当前牌组</h3><div class="panel-sub">' + deckCards.units.length + ' 角色 · ' + (run.activeEquipment || []).length + ' 携行装备 · ' + (run.activeRunes || []).length + ' 启用符文</div></div><button class="btn btn-sm" type="button" data-action="mode-loadout-open" data-mode="rogue">战前整备</button></div><div class="panel-body"><div class="run-deck-list">' + deckCards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div><p class="field-hint mt-1">装备默认不穿戴，战斗行动时可选择穿戴或销毁。符文随时可配置。</p></div></section>' +
             '<section class="panel"><div class="panel-head"><h3>节点规则</h3></div><div class="panel-body"><p class="field-hint">普通战与精英战使用当前牌组，战斗结束后生命与状态重置。首领战胜利即通关。事件可以触发额外战斗、改变后续节点或提供资源。</p></div></section>' +
           '</aside>' +
         '</div>' +
@@ -457,6 +490,8 @@ const ModesUI = {
       currentLayer: 0,
       currentNodeId: null,
       deck: { units, equipment: draft.equipment.slice(), runes: draft.runes.slice() },
+      activeEquipment: draft.equipment.slice(),
+      activeRunes: draft.runes.slice(0, 3),
       gold: 60,
       wins: 0,
       upgrades: { hpFlat: 0, dmgFlat: 0, startEffects: [] },
@@ -490,7 +525,7 @@ const ModesUI = {
     const enemy = this.buildEnemy(node.layer, node.type === 'boss' ? 'boss' : node.type === 'elite' ? 'elite' : 'battle');
     app.startBattle({
       loadouts: {
-        A: { units: run.deck.units.slice(), equipment: run.deck.equipment.slice(), runes: run.deck.runes.slice() },
+        A: this.battleLoadout(run),
         B: enemy.loadout
       },
       rules: this.makeBattleRules({ allowDuplicates: true }),
@@ -582,7 +617,7 @@ const ModesUI = {
       const gear = modeRandom(Store.index.equipment);
       offers.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: '装备 · ' + (modSummary(gear.mods, true) || '特效'), price: 25, sold: false });
     }
-    if (Store.index.runes.length && (run.deck.runes || []).length < 3) {
+    if (Store.index.runes.length && (run.deck.runes || []).length < 6) {
       const rune = modeRandom(Store.index.runes);
       offers.push({ kind: 'rune', id: rune.id, title: rune.name, desc: '符文 · ' + (modSummary(rune.mods, true) || '特效'), price: 25, sold: false });
     }
@@ -707,6 +742,91 @@ const ModesUI = {
       app.closeModal();
       app.render();
     }
+  },
+
+  /* ---------- Pre-battle loadout ---------- */
+  openLoadoutModal(app, mode) {
+    const run = Store.state.runs[mode];
+    if (!run || !run.active) return;
+    this.ensureRunLoadout(run);
+    this._loadoutDraft = {
+      mode,
+      equipment: run.activeEquipment.slice(),
+      runes: run.activeRunes.slice(0, 3)
+    };
+    this.renderLoadoutModal(app);
+  },
+
+  renderLoadoutModal(app) {
+    const run = Store.state.runs[this._loadoutDraft.mode];
+    if (!run) return;
+    const draft = this._loadoutDraft;
+    const equipmentPool = [...new Set((run.deck.equipment || []))].map(id => Store.index.maps.equipment.get(id)).filter(Boolean);
+    const runePool = [...new Set((run.deck.runes || []))].map(id => Store.index.maps.runes.get(id)).filter(Boolean);
+    const equipmentRows = equipmentPool.length ? equipmentPool.map(item => {
+      const selected = draft.equipment.includes(item.id);
+      return '<div class="loadout-item' + (selected ? ' selected' : '') + '"><button class="loadout-toggle" type="button" data-action="mode-loadout-toggle-equipment" data-id="' + attr(item.id) + '"><span class="loadout-check">' + (selected ? '携行' : '收纳') + '</span><span class="loadout-main"><strong>' + esc(item.name) + '</strong><small>' + esc((item.slot === 'weapon' ? '武器' : '饰品') + ' · ' + (modSummary(item.mods, true) || '特效')) + '</small></span>' + qualityBadge(item.quality) + '</button><button class="loadout-destroy" type="button" data-action="mode-loadout-destroy-equipment" data-id="' + attr(item.id) + '" title="从本局资源中销毁">销毁</button></div>';
+    }).join('') : '<div class="empty-state"><p>当前没有装备。可在奖励或商店中获得。</p></div>';
+    const runeRows = runePool.length ? runePool.map(item => {
+      const selected = draft.runes.includes(item.id);
+      return '<button class="loadout-item rune' + (selected ? ' selected' : '') + '" type="button" data-action="mode-loadout-toggle-rune" data-id="' + attr(item.id) + '"><span class="loadout-check">' + (selected ? '启用' : '待命') + '</span><span class="loadout-main"><strong>' + esc(item.name) + '</strong><small>' + esc(modSummary(item.mods, true) || '特效') + '</small></span>' + qualityBadge(item.quality) + '</button>';
+    }).join('') : '<div class="empty-state"><p>当前没有符文。</p></div>';
+    app.openModal({
+      title: '战前整备 · ' + (this._loadoutDraft.mode === 'rogue' ? '肉鸽' : '无尽'),
+      subtitle: '自由配置携行装备与启用符文，设置会保留到后续战斗。',
+      size: 'large',
+      body: '<div class="loadout-columns"><section><div class="detail-section-title">装备卡 · ' + draft.equipment.length + ' 携行<span class="line"></span></div><p class="field-hint mb-1">装备默认不穿戴。携行后会进入战斗中的装备卡栏目，可在行动时穿戴或销毁。</p><div class="loadout-list">' + equipmentRows + '</div></section><section><div class="detail-section-title">符文 · ' + draft.runes.length + ' / 3 启用<span class="line"></span></div><p class="field-hint mb-1">符文配置会应用到下一场战斗；战斗中也可以随时调整。</p><div class="loadout-list">' + runeRows + '</div></section></div>',
+      foot: '<span class="left">角色 ' + (run.deck.units || []).length + ' · 装备 ' + equipmentPool.length + ' · 符文 ' + runePool.length + '</span><button class="btn" type="button" data-action="modal-close">取消</button><button class="btn btn-primary" type="button" data-action="mode-loadout-save">保存配置</button>'
+    });
+  },
+
+  toggleLoadoutEquipment(app, id) {
+    if (!this._loadoutDraft) return;
+    const list = this._loadoutDraft.equipment;
+    const index = list.indexOf(id);
+    if (index >= 0) list.splice(index, 1);
+    else list.push(id);
+    this.renderLoadoutModal(app);
+  },
+
+  toggleLoadoutRune(app, id) {
+    if (!this._loadoutDraft) return;
+    const list = this._loadoutDraft.runes;
+    const index = list.indexOf(id);
+    if (index >= 0) list.splice(index, 1);
+    else if (list.length >= 3) { app.toast('每阵营最多启用三张符文。', 'error'); return; }
+    else list.push(id);
+    this.renderLoadoutModal(app);
+  },
+
+  destroyLoadoutEquipment(app, id) {
+    const mode = this._loadoutDraft && this._loadoutDraft.mode;
+    const run = mode && Store.state.runs[mode];
+    if (!run) return;
+    const idx = (run.deck.equipment || []).indexOf(id);
+    if (idx < 0) return;
+    run.deck.equipment.splice(idx, 1);
+    run.activeEquipment = (run.activeEquipment || []).filter(item => item !== id);
+    this._loadoutDraft.equipment = this._loadoutDraft.equipment.filter(item => item !== id);
+    this.storeRun(mode, run);
+    this.renderLoadoutModal(app);
+    app.toast('装备已从本局资源中销毁。', 'success');
+  },
+
+  saveLoadout(app) {
+    const draft = this._loadoutDraft;
+    if (!draft) return;
+    const run = Store.state.runs[draft.mode];
+    if (!run) return;
+    const ownedEquipment = new Set(run.deck.equipment || []);
+    const ownedRunes = new Set(run.deck.runes || []);
+    run.activeEquipment = draft.equipment.filter(id => ownedEquipment.has(id));
+    run.activeRunes = draft.runes.filter(id => ownedRunes.has(id)).slice(0, 3);
+    this.storeRun(draft.mode, run);
+    this._loadoutDraft = null;
+    app.closeModal(true);
+    app.render();
+    app.toast('战前整备已保存。', 'success');
   },
 
   /* ---------- Battle outcomes ---------- */
@@ -957,6 +1077,7 @@ const ModesUI = {
     const best = this.bestEndlessLayer();
     const historyCount = (Store.state.history || []).filter(entry => entry.mode === 'endless').length;
     if (active) {
+      this.ensureRunLoadout(run);
       const cards = this.deckPreview(run.deck);
       const upgrades = run.upgrades || {};
       const startEffects = upgrades.startEffects || [];
@@ -975,7 +1096,7 @@ const ModesUI = {
               '<section class="panel"><div class="panel-head"><div><h3>下一层预览</h3><div class="panel-sub">难度按层数递增</div></div></div><div class="panel-body"><div class="layer-list">' + [1, 2, 3, 4].map(offset => { const layer = run.layer + offset; return '<div class="layer-row"><span class="layer-no">' + layer + '</span><div class="layer-main"><strong>第 ' + layer + ' 层</strong><small>' + (layer % 5 === 0 ? '精英轮换 · 额外符文' : '随机敌人 · 属性修正') + '</small></div><span class="layer-reward">' + (layer % 3 === 0 ? '强化奖励' : '战利品') + '</span></div>'; }).join('') + '</div></div></section>' +
             '</div>' +
             '<aside class="stack">' +
-              '<section class="panel"><div class="panel-head"><h3>当前牌组</h3></div><div class="panel-body"><div class="run-deck-list">' + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></section>' +
+              '<section class="panel"><div class="panel-head"><h3>当前牌组</h3><button class="btn btn-sm" type="button" data-action="mode-loadout-open" data-mode="endless">战前整备</button></div><div class="panel-body"><div class="run-deck-list">' + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div><p class="field-hint mt-1">装备默认不穿戴；符文随时可配置，战斗前也可以调整携行与启用。</p></div></section>' +
               '<section class="panel"><div class="panel-head"><h3>层数记录</h3></div><div class="panel-body"><div class="run-stat-row"><span>历史最高</span><b>' + Math.max(best, run.layer) + ' 层</b></div><div class="run-stat-row"><span>历史挑战</span><b>' + historyCount + ' 次</b></div><p class="field-hint mt-1">结束本局会记录当前层数。</p></div></section>' +
             '</aside>' +
           '</div>' +
@@ -1000,6 +1121,8 @@ const ModesUI = {
       wins: 0,
       gold: 30,
       deck: stored.deck,
+      activeEquipment: (stored.deck.equipment || []).slice(),
+      activeRunes: [...new Set(stored.deck.runes || [])].slice(0, 3),
       upgrades: { hpFlat: 0, dmgFlat: 0, startEffects: [] },
       awaitingReward: false,
       pendingRewards: [],
@@ -1019,7 +1142,7 @@ const ModesUI = {
     const kind = layer % 5 === 0 ? 'boss' : layer % 3 === 0 ? 'elite' : 'battle';
     const enemy = this.buildEnemy(layer, kind);
     app.startBattle({
-      loadouts: { A: run.deck, B: enemy.loadout },
+      loadouts: { A: this.battleLoadout(run), B: enemy.loadout },
       rules: this.makeBattleRules({ allowDuplicates: true }),
       controllers: { A: 'human', B: 'ai' },
       modifiers: { A: this.playerModifiers(run), B: enemy.modifiers },
@@ -1101,6 +1224,21 @@ const ModesUI = {
         return true;
       case 'mode-reward-take':
         this.takeReward(app, data.mode, Number(data.index));
+        return true;
+      case 'mode-loadout-open':
+        this.openLoadoutModal(app, data.mode);
+        return true;
+      case 'mode-loadout-toggle-equipment':
+        this.toggleLoadoutEquipment(app, data.id);
+        return true;
+      case 'mode-loadout-toggle-rune':
+        this.toggleLoadoutRune(app, data.id);
+        return true;
+      case 'mode-loadout-destroy-equipment':
+        this.destroyLoadoutEquipment(app, data.id);
+        return true;
+      case 'mode-loadout-save':
+        this.saveLoadout(app);
         return true;
       case 'mode-challenge-start':
         this.startChallenge(app, data.id);

@@ -194,6 +194,8 @@ class Battle {
     this.stepDepth = 0;
     this.damageFeed = [];
     this.damageSeq = 0;
+    this.visualFeed = [];
+    this.visualSeq = 0;
     this.triggerFeed = [];
     this.actionStartedFor = null;
     this.turnSerial = 0;
@@ -230,8 +232,12 @@ class Battle {
     const unitIds = (loadout.units || []).filter(item => this.maps.units.has(item));
     side.deck = shuffle(unitIds);
     side.equipmentPool = (loadout.equipment || []).filter(item => this.maps.equipment.has(item));
-    const runeIds = (loadout.runes || []).filter(item => this.maps.runes.has(item)).slice(0, 3);
-    side.runes = runeIds.map(item => this.maps.runes.get(item));
+    const runeIds = [...new Set((loadout.runes || []).filter(item => this.maps.runes.has(item)))];
+    side.runePool = runeIds.map(item => this.maps.runes.get(item));
+    const requestedActive = Array.isArray(loadout.activeRunes)
+      ? loadout.activeRunes.filter(item => runeIds.includes(item))
+      : runeIds.slice(0, 3);
+    side.runes = [...new Set(requestedActive)].slice(0, 3).map(item => this.maps.runes.get(item));
     return side;
   }
 
@@ -279,6 +285,13 @@ class Battle {
     return entry;
   }
 
+  recordVisual(event) {
+    const entry = Object.assign({ id: ++this.visualSeq, round: this.round }, event);
+    this.visualFeed.push(entry);
+    if (this.visualFeed.length > 260) this.visualFeed.shift();
+    return entry;
+  }
+
   pullMods(unit) {
     const acc = {};
     const add = (mods, scale) => {
@@ -304,6 +317,13 @@ class Battle {
       if (!def || !def.mods) continue;
       add(def.mods, def.stackable ? inst.stacks : 1);
     }
+    const side = this.getSideOf(unit);
+    for (const ally of side.units) {
+      if (!ally.alive || !ally.onField) continue;
+      for (const skill of this.getUnitSkills(ally)) {
+        if (skill.type === 'passive' && skill.aura) add(skill.aura, 1);
+      }
+    }
     const sideMod = this.externalModsForSide[unit.side];
     if (sideMod) add({ dmgFlat: sideMod.dmgFlat || 0, hpFlat: sideMod.hpFlat || 0, dmgPct: sideMod.dmgPct || 0, takenFlat: sideMod.takenFlat || 0 }, 1);
     return acc;
@@ -322,10 +342,17 @@ class Battle {
     unit.maxHp = Math.max(1, (Number(unit.card.hp) || 1) + (mods.maxHpFlat || 0) + (sideMod.hpFlat || 0));
     if (Number(unit.card.maxHpCap) > 0) unit.maxHp = Math.min(unit.maxHp, Number(unit.card.maxHpCap));
     if (unit.maxHp < oldMax) unit.hp = Math.min(unit.hp, unit.maxHp);
-    else unit.hp = Math.min(unit.maxHp, unit.hp + Math.max(0, unit.maxHp - oldMax));
-    unit.hp = Math.max(0, unit.hp);
+    unit.hp = Math.max(0, Math.min(unit.hp, unit.maxHp));
     unit.resistance.current = this.getResistance(unit, unit.card.resistance.type);
     return mods;
+  }
+
+  recalcSide(sideId) {
+    const side = this.sides[sideId];
+    if (!side) return;
+    for (const unit of side.units) {
+      if (unit.alive) this.recalcUnit(unit);
+    }
   }
 
   createBattleUnit(card) {
@@ -351,6 +378,7 @@ class Battle {
       tempMods: {},
       acted: false,
       actionStarted: false,
+      extraActionUsed: false,
       enteredRound: this.round
     };
     return unit;
@@ -585,8 +613,9 @@ class Battle {
       this.removeUnit(target, 'defeat');
     }
     if (this.status !== 'active') return;
-    this.emergencyDeploy('A');
-    this.emergencyDeploy('B');
+    for (const sideId of ['A', 'B']) {
+      if (this.sides[sideId].controller === 'ai') this.emergencyDeploy(sideId);
+    }
     this.checkOutcome();
   }
 
@@ -672,7 +701,9 @@ class Battle {
         }
       }
     }
-    for (const sideId of ['A', 'B']) this.musterSide(sideId);
+    for (const sideId of ['A', 'B']) {
+      if (this.sides[sideId].controller === 'ai') this.musterSide(sideId);
+    }
   }
 
   deployUnit(sideId, cardId, fromHand) {
@@ -688,10 +719,10 @@ class Battle {
     const unit = this.createBattleUnit(card);
     unit.side = sideId;
     unit.resistance.current = card.resistance.value;
-    this.equipInitialItems(unit);
     side.units.push(unit);
     this.recalcUnit(unit);
     unit.hp = unit.maxHp;
+    this.recalcSide(sideId);
     const starting = ((this.modifiers[sideId] && this.modifiers[sideId].startingEffects) || []).filter(item => !item.unitId || item.unitId === cardId);
     for (const item of starting) {
       if (this.maps.effects.has(item.effectId)) {
@@ -702,24 +733,6 @@ class Battle {
     this.log('entry', side.name + ' 入场「' + card.name + '」' + (gearNames.length ? '，装备' + gearNames.join('、') : '') + '。', { side: sideId });
     this.triggerEvent('enterField', { unit }, { ownerOnly: true });
     return unit;
-  }
-
-  equipInitialItems(unit) {
-    const side = this.getSideOf(unit);
-    for (const intrinsicId of unit.card.equip || []) {
-      const gear = this.maps.equipment.get(intrinsicId);
-      if (gear && !unit.equipment[gear.slot]) unit.equipment[gear.slot] = gear;
-    }
-    for (let i = 0; i < side.equipmentPool.length; i += 1) {
-      const gear = this.maps.equipment.get(side.equipmentPool[i]);
-      if (!gear) { side.equipmentPool.splice(i, 1); i -= 1; continue; }
-      if (!unit.equipment[gear.slot]) {
-        unit.equipment[gear.slot] = gear;
-        side.equipmentPool.splice(i, 1);
-        this.log('system', unit.name + ' 装备「' + gear.name + '」。', { side: unit.side });
-        i -= 1;
-      }
-    }
   }
 
   returnEquipment(unit) {
@@ -767,6 +780,62 @@ class Battle {
     this.checkOutcome();
   }
 
+  manualDeployCard(sideId, handIndex) {
+    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: '当前无法补牌。' };
+    const side = this.sides[sideId];
+    const index = Number(handIndex);
+    if (!side || !Number.isInteger(index) || index < 0 || index >= side.hand.length) return { ok: false, error: '这张手牌已不在手牌区。' };
+    if (side.units.length >= this.rules.maxField) return { ok: false, error: '场上已经达到单位上限。' };
+    const cardId = side.hand[index];
+    this.beginBatch();
+    const unit = this.deployUnit(sideId, cardId, true);
+    this.endBatch();
+    if (!unit) return { ok: false, error: '补牌失败。' };
+    this.log('entry', side.name + ' 手动补入「' + unit.name + '」。', { side: sideId });
+    return { ok: true, unit };
+  }
+
+  equipFromPool(sideId, unitUid, equipmentId) {
+    if (this.status !== 'active') return { ok: false, error: '战斗已结束。' };
+    const side = this.sides[sideId];
+    if (!side) return { ok: false, error: '阵营不存在。' };
+    const index = side.equipmentPool.indexOf(equipmentId);
+    if (index < 0) return { ok: false, error: '装备已不在整备区。' };
+    const unit = this.getUnit(unitUid);
+    if (!unit || unit.side !== sideId || !unit.alive || !unit.onField) return { ok: false, error: '目标单位不在场。' };
+    const gear = this.maps.equipment.get(equipmentId);
+    if (!gear) return { ok: false, error: '装备不存在。' };
+    if (unit.equipment[gear.slot]) return { ok: false, error: '该单位的' + (gear.slot === 'weapon' ? '武器' : '饰品') + '栏已被占用。' };
+    side.equipmentPool.splice(index, 1);
+    unit.equipment[gear.slot] = gear;
+    this.recalcUnit(unit);
+    this.log('effect', unit.name + ' 装备「' + gear.name + '」。此操作不占用行动。', { side: sideId });
+    return { ok: true, unit, gear };
+  }
+
+  destroyEquipmentFromPool(sideId, equipmentId) {
+    const side = this.sides[sideId];
+    if (!side) return { ok: false, error: '阵营不存在。' };
+    const index = side.equipmentPool.indexOf(equipmentId);
+    if (index < 0) return { ok: false, error: '装备已不在整备区。' };
+    const gear = this.maps.equipment.get(equipmentId);
+    side.equipmentPool.splice(index, 1);
+    this.log('effect', side.name + ' 销毁了「' + (gear ? gear.name : equipmentId) + '」。', { side: sideId });
+    return { ok: true };
+  }
+
+  setActiveRunes(sideId, runeIds) {
+    const side = this.sides[sideId];
+    if (!side) return { ok: false, error: '阵营不存在。' };
+    const allowed = new Set((side.runePool || []).map(rune => rune.id));
+    const selected = [...new Set((runeIds || []).filter(id => allowed.has(id)))];
+    if (selected.length > 3) return { ok: false, error: '每个阵营最多启用三张符文。' };
+    side.runes = selected.map(id => this.maps.runes.get(id)).filter(Boolean);
+    for (const unit of side.units) this.recalcUnit(unit);
+    this.log('effect', side.name + ' 的符文配置更新为：' + (side.runes.map(rune => rune.name).join('、') || '无') + '。', { side: sideId });
+    return { ok: true };
+  }
+
   removeUnit(unit, reason) {
     if (!unit || !unit.alive) return;
     unit.alive = false;
@@ -774,6 +843,7 @@ class Battle {
     unit.pendingDefeat = false;
     const side = this.getSideOf(unit);
     side.units = side.units.filter(item => item !== unit);
+    this.recalcSide(unit.side);
     this.log('defeat', unit.name + (reason === 'retreat' ? ' 强制退场。' : ' 被击败，退场。'), { side: unit.side });
     const equipmentSnapshot = { weapon: unit.equipment.weapon, accessory: unit.equipment.accessory };
     this.triggerDefeated(unit);
@@ -826,6 +896,7 @@ class Battle {
           if (!unit.alive) continue;
           if (options.ownerOnly && eventData.unit && unit !== eventData.unit) continue;
           if (eventName === 'allyAttack' && unit.side !== eventData.attacker.side) continue;
+          if (eventName === 'selfAttack' && eventData.attacker && unit !== eventData.attacker) continue;
           if (eventName === 'selfAttacked' && eventData.target && unit !== eventData.target) continue;
           if (eventName === 'actionStart' && eventData.unit && unit !== eventData.unit) continue;
           if (eventName === 'enterField' && eventData.unit && unit !== eventData.unit) continue;
@@ -878,6 +949,7 @@ class Battle {
       multiplier: skill ? (Number(skill.multiplier) || 100) / 100 : 1,
       chosen: chosen || [],
       vars: {},
+      damageByTarget: {},
       lastHitTargets: [],
       lastHitCount: 0,
       eventData: extra.eventData || {},
@@ -897,15 +969,59 @@ class Battle {
     this.log('skill', unit.name + ' 释放「' + skill.name + '」。', { side: unit.side });
     this.lastSkill = { unitId: unit.battleId, skillId: skill.id };
     const ctx = this.createContext(unit, skill, chosen, options);
+    if ((skill.type === 'active' || skill.type === 'extra') && skill.op === 'support') {
+      const supportTargets = (chosen || []).filter(item => item && item.side === unit.side);
+      const visualTargets = supportTargets.length ? supportTargets : [unit];
+      for (const target of visualTargets) {
+        this.recordVisual({
+          kind: 'support',
+          sourceUid: unit.battleId,
+          sourceName: unit.name,
+          targetUid: target.battleId,
+          targetName: target.name,
+          self: target === unit
+        });
+      }
+    }
     this.executeSteps(skill.steps || [], ctx);
+    if (options.applyActionEffects) this.applyActionDamageRiders(unit, ctx);
     if (options.countAsAttack && skill.op === 'attack' && this.status === 'active') {
       const targets = ctx.lastHitTargets.length ? ctx.lastHitTargets : chosen;
       const livingTargets = targets.filter(item => item && item.onField);
       if (livingTargets.length) {
+        this.triggerEvent('selfAttack', { attacker: unit, targets: livingTargets.slice() });
         this.triggerEvent('allyAttack', { attacker: unit, targets: livingTargets.slice() });
       }
     }
     return ctx;
+  }
+
+  applyActionDamageRiders(unit, ctx) {
+    const riders = [];
+    for (const inst of unit.effects) {
+      const def = this.maps.effects.get(inst.effectId);
+      if (def && def.damageRider) riders.push(def);
+    }
+    if (!riders.length) return;
+    for (const def of riders) {
+      const rider = def.damageRider;
+      for (const [targetUid, total] of Object.entries(ctx.damageByTarget || {})) {
+        if (!(total > 0)) continue;
+        const target = this.getUnit(targetUid);
+        if (!target || !target.alive || !target.onField) continue;
+        if (!unit.alive) continue;
+        const raw = total * (Number(rider.ratio) || 0.5);
+        const extra = (rider.rounding === 'floor') ? Math.floor(raw) : Math.ceil(raw);
+        if (extra <= 0) continue;
+        this.pushTrigger(unit, '效果', def.name, 'action');
+        this.log('trigger', unit.name + ' 的效果「' + def.name + '」对 ' + target.name + ' 追加 ' + extra + ' 点真实伤害。', { side: unit.side });
+        this.dealDamage(unit, target, extra, rider.damageType || 'true', {
+          isAttack: false,
+          ignoreResistance: true,
+          rider: true
+        });
+      }
+    }
   }
 
   executeSteps(steps, ctx) {
@@ -933,17 +1049,32 @@ class Battle {
         case 'damage': {
           const targets = this.getTargetsForStep(ctx.unit, step, ctx);
           let hit = 0;
+          const hitTargets = [];
+          const isBonus = !!step.bonus;
           const formulaValue = this.evalFormula(step.formula, ctx);
           for (const target of targets) {
             if (!target.alive || !target.onField) continue;
             const result = this.dealDamage(ctx.unit, target, formulaValue, step.damageType || 'physical', {
-              ignoreResistance: !!step.ignoreResistance,
-              isAttack: !!(ctx.skill && ctx.skill.op === 'attack' && (ctx.skill.type === 'active' || ctx.skill.type === 'extra'))
+              ignoreResistance: !!step.ignoreResistance || isBonus,
+              isAttack: !isBonus && !!(ctx.skill && ctx.skill.op === 'attack' && (ctx.skill.type === 'active' || ctx.skill.type === 'extra')),
+              bonus: isBonus,
+              isBurn: !!step.burn
             });
-            if (result.hit) hit += 1;
+            if (result.hit) {
+              hit += 1;
+              hitTargets.push(target);
+              if (result.amount > 0) {
+                ctx.damageByTarget[target.battleId] = (ctx.damageByTarget[target.battleId] || 0) + result.amount;
+              }
+            }
           }
-          ctx.lastHitCount = hit;
-          if (hit) ctx.lastHitTargets = targets.filter(item => item.alive || item.pendingDefeat);
+          if (!isBonus) {
+            ctx.lastHitCount = hit;
+            if (hit) ctx.lastHitTargets = hitTargets;
+          } else if (!ctx.lastHitTargets.length) {
+            ctx.lastHitCount = hit;
+            ctx.lastHitTargets = hitTargets;
+          }
           break;
         }
         case 'heal': {
@@ -1107,10 +1238,10 @@ class Battle {
     if (side.units.length >= this.rules.maxField) return null;
     const unit = this.createBattleUnit(card);
     unit.side = sideId;
-    this.equipInitialItems(unit);
     side.units.push(unit);
     this.recalcUnit(unit);
     unit.hp = unit.maxHp;
+    this.recalcSide(sideId);
     unit.acted = true;
     this.log('summon', side.name + ' 召唤「' + card.name + '」。', { side: sideId });
     this.triggerEvent('enterField', { unit }, { ownerOnly: true });
@@ -1152,15 +1283,24 @@ class Battle {
     options = options || {};
     if (!target || !target.alive || !target.onField) return { hit: false, amount: 0 };
     const type = DAMAGE_TYPES[damageType] ? damageType : 'physical';
-    let amount = Math.max(0, Number(baseAmount) || 0);
-    const mods = this.getMods(source);
-    const outgoing1 = amount * (1 + (mods.dmgPct || 0) / 100) + (mods.dmgFlat || 0);
-    const outgoing2 = outgoing1 * (1 + (mods.finalDmgPct || 0) / 100) + (mods.finalDmgFlat || 0);
-    const resistance = options.ignoreResistance || type === 'true' ? 0 : this.getResistance(target, type);
-    const targetMods = this.getMods(target);
-    const takenScale = 1 - (targetMods.takenPct || 0) / 100;
-    const finalAmount = Math.max(0, Math.round(outgoing2 * takenScale - (targetMods.takenFlat || 0) - resistance));
+    const isBonus = !!options.bonus;
+    const isAttack = !!options.isAttack && !isBonus;
+    const base = Math.max(0, Number(baseAmount) || 0);
     const beforeHp = target.hp;
+    let finalAmount = 0;
+    let resistance = 0;
+    let mods = {};
+    if (isBonus) {
+      finalAmount = Math.max(0, Math.round(base));
+    } else {
+      mods = this.getMods(source);
+      const outgoing1 = base * (1 + (mods.dmgPct || 0) / 100) + (mods.dmgFlat || 0);
+      const outgoing2 = outgoing1 * (1 + (mods.finalDmgPct || 0) / 100) + (mods.finalDmgFlat || 0);
+      resistance = options.ignoreResistance || type === 'true' ? 0 : this.getResistance(target, type);
+      const targetMods = this.getMods(target);
+      const takenScale = 1 - (targetMods.takenPct || 0) / 100;
+      finalAmount = Math.max(0, Math.round(outgoing2 * takenScale - (targetMods.takenFlat || 0) - resistance));
+    }
     let immune = false;
     if (finalAmount >= target.hp && finalAmount > 0 && !target.pendingDefeat) {
       const candidates = this.getFatalGuardCandidates(target);
@@ -1175,31 +1315,48 @@ class Battle {
     }
     target.hp = Math.max(0, target.hp - finalAmount);
     this.damageSeq += 1;
-    this.damageFeed.unshift({
-      id: this.damageSeq,
+    const visual = {
+      kind: 'damage',
       uid: target.battleId,
+      targetUid: target.battleId,
       targetName: target.name,
       sourceUid: source ? source.battleId : '',
       sourceName: source ? source.name : '状态',
       amount: finalAmount,
       type,
+      damageType: type,
+      isAttack,
+      bonus: isBonus,
+      burn: !!options.isBurn || (!isAttack && !isBonus && !options.rider),
+      rider: !!options.rider,
+      sourceSide: source ? source.side : null,
+      targetSide: target.side,
       round: this.round
-    });
+    };
+    this.damageFeed.unshift(Object.assign({ id: this.damageSeq, round: this.round }, visual));
     this.damageFeed = this.damageFeed.slice(0, 16);
-    this.log('damage', target.name + ' 受到 ' + finalAmount + ' 点' + DAMAGE_TYPES[type].label + '伤害（' + beforeHp + ' → ' + target.hp + '）。', { side: target.side });
-    if (this.rules.showFormula !== false) {
-      const modsText = [];
-      if (mods.dmgFlat) modsText.push('伤害提升值 ' + mods.dmgFlat);
-      if (mods.dmgPct) modsText.push('伤害提升 ' + mods.dmgPct + '%');
-      if (mods.finalDmgPct) modsText.push('最终伤害 ' + mods.finalDmgPct + '%');
-      if (resistance) modsText.push('抗性 -' + resistance);
-      this.log('formula', '伤害结算：基础 ' + amount + '，修正 ' + (modsText.length ? modsText.join('，') : '无') + '，实际 ' + finalAmount + '。', { side: target.side });
+    this.recordVisual(visual);
+    if (isBonus) {
+      this.log('damage', target.name + ' 受到 ' + finalAmount + ' 点附加' + DAMAGE_TYPES[type].label + '伤害（' + beforeHp + ' → ' + target.hp + '）。附加伤害不受增益、减伤与抗性影响，也不视作独立攻击。', { side: target.side });
+      if (this.rules.showFormula !== false) {
+        this.log('formula', '附加伤害结算：基础 ' + base + '，忽略全部伤害增益、减伤与抗性，实际 ' + finalAmount + '。', { side: target.side });
+      }
+    } else {
+      this.log('damage', target.name + ' 受到 ' + finalAmount + ' 点' + DAMAGE_TYPES[type].label + '伤害（' + beforeHp + ' → ' + target.hp + '）。', { side: target.side });
+      if (this.rules.showFormula !== false) {
+        const modsText = [];
+        if (mods.dmgFlat) modsText.push('伤害提升值 ' + mods.dmgFlat);
+        if (mods.dmgPct) modsText.push('伤害提升 ' + mods.dmgPct + '%');
+        if (mods.finalDmgPct) modsText.push('最终伤害 ' + mods.finalDmgPct + '%');
+        if (resistance) modsText.push('抗性 -' + resistance);
+        this.log('formula', '伤害结算：基础 ' + base + '，修正 ' + (modsText.length ? modsText.join('，') : '无') + '，实际 ' + finalAmount + '。', { side: target.side });
+      }
     }
-    if (target.alive && !target.pendingDefeat && options.isAttack) {
+    if (target.alive && !target.pendingDefeat && isAttack) {
       this.triggerEvent('selfAttacked', { target, source, damage: finalAmount, isAttack: true, targets: [source].filter(Boolean) });
     }
     if (target.hp <= 0) this.markPendingDefeat(target);
-    return { hit: true, amount: finalAmount, beforeHp, afterHp: target.hp };
+    return { hit: true, amount: finalAmount, beforeHp, afterHp: target.hp, bonus: isBonus };
   }
 
   healUnit(source, target, baseAmount) {
@@ -1215,6 +1372,17 @@ class Battle {
       this.pendingDefeats = this.pendingDefeats.filter(item => item !== target);
     }
     this.log('heal', target.name + ' 回复 ' + healed + ' 点生命（' + before + ' → ' + target.hp + '）。', { side: target.side });
+    if (healed > 0) {
+      this.recordVisual({
+        kind: 'heal',
+        sourceUid: source ? source.battleId : null,
+        sourceName: source ? source.name : '回复',
+        targetUid: target.battleId,
+        targetName: target.name,
+        amount: healed,
+        self: !!source && source === target
+      });
+    }
     return healed;
   }
 
@@ -1305,7 +1473,7 @@ class Battle {
     this.phase = 'resolving';
     this.turnSerial += 1;
     this.beginBatch();
-    this.executeSkill(unit, skill, chosen, { countAsAttack: true, allowDeadSource: false });
+    this.executeSkill(unit, skill, chosen, { countAsAttack: true, allowDeadSource: false, applyActionEffects: true });
     this.endBatch();
     this.phase = this.status === 'active' ? 'awaiting' : 'ended';
     if (this.status === 'active') this.advanceTurn();
@@ -1326,7 +1494,7 @@ class Battle {
     this.phase = 'resolving';
     this.beginBatch();
     this.log('extra', unit.name + ' 释放附加技「' + skill.name + '」，不占用行动。', { side: unit.side });
-    this.executeSkill(unit, skill, chosen, { countAsAttack: true });
+    this.executeSkill(unit, skill, chosen, { countAsAttack: true, applyActionEffects: true });
     this.endBatch();
     this.phase = this.status === 'active' ? 'awaiting' : 'ended';
     if (this.status === 'active') this.ensureActionable();
@@ -1387,8 +1555,37 @@ class Battle {
     return side && side.units.some(unit => unit.alive && !unit.acted && !unit.pendingDefeat);
   }
 
+  grantExtraActionsForRound() {
+    const candidates = [];
+    for (const sideId of ['A', 'B']) {
+      for (const unit of this.sides[sideId].units) {
+        if (!unit.alive || unit.extraActionUsed) continue;
+        const eligible = unit.effects.some(inst => {
+          const def = this.maps.effects.get(inst.effectId);
+          return def && def.extraActionAtRoundEnd;
+        });
+        if (eligible) candidates.push(unit);
+      }
+    }
+    if (!candidates.length) return false;
+    for (const unit of candidates) {
+      unit.acted = false;
+      unit.actionStarted = false;
+      unit.extraActionUsed = true;
+      this.log('turn', '结束阶段：' + unit.name + ' 获得一次额外行动。', { side: unit.side });
+      this.pushTrigger(unit, '效果', '额外行动', 'roundEnd');
+    }
+    const preferred = candidates.find(unit => unit.side === this.currentSide) || candidates[0];
+    this.currentSide = preferred.side;
+    this.phase = 'awaiting';
+    this.actionStartedFor = null;
+    this.ensureActionable();
+    return true;
+  }
+
   endRound() {
     if (this.endingRound || this.status !== 'active') return;
+    if (this.grantExtraActionsForRound()) return;
     this.endingRound = true;
     this.phase = 'roundEnd';
     this.beginBatch();
@@ -1401,6 +1598,7 @@ class Battle {
         for (const unit of this.sides[sideId].units) {
           unit.acted = false;
           unit.actionStarted = false;
+          unit.extraActionUsed = false;
         }
       }
       this.actionStartedFor = null;

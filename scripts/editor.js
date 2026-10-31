@@ -281,6 +281,7 @@ const EditorUI = {
           this.fieldRow('伤害类型', this.stepInput(listPath, index, 'damageType', step.damageType || 'physical', { type: 'select', options: Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), disabled })) +
           this.fieldRow('伤害公式', this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), '支持 $atk、$multiplier、$lastHitCount、min()') +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'ignoreResistance', !!step.ignoreResistance, '无视对应属性抗性（真实伤害本身忽略抗性）', disabled) + '</div>' +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'bonus', !!step.bonus, '附加伤害：不受增益与减伤，无视抗性，不视作独立攻击，使用独立飞弹与爆炸', disabled) + '</div>' +
         '</div>';
       case 'heal':
         return '<div class="step-fields">' + this.fieldRow('目标', targetSelect(step.target)) + this.fieldRow('回复公式', this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), '例如 $hpMax - $hp') + '</div>';
@@ -345,12 +346,13 @@ const EditorUI = {
 
   renderStep(item, step, listPath, index, readOnly, depth) {
     const meta = STEP_LIBRARY.find(entry => entry.kind === step.kind) || { name: step.kind, group: '流程' };
+    const displayName = step.kind === 'damage' && step.bonus ? '附加伤害' : meta.name;
     const isBranch = ['branch', 'forEach', 'loop'].includes(step.kind);
     return '<div class="step-block' + (isBranch ? ' branch-step' : '') + '" data-step-block data-list-path="' + attr(listPath) + '" data-index="' + index + '" draggable="' + (!readOnly ? 'true' : 'false') + '">' +
       '<div class="step-head">' +
         '<button class="drag-handle" type="button" aria-label="拖拽排序" title="拖拽或使用上下按钮排序"' + (readOnly ? ' disabled' : '') + '>≡</button>' +
         '<span class="step-num">' + (depth ? String(index + 1) : String(index + 1)) + '</span>' +
-        '<span class="step-title">' + esc(meta.name) + '</span>' +
+        '<span class="step-title">' + esc(displayName) + '</span>' +
         '<span class="step-kind">' + esc(meta.group) + '</span>' +
         '<div class="step-actions">' +
           (readOnly ? '' : '<button type="button" data-action="ed-step-up" data-list-path="' + attr(listPath) + '" data-index="' + index + '" title="上移">↑</button><button type="button" data-action="ed-step-down" data-list-path="' + attr(listPath) + '" data-index="' + index + '" title="下移">↓</button><button type="button" data-action="ed-step-dup" data-list-path="' + attr(listPath) + '" data-index="' + index + '" title="复制步骤">⧉</button><button class="del" type="button" data-action="ed-step-delete" data-list-path="' + attr(listPath) + '" data-index="' + index + '" title="删除步骤">×</button>') +
@@ -388,7 +390,7 @@ const EditorUI = {
     return '<div class="form-grid">' +
       '<div class="form-row span-2"><label class="field-label">名字 <small>自然语言显示名</small></label><input class="input" value="' + attr(item.name || '') + '" data-meta-field="name"' + (readOnly ? ' disabled' : '') + ' placeholder="技能或效果名称"></div>' +
       '<div class="form-row"><label class="field-label">ID</label><input class="input mono" value="' + attr(item.id) + '" readonly><div class="field-hint">引用 ID。扩展草稿使用包命名空间。</div></div>' +
-      (skill ? '<div class="form-row"><label class="field-label">品质</label><select class="select" data-meta-field="quality"' + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(QUALITIES).map(key => ({ value: key, label: QUALITIES[key].label + ' · ' + QUALITIES[key].name })), item.quality || 'white') + '</select></div>' : '<div class="form-row"><label class="field-label">效果类型</label><select class="select" data-meta-field="type"' + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(EFFECT_TYPES).map(key => ({ value: key, label: EFFECT_TYPES[key].label })), item.type || 'special') + '</select></div>') +
+      (skill ? '<div class="form-row"><label class="field-label">品质</label><div class="editor-quality-picker" role="group" aria-label="品质">' + Object.keys(QUALITIES).map(key => '<button class="quality-choice ' + qualityClass(key) + ((item.quality || 'white') === key ? ' active' : '') + '" type="button" data-action="ed-set-quality" data-quality="' + key + '" aria-label="品质 ' + QUALITIES[key].label + '"' + (readOnly ? ' disabled' : '') + '></button>').join('') + '</div></div>' : '<div class="form-row"><label class="field-label">效果类型</label><select class="select" data-meta-field="type"' + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(EFFECT_TYPES).map(key => ({ value: key, label: EFFECT_TYPES[key].label })), item.type || 'special') + '</select></div>') +
       (skill ? '<div class="form-row"><label class="field-label">技能类型</label><select class="select" data-meta-field="type"' + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(SKILL_TYPES).map(key => ({ value: key, label: SKILL_TYPES[key].label })), item.type || 'active') + '</select><div class="field-hint">' + esc((SKILL_TYPES[item.type] || SKILL_TYPES.active).hint) + '</div></div>' +
         '<div class="form-row"><label class="field-label">操作分类 <small>触发判定标准</small></label><select class="select" data-meta-field="op"' + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(SKILL_OPS).map(key => ({ value: key, label: SKILL_OPS[key].label })), item.op || 'attack') + '</select></div>' : '') +
       '<div class="form-row"><label class="field-label">触发事件</label><select class="select" data-meta-field="triggerEvent"' + (readOnly ? ' disabled' : '') + '>' + this.optionList(triggerOptions, item.trigger && item.trigger.event || 'manual') + '</select><div class="field-hint">' + (skill && item.type === 'active' ? '主动技默认只能在自身行动时手动释放。' : skill && item.type === 'extra' ? '附加技需要可主动释放的条件。' : '被动技必须配置触发事件。') + '</div></div>' +
@@ -714,6 +716,12 @@ const EditorUI = {
       case 'ed-req-remove':
         if (readOnly || !item) return true;
         item.requirements.splice(Number(data.index), 1);
+        this.markDirty();
+        app.render();
+        return true;
+      case 'ed-set-quality':
+        if (readOnly || !item) return true;
+        item.quality = data.quality || 'white';
         this.markDirty();
         app.render();
         return true;

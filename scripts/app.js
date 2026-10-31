@@ -19,7 +19,7 @@ function qualityClass(quality) {
 
 function qualityBadge(quality) {
   const q = getQuality(quality);
-  return '<span class="quality-badge ' + qualityClass(q.id) + '">' + esc(q.label) + ' · ' + esc(q.name) + '</span>';
+  return '<span class="quality-badge ' + qualityClass(q.id) + '" aria-hidden="true"></span>';
 }
 
 function cardTypeLabel(type) {
@@ -62,6 +62,7 @@ function triggerLabel(event) { return getTriggerLabel(event); }
 
 function stepLabel(step) {
   if (!step) return '空步骤';
+  if (step.kind === 'damage' && step.bonus) return '附加伤害';
   const meta = STEP_LIBRARY.find(item => item.kind === step.kind);
   return meta ? meta.name : step.kind;
 }
@@ -70,7 +71,7 @@ function stepSummary(step) {
   if (!step) return '';
   switch (step.kind) {
     case 'damage':
-      return (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.formula || '0') + '，' + (TARGET_MODES[step.target || 'chosen'] ? (step.target === 'chosen' ? '选定目标' : step.target) : (step.target || '选定目标'));
+      return (step.bonus ? '附加伤害 · ' : '') + (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.formula || '0') + '，' + (TARGET_MODES[step.target || 'chosen'] ? (step.target === 'chosen' ? '选定目标' : step.target) : (step.target || '选定目标'));
     case 'heal': return '回复 ' + (step.formula || '0');
     case 'addEffect': return '附加 ' + (step.effectId || '未引用') + ' ×' + (step.stacks || '1');
     case 'removeEffect': return '移除 ' + (step.effectId || '全部效果');
@@ -183,7 +184,7 @@ function renderCardDetail(card, type, options) {
         '<span class="detail-art-label">' + esc(cardTypeLabel(type)) + ' / ' + esc(packName) + '</span>' +
       '</div>' +
       '<div class="card-detail-body">' +
-        '<div class="detail-title-row"><div><h2>' + esc(card.name) + '</h2><p class="detail-subline">' + esc(card.id) + ' · ' + esc(getQuality(card.quality).name) + '</p></div></div>' +
+        '<div class="detail-title-row"><div><h2>' + esc(card.name) + '</h2><p class="detail-subline">' + esc(card.id) + '</p></div></div>' +
         '<p class="detail-flavor">' + esc(card.flavor || card.description || '暂无档案记录。') + '</p>' +
         stats +
         (skills.length ? '<div class="detail-section-title">技能档案<span class="line"></span></div><div class="skill-detail-list">' + skills.map(renderSkillDetailCard).join('') + '</div>' : '') +
@@ -242,6 +243,7 @@ const App = {
 
   enterRoute(route, initial) {
     this.clearAiTimer();
+    if (this.route !== route) this.cancelBattleFx();
     this.closeModal(true);
     if (route === 'battle' && !this.battle) route = 'home';
     if (route === 'builder' && !this.builder) route = this.setup ? 'setup' : 'home';
@@ -373,7 +375,7 @@ const App = {
     }).join('');
     const heroCards = heroUnits.map((unit, index) => '<div class="hero-card">' +
       '<img class="hc-art" src="' + attr(cardArt(unit)) + '" alt="' + attr(unit.name) + '">' +
-      '<div class="hc-foot"><span>' + esc(unit.name) + '</span><span class="hc-mark">' + esc(getQuality(unit.quality).label) + '</span></div>' +
+      '<div class="hc-foot"><span>' + esc(unit.name) + '</span><span class="hero-quality ' + qualityClass(unit.quality) + '" aria-hidden="true"></span></div>' +
     '</div>').join('');
     const statHtml = statCards.map(stat => '<div class="home-stat">' +
       '<img src="' + stat.icon + '" alt="">' +
@@ -471,7 +473,7 @@ const App = {
     const deckHtml = (side, validation) => {
       const deck = side === 'A' ? setup.deckA : setup.deckB;
       const cards = validation.cards;
-      const unitMinis = cards.units.slice(0, 6).map(unit => '<span class="deck-mini-card tip" data-tip="' + attr(unit.name + ' · ' + (RESISTANCE_TYPES[unit.resistance.type] || { label: '抗性' }).label + ' ' + unit.resistance.value) + '"><img src="' + attr(cardArt(unit)) + '" alt=""><span class="mini-q">' + esc(getQuality(unit.quality).label) + '</span></span>').join('');
+      const unitMinis = cards.units.slice(0, 6).map(unit => '<span class="deck-mini-card tip" data-tip="' + attr(unit.name + ' · ' + (RESISTANCE_TYPES[unit.resistance.type] || { label: '抗性' }).label + ' ' + unit.resistance.value) + '"><img src="' + attr(cardArt(unit)) + '" alt=""><span class="mini-q ' + qualityClass(unit.quality) + '"></span></span>').join('');
       const more = cards.units.length > 6 ? '<span class="deck-mini-more">+' + (cards.units.length - 6) + '</span>' : '';
       return '<div class="panel deck-side-panel">' +
         '<div class="deck-side-head"><div class="deck-side-title"><span class="side-mark ' + (side === 'B' ? 'enemy' : '') + '">' + side + '</span><div><h3>' + (side === 'A' ? '我方牌组' : '敌方牌组') + '</h3><small>' + (custom || side === 'A' ? '玩家构筑' : '玩家构筑 / 同屏操作') + '</small></div></div><span class="chip">' + cards.units.length + ' 角色</span></div>' +
@@ -508,7 +510,7 @@ const App = {
                 '<div class="form-row span-2"><div class="toggle-row" style="border-bottom:0;padding-bottom:0"><div class="toggle-copy"><strong>允许战斗中抽牌</strong><small>每经过若干回合，双方从可抽牌堆补充角色牌。</small></div><button class="toggle" type="button" aria-pressed="' + (rules.drawDuringBattle ? 'true' : 'false') + '" data-action="setup-toggle-rule" data-rule="drawDuringBattle"' + (custom ? ' disabled' : '') + ' aria-label="允许战斗中抽牌"></button></div></div>' +
                 '<div class="form-row"><label class="field-label">抽牌间隔回合</label><div class="rule-number-wrap"><input class="input" type="number" min="1" max="10" value="' + esc(rules.drawInterval) + '" data-setup-rule="drawInterval"' + (drawDisabled ? ' disabled' : '') + '><span>回合</span></div></div>' +
                 '<div class="form-row"><label class="field-label">单次抽牌数</label><div class="rule-number-wrap"><input class="input" type="number" min="1" max="8" value="' + esc(rules.drawCount) + '" data-setup-rule="drawCount"' + (drawDisabled ? ' disabled' : '') + '><span>张</span></div></div>' +
-                '<div class="form-row span-2"><div class="notice info">每回合开始时，双方按上限从手牌自动补入单位；当场上的计数单位全部退场时，会立即尝试紧急入场。装备与符文在战前整备生效，不进入抽牌堆。</div></div>' +
+                '<div class="form-row span-2"><div class="notice info">初始入场后，空缺位置由玩家点击手动补入；自动控制方会自行补牌。装备默认不穿戴，可在自己的行动中穿戴或销毁，不结束行动；符文可随时配置。装备与符文都不进入抽牌堆。</div></div>' +
               '</div></div>' +
             '</section>' +
             '<section class="panel"><div class="panel-head"><div><h3>双方构筑</h3><div class="panel-sub">按 ID 引用角色、技能、高级效果、装备与符文。</div></div><button class="btn btn-sm" type="button" data-action="open-route" data-route="library">打开卡牌库</button></div><div class="panel-body"><div class="deck-overview">' + deckHtml('A', validationA) + deckHtml('B', validationB) + '</div></div></section>' +
@@ -528,7 +530,7 @@ const App = {
                 '</div></div>' +
                 (validationA.errors.length || validationB.errors.length ? '<div class="notice danger mt-2">' + [...validationA.errors, ...validationB.errors].map(esc).join('；') + '</div>' : '') +
                 '<div class="start-cta"><button class="btn btn-primary btn-block btn-lg" type="button" data-action="setup-start"' + (startDisabled ? ' disabled' : '') + '>进入战场</button></div>' +
-                '<p class="start-caption">' + (custom ? '自定义模式将全部角色置于手牌，自动补入至场地上限。' : '抽牌、入场与触发按单链式顺序结算。') + '</p>' +
+                '<p class="start-caption">' + (custom ? '自定义模式将全部角色置于手牌，初始入场后空缺位置需手动补牌。' : '抽牌、入场与触发按单链式顺序结算。') + '</p>' +
               '</div>' +
             '</section>' +
             '<section class="panel"><div class="panel-head"><div><h3>本次规则优先</h3><div class="panel-sub">开局前确认</div></div></div><div class="panel-body"><div class="stack gap-sm"><div class="trigger-line"><span>退场</span><span class="arrow">›</span><span>处决</span><span class="arrow">›</span><span>击败</span></div><div class="trigger-line"><span>强制回复</span><span class="arrow">›</span><span>禁疗</span><span class="arrow">›</span><span>回复</span></div><p class="field-hint">触发与条件只在对应操作发生时判定一次；效果与技能不会按帧轮询。</p></div></div></section>' +
@@ -662,11 +664,11 @@ const App = {
             let meta = '';
             if (typeKey === 'unit') {
               const res = RESISTANCE_TYPES[card.resistance.type] || { label: '抗性' };
-              meta = getQuality(card.quality).label + ' · 生命 ' + card.hp + ' · ' + res.label.replace('抗性', '抗') + ' ' + card.resistance.value + ' · ' + (card.counted === false ? '不计数' : '计数') + ' · 技能 ' + ((card.skills || []).length);
+              meta = '生命 ' + card.hp + ' · ' + res.label.replace('抗性', '抗') + ' ' + card.resistance.value + ' · ' + (card.counted === false ? '不计数' : '计数') + ' · 技能 ' + ((card.skills || []).length);
             } else if (typeKey === 'equipment') {
-              meta = getQuality(card.quality).label + ' · ' + (card.slot === 'weapon' ? '武器' : '饰品') + ' · ' + (modSummary(card.mods, true) || '特效');
+              meta = (card.slot === 'weapon' ? '武器' : '饰品') + ' · ' + (modSummary(card.mods, true) || '特效');
             } else {
-              meta = getQuality(card.quality).label + ' · ' + (card.faction === 'any' ? '全阵营' : card.faction) + ' · ' + (modSummary(card.mods, true) || '特效');
+              meta = (card.faction === 'any' ? '全阵营' : card.faction) + ' · ' + (modSummary(card.mods, true) || '特效');
             }
             return '<div class="deck-entry" data-action="builder-pick" data-type="' + typeKey + '" data-id="' + attr(card.id) + '" role="button" tabindex="0" title="查看技能与流程">' +
               '<img class="entry-thumb" src="' + attr(cardArt(card)) + '" alt="">' +
@@ -825,7 +827,6 @@ const App = {
     return items.map(item => {
       const card = item.card;
       const selected = this.library.selectedId === card.id && this.library.selectedType === item.type;
-      const q = getQuality(card.quality);
       let sub = '';
       let stats = '';
       if (item.type === 'unit') {
@@ -839,7 +840,7 @@ const App = {
         stats = '<span class="chip violet">' + esc(modSummary(card.mods, true) || '无附加数值') + '</span>';
       }
       return '<button class="display-card ' + qualityClass(card.quality) + ' ' + (item.type === 'unit' && card.quality === 'rainbow' ? 'rainbow-frame ' : '') + (card.quality === 'gold' ? 'gold-frame ' : '') + (selected ? 'selected' : '') + '" type="button" data-action="library-select" data-type="' + item.type + '" data-id="' + attr(card.id) + '">' +
-        '<div class="display-card-art"><img src="' + attr(cardArt(card)) + '" alt=""><span class="art-shade"></span><span class="quality-badge ' + qualityClass(card.quality) + '">' + q.label + ' · ' + q.name + '</span><span class="type-tag">' + cardTypeLabel(item.type) + '</span><span class="card-id">' + esc(card.id) + '</span></div>' +
+        '<div class="display-card-art"><img src="' + attr(cardArt(card)) + '" alt=""><span class="art-shade"></span><span class="quality-badge ' + qualityClass(card.quality) + '" aria-hidden="true"></span><span class="type-tag">' + cardTypeLabel(item.type) + '</span><span class="card-id">' + esc(card.id) + '</span></div>' +
         '<div class="display-card-body"><h3>' + esc(card.name) + '</h3><div class="card-sub">' + esc(sub) + '</div><div class="display-card-stats">' + stats + '</div></div>' +
       '</button>';
     }).join('');
@@ -855,7 +856,10 @@ const App = {
   renderLibrary() {
     const items = this.libraryFiltered();
     const selected = this.currentLibraryCard();
-    const qualityOptions = ['all'].concat(Object.keys(QUALITIES)).map(q => '<option value="' + q + '"' + (this.library.quality === q ? ' selected' : '') + '>' + (q === 'all' ? '全部品质' : q === 'white' ? '白 / 普通' : q === 'blue' ? '蓝 / 强大' : q === 'gold' ? '金 / 极强' : '彩 / 概念') + '</option>').join('');
+    const qualityOptions = '<div class="quality-filter" role="group" aria-label="品质筛选">' +
+      '<button class="quality-choice all' + (this.library.quality === 'all' ? ' active' : '') + '" type="button" data-action="library-quality" data-quality="all" aria-label="全部品质"></button>' +
+      Object.keys(QUALITIES).map(q => '<button class="quality-choice ' + qualityClass(q) + (this.library.quality === q ? ' active' : '') + '" type="button" data-action="library-quality" data-quality="' + q + '" aria-label="筛选品质 ' + QUALITIES[q].label + '"></button>').join('') +
+    '</div>';
     const tabs = [{ id: 'all', label: '全部' }, { id: 'unit', label: '角色' }, { id: 'equipment', label: '装备' }, { id: 'rune', label: '符文' }].map(tab => '<button class="segment' + (this.library.type === tab.id ? ' active' : '') + '" type="button" data-action="library-type" data-type="' + tab.id + '">' + tab.label + '</button>').join('');
     let detail = '';
     if (selected) {
@@ -870,7 +874,7 @@ const App = {
     return '' +
       '<div class="page-wrap library-page">' +
         '<div class="page-head"><div class="page-head-main"><div class="page-kicker">CARD ARCHIVE / ID INDEX</div><h1>卡牌库</h1><p>按 ID 检索角色、装备与符文，并查看技能的自然语言描述与完整流程结构。当前索引包含已启用的扩展包。</p></div><div class="page-head-side"><span class="chip">' + items.length + ' / ' + Store.index.cards + ' 卡牌</span><button class="btn" type="button" data-action="open-route" data-route="expansions">扩展包管理</button><button class="btn" type="button" data-action="open-route" data-route="editor">技能编辑器</button></div></div>' +
-        '<div class="library-toolbar"><div class="segmented">' + tabs + '</div><select class="select" style="width:130px" data-library-quality aria-label="品质筛选">' + qualityOptions + '</select><div class="search-wrap"><input class="input" type="search" value="' + attr(this.library.search) + '" placeholder="搜索名称或 ID" data-library-search></div><span class="result-count" id="library-count">' + items.length + ' 项结果</span></div>' +
+        '<div class="library-toolbar"><div class="segmented">' + tabs + '</div>' + qualityOptions + '<div class="search-wrap"><input class="input" type="search" value="' + attr(this.library.search) + '" placeholder="搜索名称或 ID" data-library-search></div><span class="result-count" id="library-count">' + items.length + ' 项结果</span></div>' +
         '<div class="library-layout">' +
           '<div class="card-grid" id="library-results">' + this.renderLibraryResults() + '</div>' +
           '<aside class="library-aside">' + (detail || '<div class="panel"><div class="panel-body"><div class="empty-state"><img src="assets/icons/library.svg" alt=""><h3>选择一张卡牌</h3><p>卡牌详情会显示在右侧。</p></div></div></div>') + '</aside>' +
@@ -928,12 +932,22 @@ const App = {
   closeModal(silent) {
     const root = document.getElementById('overlay-root');
     if (!root) return;
-    if (this.modalOpen && !silent) { /* closing is harmless even for result dialogs */ }
     root.innerHTML = '';
     root.classList.remove('active');
     this.modalOpen = false;
     this._modalConfirm = null;
     document.body.style.overflow = '';
+    if (this._deploySide) this._deploySide = null;
+    this._runeDraft = null;
+    if (this._battleInteractionPause) {
+      this._battleInteractionPause = false;
+      if (this.route === 'battle' && this.battle) this.afterBattleRender();
+    }
+  },
+
+  pauseBattleInteraction() {
+    this.clearAiTimer();
+    this._battleInteractionPause = true;
   },
 
   confirm(options) {
@@ -1014,6 +1028,12 @@ App.startBattle = function (config) {
     this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
     this.battleContext = Object.assign({ mode: config.mode || 'versus', source: config.source || 'setup', startedAt: Date.now() }, config.context || {});
     this._resultShownFor = null;
+    this._battleFxActive = false;
+    this._battleInteractionPause = false;
+    this._battlePreRects = null;
+    this._fxToken = (this._fxToken || 0) + 1;
+    this._battleVisualCursor = battle.visualFeed.length ? battle.visualFeed[battle.visualFeed.length - 1].id : 0;
+    if (window.BattleFX) BattleFX.cancel();
     this.route = 'battle';
     this.go('battle');
   } catch (error) {
@@ -1072,7 +1092,7 @@ App.renderBattle = function () {
   ];
   const winnerBanner = result ? '<div class="battle-end-banner"><img src="' + (result.playerWin ? 'assets/pictures/brand-mark.svg' : 'assets/icons/challenge.svg') + '" alt="" width="25" height="25"><div><strong>' + esc(result.title) + '</strong><br><span>' + esc(result.subtitle) + '</span></div><button class="btn btn-sm btn-gold" type="button" data-action="battle-show-result">查看结算</button></div>' : '';
   return '' +
-    '<div class="battle-page">' +
+    '<div class="battle-page' + (this._battleFxActive ? ' fx-locked' : '') + '">' +
       '<div class="battle-titlebar">' +
         '<div class="battle-title"><img src="assets/pictures/brand-mark.svg" alt=""><div><h1>对局记录 · ' + esc(modeName) + '</h1><p>本地单链式结算 · ' + esc(battle.mode) + ' · 先手方：敌方</p></div><div class="battle-rule-tags">' + ruleTags.map(tag => '<span class="chip tiny">' + esc(tag) + '</span>').join('') + '</div></div>' +
         '<div class="battle-titlebar-actions"><button class="btn btn-sm" type="button" data-action="battle-log-toggle">日志</button><button class="btn btn-sm" type="button" data-action="battle-surrender"' + (battle.status !== 'active' ? ' disabled' : '') + '>认输</button><button class="btn btn-sm" type="button" data-action="battle-leave">离开对局</button></div>' +
@@ -1103,9 +1123,17 @@ App.renderBattleField = function (sideId) {
   const activeSkills = this.battleSkillContext();
   const isHuman = battle.controllers[sideId] === 'human';
   const emptySlots = Math.max(0, battle.rules.maxField - units.length);
-  const slotHtml = Array.from({ length: emptySlots }).map(() => '<div class="unit-empty-slot"><span class="plus">+</span>等待入场</div>').join('');
+  const canDeploy = isHuman && battle.status === 'active' && battle.phase === 'awaiting' && side.hand.length > 0;
+  const slotHtml = Array.from({ length: emptySlots }).map(() => canDeploy
+    ? '<button class="unit-empty-slot deployable" type="button" data-action="battle-deploy-open" data-side="' + sideId + '"><span class="plus">+</span>点击补牌 · 手牌 ' + side.hand.length + '</button>'
+    : '<div class="unit-empty-slot"><span class="plus">+</span>' + (battle.phase !== 'awaiting' ? '等待结算' : side.hand.length ? '等待手动补牌' : '当前无可补角色') + '</div>').join('');
   const sideLabel = sideId === 'A' ? '我方场地' : '敌方场地';
-  const footRunes = side.runes.map(rune => '<span class="rune-mini" title="' + attr(rune.description || '') + '">' + esc(rune.name) + '</span>').join('') || '<span class="rune-mini">无符文</span>';
+  const runeSlots = Array.from({ length: 3 }).map((_, index) => side.runes[index]
+    ? '<span class="rune-mini" title="' + attr(side.runes[index].description || '') + '">' + esc(side.runes[index].name) + '</span>'
+    : '<span class="rune-mini empty">+</span>').join('');
+  const runeFooter = isHuman
+    ? '<button class="field-runes-action" type="button" data-action="battle-rune-config" data-side="' + sideId + '"><span class="field-runes-label">符文 ' + side.runes.length + '/3</span><span class="field-runes-list">' + runeSlots + '</span><span class="field-runes-edit">配置</span></button>'
+    : '<span class="field-runes-static">' + runeSlots + '</span>';
   const activeLabel = isActive ? (battle.controllers[sideId] === 'ai' ? '自动行动' : '当前行动') : '';
   return '' +
     '<section class="battle-field field-' + sideId.toLowerCase() + '">' +
@@ -1115,7 +1143,7 @@ App.renderBattleField = function (sideId) {
           '<div class="field-status"><span class="chip ' + (isActive ? 'gold' : '') + '">' + esc(activeLabel || '待机') + '</span><span class="chip">' + units.length + '/' + battle.rules.maxField + '</span></div>' +
         '</div>' +
         '<div class="field-body"><div class="unit-stack">' + (units.length ? units.map(unit => this.renderBattleUnit(unit)).join('') : '<div class="field-empty"><span>该区域暂无单位</span><span class="tiny">单位将在回合开始或紧急轮换时入场</span></div>') + slotHtml + '</div></div>' +
-        '<div class="field-footer"><span>装备池 ' + side.equipmentPool.length + ' · 手牌 ' + side.hand.length + '</span><span class="runes-inline">' + footRunes + '</span></div>' +
+        '<div class="field-footer"><span>装备 ' + side.equipmentPool.length + ' · 手牌 ' + side.hand.length + '</span>' + runeFooter + '</div>' +
       '</div>' +
     '</section>';
 };
@@ -1224,14 +1252,15 @@ App.renderBattleActionPanel = function () {
       const state = battle.getSkillState(unit, skill);
       return '<button class="extra-skill-btn" type="button" data-action="battle-extra" data-uid="' + attr(unit.battleId) + '" data-skill="' + attr(skill.id) + '"' + (state.usable ? '' : ' disabled title="' + attr(state.reason) + '"') + '>' + esc(unit.name) + ' · ' + esc(skill.name) + '</button>';
     }).join('') + '</div></div>' : '';
-    body = '<div class="action-empty"><div class="ae-icon">行</div><h3>' + (selectable.length ? '选择行动单位' : '本回合没有可行动单位') + '</h3><p>' + (selectable.length ? '点击任意未行动单位。也可以先释放满足条件的附加技，附加技不占用行动。' : '可行动单位可能已待机或退场。系统会按顺序推进回合。') + '</p>' + extras + '</div>';
+    const canRefill = current && battle.controllers[current.id] === 'human' && current.hand.length && battle.getFieldUnits(current.id).length < battle.rules.maxField;
+    body = '<div class="action-empty"><div class="ae-icon">行</div><h3>' + (selectable.length ? '选择行动单位' : '本回合没有可行动单位') + '</h3><p>' + (selectable.length ? '点击任意未行动单位。也可以先释放满足条件的附加技，附加技不占用行动。' : '可行动单位可能已待机或退场。系统会按顺序推进回合。') + '</p>' + (canRefill ? '<p class="field-hint">场上有空缺位置。点击空缺位置，从手牌指定补入一名角色；补牌不会结束当前行动。</p>' : '') + extras + '</div>';
     footer = '<div class="turn-help">当前行动方：' + esc(current ? current.name : '') + ' · 未行动 ' + remainingCountLabel(this.battle) + '</div><button class="btn btn-sm" type="button" data-action="battle-log-toggle">日志</button>';
   }
   return '<div class="battle-action"><div class="action-panel">' +
     '<div class="action-head"><div><div class="eyebrow">' + (ending ? 'RESULT' : isAi ? 'AUTOMATED TURN' : 'ACTION SELECTION') + '</div><h2>' + (ending ? '对局结算' : isAi ? '自动行动中' : '行动选择区') + '</h2></div><div class="action-head-right"><span class="chip">第 ' + battle.round + ' 回合</span>' + (current && !ending ? '<span class="chip ' + (current.id === 'B' ? 'blue' : 'gold') + '">' + esc(current.name) + '</span>' : '') + '<span class="chip">' + esc(this.phaseLabel()) + '</span></div></div>' +
     '<div class="action-body">' + body + '</div>' +
     '<div class="action-footer">' + footer + '</div>' +
-  '</div>' + this.renderDamageStage() + '</div>';
+  '</div></div>';
 };
 
 function remainingCountLabel(battle) {
@@ -1239,11 +1268,73 @@ function remainingCountLabel(battle) {
   return String(battle.getFieldUnits(battle.currentSide).filter(unit => !unit.acted).length);
 }
 
-App.renderDamageStage = function () {
+App.renderDamageStage = function () { return ''; };
+
+App.captureBattleUnitPositions = function () {
+  const positions = {};
+  const nodes = document.querySelectorAll('.battle-grid .unit-card[data-uid]');
+  for (const node of nodes) {
+    const rect = node.getBoundingClientRect();
+    positions[node.dataset.uid] = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + Math.min(rect.height * 0.48, rect.height - 18),
+      w: rect.width,
+      h: rect.height
+    };
+  }
+  for (const side of ['A', 'B']) {
+    const field = document.querySelector('.field-' + side.toLowerCase() + ' .field-panel');
+    if (field) {
+      const rect = field.getBoundingClientRect();
+      positions['field:' + side] = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+  }
+  positions.center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  return positions;
+};
+
+App.beginBattleEngineAction = function () {
+  this._battlePreRects = this.captureBattleUnitPositions();
+};
+
+App.drainBattleVisuals = function () {
+  if (!this.battle) return [];
+  const feed = this.battle.visualFeed || [];
+  const fresh = feed.filter(item => item.id > (this._battleVisualCursor || 0));
+  this._battleVisualCursor = feed.length ? feed[feed.length - 1].id : (this._battleVisualCursor || 0);
+  return fresh;
+};
+
+App.finishBattleEngineAction = function () {
+  if (!this.battle) return;
   const battle = this.battle;
-  if (!battle || !battle.damageFeed.length) return '';
-  const latest = battle.damageFeed.slice(0, 3);
-  return '<div class="damage-stage">' + latest.map(entry => '<div class="damage-float ' + esc(entry.type) + '"><span class="dmg-num">-' + entry.amount + '</span><span class="dmg-meta">' + esc(entry.targetName || '') + ' · ' + esc((DAMAGE_TYPES[entry.type] || DAMAGE_TYPES.physical).label) + '</span></div>').join('') + '</div>';
+  const previousPositions = this._battlePreRects || {};
+  this._battlePreRects = null;
+  const visuals = this.drainBattleVisuals();
+  this._battleFxActive = visuals.length > 0;
+  this.render();
+  if (!visuals.length || !window.BattleFX) {
+    this._battleFxActive = false;
+    this.afterBattleRender();
+    return;
+  }
+  const token = ++this._fxToken;
+  const currentPositions = this.captureBattleUnitPositions();
+  const positions = Object.assign({}, previousPositions, currentPositions);
+  requestAnimationFrame(() => {
+    if (token !== this._fxToken || this.route !== 'battle' || this.battle !== battle || !this._battleFxActive) return;
+    BattleFX.play(visuals, positions, () => {
+      if (token !== this._fxToken || this.route !== 'battle' || this.battle !== battle) return;
+      this._battleFxActive = false;
+      this.afterBattleRender();
+    });
+  });
+};
+
+App.cancelBattleFx = function () {
+  this._fxToken = (this._fxToken || 0) + 1;
+  this._battleFxActive = false;
+  if (window.BattleFX) BattleFX.cancel();
 };
 
 App.renderBattleHand = function () {
@@ -1258,11 +1349,20 @@ App.renderBattleHand = function () {
       '<span class="hc-badges">' + qualityBadge(card.quality) + '<span>' + (card.counted === false ? '不计数' : '计数') + '</span></span>' +
     '</button>';
   }).join('') : '<div class="hand-empty"><span>当前行动方没有可用角色手牌。</span><span class="faint">退场的角色会进入退场区，除非规则允许回到可抽牌堆。</span></div>';
+  const canHandleEquipment = battle.status === 'active' && battle.phase === 'awaiting' && battle.controllers[side.id] === 'human' && battle.currentSide === side.id;
+  const gear = (side.equipmentPool || []).map(id => battle.maps.equipment.get(id)).filter(Boolean);
+  const gearCards = gear.length ? gear.map((item, index) => {
+    const body = '<img src="' + attr(cardArt(item)) + '" alt=""><div><strong>' + esc(item.name) + '</strong><small>' + esc((item.slot === 'weapon' ? '武器' : '饰品') + ' · ' + (modSummary(item.mods, true) || '特效')) + '</small></div>' + qualityBadge(item.quality);
+    return canHandleEquipment
+      ? '<button class="gear-rack-card" type="button" data-action="battle-equipment-open" data-side="' + side.id + '" data-id="' + attr(item.id) + '">' + body + '</button>'
+      : '<div class="gear-rack-card">' + body + '</div>';
+  }).join('') : '<div class="gear-rack-empty">' + (side.deck.length || side.hand.length ? '整备区为空。装备卡不会自动穿戴。' : '没有可用装备。') + '</div>';
   return '<section class="hand-zone panel">' +
     '<div class="hand-head"><div class="hand-head-left"><span class="field-side-mark">' + (side.id === 'A' ? '我' : '敌') + '</span><h2>' + esc(side.name) + '手牌</h2><span class="chip">' + hand.length + ' 张</span></div>' +
       '<div class="zone-chips"><span class="zone-chip">牌堆 <b>' + side.deck.length + '</b></span><span class="zone-chip">可抽牌堆 <b>' + side.deck.length + '</b></span><span class="zone-chip">弃牌 <b>' + side.discard.length + '</b></span><span class="zone-chip">退场 <b>' + side.retreat.length + '</b></span>' + (battle.rules.drawDuringBattle ? '<span class="zone-chip draw-countdown">补充抽牌倒计时 <b>' + (countdown == null ? '—' : countdown) + '</b> 回合</span>' : '<span class="zone-chip">战斗中抽牌 关闭</span>') + '</div></div>' +
     '<div class="hand-body">' + handCards + '</div>' +
-    '<div class="hand-tip"><span class="dot"></span>单位在回合开始时自动补入场地；装备与符文已在战前整备生效，不占用抽牌堆。<button class="footer-link" type="button" data-action="battle-deck-info">查看双方区域</button></div>' +
+    '<div class="gear-rack"><div class="gear-rack-head"><div><strong>装备卡</strong><span>选择销毁或穿戴，不结束行动</span></div><span class="tiny faint">' + gear.length + ' 张 · 默认未穿戴</span></div><div class="gear-rack-list">' + gearCards + '</div></div>' +
+    '<div class="hand-tip"><span class="dot"></span>点击场内空缺位置从手牌手动补入；符文可随时配置。装备与符文都不占用抽牌堆。<button class="footer-link" type="button" data-action="battle-deck-info">查看双方区域</button></div>' +
   '</section>';
 };
 
@@ -1357,24 +1457,25 @@ App.selectBattleUnit = function (uid) {
     this.toast('该单位本回合已行动。', 'error');
     return;
   }
+  this.beginBattleEngineAction();
   const prep = this.battle.prepareUnit(unit.battleId);
   if (!prep.ok) {
+    this._battlePreRects = null;
+    this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
     this.toast(prep.error || '无法选择该单位。', 'error');
     return;
   }
   if (prep.skipped || this.battle.status === 'ended') {
     this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
-    this.render();
-    this.afterBattleRender();
+    this.finishBattleEngineAction();
     return;
   }
   if (this.battle.currentSide !== unit.side) {
-    this.render();
-    this.afterBattleRender();
+    this.finishBattleEngineAction();
     return;
   }
   this.battleUI = { selectedUid: unit.battleId, skillId: null, kind: 'active', extraUid: null, targetUid: null };
-  this.render();
+  this.finishBattleEngineAction();
 };
 
 App.chooseBattleSkill = function (uid, skillId, kind) {
@@ -1383,13 +1484,20 @@ App.chooseBattleSkill = function (uid, skillId, kind) {
   if (!actor) return;
   const skill = this.battle.getSkillForUnit(actor, skillId);
   if (!skill) return;
+  let preparedNow = false;
   if (kind === 'active' && this.battleUI.selectedUid !== uid) {
+    this.beginBattleEngineAction();
     const prep = this.battle.prepareUnit(uid);
-    if (!prep.ok) { this.toast(prep.error, 'error'); return; }
-    if (prep.skipped) { this.render(); this.afterBattleRender(); return; }
+    if (!prep.ok) { this._battlePreRects = null; this.toast(prep.error, 'error'); return; }
+    preparedNow = true;
+    if (prep.skipped) { this.finishBattleEngineAction(); return; }
   }
   const state = this.battle.getSkillState(actor, skill);
-  if (!state.usable) { this.toast(state.reason, 'error'); return; }
+  if (!state.usable) {
+    if (preparedNow) this.finishBattleEngineAction();
+    this.toast(state.reason, 'error');
+    return;
+  }
   this.battleUI.kind = kind === 'extra' ? 'extra' : 'active';
   this.battleUI.extraUid = kind === 'extra' ? uid : null;
   if (kind === 'active') this.battleUI.selectedUid = uid;
@@ -1401,7 +1509,8 @@ App.chooseBattleSkill = function (uid, skillId, kind) {
     const targets = this.battleTargetPreview();
     if (targets.length === 1) this.battleUI.targetUid = targets[0].battleId;
   }
-  this.render();
+  if (preparedNow) this.finishBattleEngineAction();
+  else this.render();
 };
 
 App.confirmBattleSkill = function () {
@@ -1415,6 +1524,7 @@ App.confirmBattleSkill = function () {
     if (!preview.length) { this.toast('没有合法目标。', 'error'); return; }
     this.toast('请先在地场上选择目标。', 'error'); return;
   }
+  this.beginBattleEngineAction();
   let result;
   if (kind === 'extra') {
     result = this.battle.useExtraSkill(actor.battleId, skill.id, this.battleUI.targetUid || null);
@@ -1422,12 +1532,12 @@ App.confirmBattleSkill = function () {
     result = this.battle.useSkill(actor.battleId, skill.id, this.battleUI.targetUid || null);
   }
   if (!result.ok) {
+    this._battlePreRects = null;
     this.toast(result.error || '技能释放失败。', 'error');
     return;
   }
   this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
-  this.render();
-  this.afterBattleRender();
+  this.finishBattleEngineAction();
 };
 
 App.cancelBattleSkill = function () {
@@ -1442,9 +1552,172 @@ App.cancelBattleSkill = function () {
 
 App.passBattleAction = function (uid) {
   if (!this.battle || this.battle.status !== 'active') return;
+  this.beginBattleEngineAction();
   const result = this.battle.passAction(uid);
-  if (!result.ok) { this.toast(result.error, 'error'); return; }
+  if (!result.ok) { this._battlePreRects = null; this.toast(result.error, 'error'); return; }
   this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
+  this.finishBattleEngineAction();
+};
+
+App.openDeployMenu = function (sideId) {
+  const battle = this.battle;
+  if (!battle || battle.status !== 'active' || battle.phase !== 'awaiting' || this._battleFxActive) return;
+  const side = battle.sides[sideId];
+  if (!side || battle.controllers[sideId] !== 'human') return;
+  if (battle.getFieldUnits(sideId).length >= battle.rules.maxField) return;
+  if (!side.hand.length) { this.toast('手牌区没有可补入的角色。', 'error'); return; }
+  this.pauseBattleInteraction();
+  this._deploySide = sideId;
+  const cards = side.hand.map((cardId, index) => {
+    const card = battle.deckUnitCard(cardId);
+    if (!card) return '';
+    const res = RESISTANCE_TYPES[card.resistance.type] || { label: '抗性' };
+    return '<button class="deploy-card" type="button" data-action="battle-deploy-card" data-side="' + sideId + '" data-index="' + index + '">' +
+      '<img src="' + attr(cardArt(card)) + '" alt="">' +
+      '<span class="deploy-card-main"><strong>' + esc(card.name) + '</strong><small>生命 ' + card.hp + ' · ' + esc(res.label) + ' ' + card.resistance.value + ' · ' + (card.counted === false ? '不计数' : '计数') + '</small></span>' +
+      qualityBadge(card.quality) +
+    '</button>';
+  }).join('');
+  this.openModal({
+    title: '补牌 · ' + side.name,
+    subtitle: '战场已暂停。补入一名角色，不结束当前行动。',
+    size: 'large',
+    body: '<p class="modal-copy">场上有 ' + Math.max(0, battle.rules.maxField - battle.getFieldUnits(sideId).length) + ' 个空缺位置。选择一张手牌补入，补牌不会消耗当前单位的行动。</p><div class="deploy-grid mt-2">' + (cards || '<div class="empty-state"><p>没有可补入的角色。</p></div>') + '</div>',
+    foot: '<span class="left">手牌 ' + side.hand.length + ' 张 · 场地上限 ' + battle.rules.maxField + '</span><button class="btn" type="button" data-action="modal-close">取消</button>'
+  });
+};
+
+App.deployBattleCard = function (sideId, index) {
+  const battle = this.battle;
+  if (!battle || battle.status !== 'active') return;
+  this.beginBattleEngineAction();
+  const result = battle.manualDeployCard(sideId, Number(index));
+  if (!result.ok) {
+    this._battlePreRects = null;
+    this.toast(result.error || '补牌失败。', 'error');
+    return;
+  }
+  this._battleInteractionPause = false;
+  this.closeModal(true);
+  this.finishBattleEngineAction();
+};
+
+App.openEquipmentMenu = function (sideId, equipmentId) {
+  const battle = this.battle;
+  if (!battle || battle.status !== 'active' || battle.phase !== 'awaiting' || this._battleFxActive) return;
+  if (battle.currentSide !== sideId || battle.controllers[sideId] !== 'human') return;
+  const side = battle.sides[sideId];
+  if (!side || !side.equipmentPool.includes(equipmentId)) return;
+  const gear = battle.maps.equipment.get(equipmentId);
+  if (!gear) return;
+  this.pauseBattleInteraction();
+  const units = battle.getFieldUnits(sideId);
+  const unitRows = units.length ? units.map(unit => {
+    const occupied = !!unit.equipment[gear.slot];
+    return '<button class="choice-card' + (occupied ? ' disabled' : '') + '" type="button" data-action="battle-equip-confirm" data-side="' + sideId + '" data-id="' + attr(equipmentId) + '" data-unit="' + attr(unit.battleId) + '"' + (occupied ? ' disabled' : '') + '>' +
+      '<span class="choice-mark">' + (gear.slot === 'weapon' ? '武' : '饰') + '</span><span class="choice-main"><strong>' + esc(unit.name) + '</strong><small>' + (occupied ? (gear.slot === 'weapon' ? '武器栏' : '饰品栏') + '已满' : '生命 ' + unit.hp + ' / ' + unit.maxHp + ' · 空闲' + (gear.slot === 'weapon' ? '武器栏' : '饰品栏')) + '</small></span>' +
+    '</button>';
+  }).join('') : '<div class="empty-state"><p>场上没有可穿戴该装备的单位。</p></div>';
+  this.openModal({
+    title: gear.name,
+    subtitle: '装备卡 · ' + (gear.slot === 'weapon' ? '武器' : '饰品') + ' · 不结束行动',
+    size: 'large',
+    body: '<div class="row between wrap mb-2"><div class="row">' + qualityBadge(gear.quality) + '<span class="chip">' + esc(gear.slot === 'weapon' ? '武器' : '饰品') + '</span><span class="chip gold">' + esc(modSummary(gear.mods, true) || '无附加数值') + '</span></div><span class="field-hint">默认未穿戴；穿戴或销毁都不消耗行动。</span></div>' +
+      '<p class="modal-copy">' + esc(gear.description || '这张装备没有额外描述。') + '</p>' +
+      '<div class="detail-section-title">选择穿戴单位<span class="line"></span></div><div class="choice-list">' + unitRows + '</div>' +
+      '<div class="notice mt-2">销毁会将该装备永久移出本局整备区。</div>',
+    foot: '<button class="btn btn-danger" type="button" data-action="battle-equipment-destroy" data-side="' + sideId + '" data-id="' + attr(equipmentId) + '">销毁装备</button><button class="btn" type="button" data-action="modal-close">取消</button>'
+  });
+};
+
+App.equipBattleCard = function (sideId, equipmentId, unitUid) {
+  const battle = this.battle;
+  if (!battle || battle.status !== 'active') return;
+  this.beginBattleEngineAction();
+  const result = battle.equipFromPool(sideId, unitUid, equipmentId);
+  if (!result.ok) {
+    this._battlePreRects = null;
+    this.toast(result.error || '穿戴失败。', 'error');
+    return;
+  }
+  this._battleInteractionPause = false;
+  this.closeModal(true);
+  this.finishBattleEngineAction();
+};
+
+App.destroyBattleEquipment = function (sideId, equipmentId) {
+  const battle = this.battle;
+  if (!battle || battle.status !== 'active') return;
+  const result = battle.destroyEquipmentFromPool(sideId, equipmentId);
+  if (!result.ok) { this.toast(result.error || '销毁失败。', 'error'); return; }
+  const context = this.battleContext || {};
+  if (['rogue', 'endless'].includes(context.mode)) {
+    const run = Store.state.runs[context.mode];
+    if (run && run.deck) {
+      const owned = run.deck.equipment || [];
+      const index = owned.indexOf(equipmentId);
+      if (index >= 0) owned.splice(index, 1);
+      if (Array.isArray(run.activeEquipment)) run.activeEquipment = run.activeEquipment.filter(item => item !== equipmentId);
+      Store.recordRun(context.mode, run);
+    }
+  }
+  this._battleInteractionPause = false;
+  this.closeModal(true);
+  this.beginBattleEngineAction();
+  this.finishBattleEngineAction();
+};
+
+App.openRuneConfig = function (sideId) {
+  const battle = this.battle;
+  if (!battle || battle.status !== 'active' || battle.phase !== 'awaiting' || this._battleFxActive) return;
+  const side = battle.sides[sideId];
+  if (!side || battle.controllers[sideId] !== 'human') return;
+  this.pauseBattleInteraction();
+  this._runeDraft = { sideId, ids: side.runes.map(rune => rune.id) };
+  this.renderRuneConfigModal();
+};
+
+App.renderRuneConfigModal = function () {
+  const battle = this.battle;
+  const draft = this._runeDraft;
+  if (!battle || !draft) return;
+  const side = battle.sides[draft.sideId];
+  const pool = side.runePool || [];
+  const cards = pool.length ? pool.map(rune => {
+    const selected = draft.ids.includes(rune.id);
+    return '<button class="rune-choice' + (selected ? ' selected' : '') + '" type="button" data-action="battle-rune-toggle" data-side="' + side.id + '" data-id="' + attr(rune.id) + '">' +
+      '<span class="rune-choice-top">' + qualityBadge(rune.quality) + '<strong>' + esc(rune.name) + '</strong><span class="rune-check">' + (selected ? '已启用' : '启用') + '</span></span>' +
+      '<span class="rune-choice-mods">' + esc(modSummary(rune.mods, true) || '特效') + '</span>' +
+      '<span class="rune-choice-desc">' + esc(rune.description || '') + '</span>' +
+    '</button>';
+  }).join('') : '<div class="empty-state"><p>本局没有可配置的符文。可以在牌组构筑或战前整备中加入。</p></div>';
+  this.openModal({
+    title: '符文配置 · ' + side.name,
+    subtitle: '战场已暂停。至多启用三张符文，配置不结束行动。',
+    size: 'large',
+    body: '<div class="row between wrap mb-2"><span class="chip violet">已启用 ' + draft.ids.length + ' / 3</span><span class="field-hint">符文对该阵营全部单位实时生效。</span></div><div class="rune-choice-grid">' + cards + '</div>',
+    foot: '<span class="left">当前：' + (side.runes.map(rune => rune.name).join('、') || '无') + '</span><button class="btn" type="button" data-action="modal-close">取消</button><button class="btn btn-primary" type="button" data-action="battle-rune-apply" data-side="' + side.id + '">应用配置</button>'
+  });
+};
+
+App.toggleRuneDraft = function (sideId, runeId) {
+  const draft = this._runeDraft;
+  if (!draft || draft.sideId !== sideId) return;
+  const index = draft.ids.indexOf(runeId);
+  if (index >= 0) draft.ids.splice(index, 1);
+  else if (draft.ids.length >= 3) { this.toast('每个阵营最多启用三张符文。', 'error'); return; }
+  else draft.ids.push(runeId);
+  this.renderRuneConfigModal();
+};
+
+App.applyRuneConfig = function (sideId) {
+  const draft = this._runeDraft;
+  if (!draft || !this.battle) return;
+  const result = this.battle.setActiveRunes(sideId, draft.ids);
+  if (!result.ok) { this.toast(result.error, 'error'); return; }
+  this._runeDraft = null;
+  this._battleInteractionPause = false;
+  this.closeModal(true);
   this.render();
   this.afterBattleRender();
 };
@@ -1516,7 +1789,7 @@ App.openBattleDeckInfo = function () {
       '<div class="kv"><span class="k">装备池</span><span class="v">' + side.equipmentPool.length + '</span></div>' +
       '<div class="kv"><span class="k">符文</span><span class="v">' + side.runes.length + '</span></div></div>';
   }).join('');
-  this.openModal({ title: '区域与牌堆', subtitle: '装备与符文在战前整备生效，不进入抽牌堆。', body: sideRows });
+  this.openModal({ title: '区域与牌堆', subtitle: '装备与符文不进入抽牌堆；装备默认不穿戴，符文可在本局中随时重新配置。', body: sideRows });
 };
 
 App.openBattleLog = function () {
@@ -1593,6 +1866,7 @@ App.clearAiTimer = function () {
 App.scheduleAiIfNeeded = function () {
   this.clearAiTimer();
   if (!this.battle || this.route !== 'battle' || this.battle.status !== 'active') return;
+  if (this._battleFxActive || this._battleInteractionPause) return;
   if (this.battle.phase !== 'awaiting') return;
   const side = this.battle.currentSide;
   if (!side || this.battle.controllers[side] !== 'ai') return;
@@ -1606,11 +1880,13 @@ App.scheduleAiIfNeeded = function () {
 App.runAiTurn = function () {
   if (!this.battle || this.route !== 'battle' || this.battle.status !== 'active' || this.battle.phase !== 'awaiting') return;
   if (this.battle.controllers[this.battle.currentSide] !== 'ai') return;
+  if (this._battleFxActive || this._battleInteractionPause) return;
+  this.beginBattleEngineAction();
   const plan = this.battle.aiPlan();
   if (!plan) {
     this.battle.advanceTurn();
-    this.render();
-    this.afterBattleRender();
+    this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
+    this.finishBattleEngineAction();
     return;
   }
   let result = null;
@@ -1624,20 +1900,22 @@ App.runAiTurn = function () {
       result = { ok: true };
     } else {
       const target = this.battle.getUnit(plan.targetUid);
-      const state = this.battle.getSkillState(this.battle.getUnit(plan.unitId), this.battle.getSkillForUnit(this.battle.getUnit(plan.unitId), plan.skillId));
+      const actor = this.battle.getUnit(plan.unitId);
+      const skill = actor ? this.battle.getSkillForUnit(actor, plan.skillId) : null;
+      const state = actor ? this.battle.getSkillState(actor, skill) : null;
       if (!target && state && state.targets && state.targets.length === 1) plan.targetUid = state.targets[0].battleId;
       result = this.battle.useSkill(plan.unitId, plan.skillId, plan.targetUid);
       if (!result.ok) result = this.battle.passAction(plan.unitId);
     }
   }
   if (!result || !result.ok) {
+    this._battlePreRects = null;
     this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
-    this.render();
+    this.finishBattleEngineAction();
     return;
   }
   this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
-  this.render();
-  this.afterBattleRender();
+  this.finishBattleEngineAction();
 };
 
 App.leaveBattle = function (skipConfirm, destination) {
@@ -1646,6 +1924,7 @@ App.leaveBattle = function (skipConfirm, destination) {
     let modeRoute = null;
     if (window.ModesUI && typeof ModesUI.onBattleAbort === 'function') modeRoute = ModesUI.onBattleAbort(context, this);
     this.clearAiTimer();
+    this.cancelBattleFx();
     this.battle = null;
     this.battleUI = null;
     this.battleContext = null;
@@ -2075,6 +2354,10 @@ App.handleChangeEvent = function (event) {
 };
 
 App.handleAction = function (action, el, event) {
+  if (this._battleFxActive && action && action.startsWith('battle-')) {
+    const allowed = ['battle-log-toggle', 'battle-unit-info', 'battle-unit-counts', 'battle-unit-gear', 'battle-show-result', 'battle-deck-info'];
+    if (!allowed.includes(action)) return;
+  }
   if (window.EditorUI && typeof EditorUI.handleAction === 'function' && EditorUI.handleAction(action, el, this, event)) return;
   if (window.ModesUI && typeof ModesUI.handleAction === 'function' && ModesUI.handleAction(action, el, this, event)) return;
   const data = el.dataset;
@@ -2157,6 +2440,10 @@ App.handleAction = function (action, el, event) {
     case 'library-select':
       this.selectLibraryCard(data.type, data.id);
       break;
+    case 'library-quality':
+      this.library.quality = data.quality || 'all';
+      this.render();
+      break;
     case 'library-open-card':
       this.openCardFromOther(data.type, data.id);
       break;
@@ -2186,6 +2473,30 @@ App.handleAction = function (action, el, event) {
       break;
     case 'battle-unit-gear':
       this.openBattleGear(data.uid);
+      break;
+    case 'battle-deploy-open':
+      this.openDeployMenu(data.side);
+      break;
+    case 'battle-deploy-card':
+      this.deployBattleCard(data.side, Number(data.index));
+      break;
+    case 'battle-equipment-open':
+      this.openEquipmentMenu(data.side, data.id);
+      break;
+    case 'battle-equip-confirm':
+      this.equipBattleCard(data.side, data.id, data.unit);
+      break;
+    case 'battle-equipment-destroy':
+      this.destroyBattleEquipment(data.side, data.id);
+      break;
+    case 'battle-rune-config':
+      this.openRuneConfig(data.side);
+      break;
+    case 'battle-rune-toggle':
+      this.toggleRuneDraft(data.side, data.id);
+      break;
+    case 'battle-rune-apply':
+      this.applyRuneConfig(data.side);
       break;
     case 'battle-hand-info':
       this.openBattleHandInfo(data.id);

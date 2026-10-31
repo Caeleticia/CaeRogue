@@ -49,6 +49,7 @@ const TRIGGER_EVENTS = {
   roundStart:  { label: '回合开始时', group: '回合' },
   roundEnd:    { label: '回合结束时', group: '回合' },
   allyAttack:  { label: '我方单位攻击时', group: '战斗' },
+  selfAttack:  { label: '自身攻击时', group: '战斗' },
   selfAttacked:{ label: '受到攻击时', group: '战斗' },
   fatalDamage: { label: '受到致命伤害时', group: '战斗' },
   defeated:    { label: '被击败时', group: '战斗' },
@@ -181,6 +182,60 @@ const CORE_PACK = {
         equip: [],
         art: 'assets/pictures/unit-yonava.svg',
         flavor: '她不计数，也不被计数。她只把诅咒递到别人手里，然后离开。'
+      },
+      {
+        id: 'qu', packId: CORE_PACK_ID, name: '区', quality: 'rainbow',
+        type: 'unit', faction: 'caterpillar', counted: true, hp: 1, attack: 0,
+        resistance: { type: 'general', value: 0 },
+        skills: ['qu_arrive', 'qu_hungry'],
+        equip: [],
+        art: 'assets/pictures/unit-qu.svg',
+        flavor: '一条色彩鲜艳的毛毛虫。它已经想好下一个名字了。'
+      },
+      {
+        id: 'mimi', packId: CORE_PACK_ID, name: '迷迷', quality: 'gold',
+        type: 'unit', faction: 'fae', counted: true, hp: 6, attack: 0,
+        resistance: { type: 'general', value: 1 },
+        skills: ['mimi_bond', 'mimi_help'],
+        equip: [],
+        art: 'assets/pictures/unit-mimi.svg',
+        flavor: '悬浮的粉色兔形小精灵。长耳、星纹大眼，拖着粉紫长尾，总会先一步抵达需要帮助的地方。'
+      },
+      {
+        id: 'yifei', packId: CORE_PACK_ID, name: '逸飞巨菜', quality: 'blue',
+        type: 'unit', faction: 'street', counted: true, hp: 6, attack: 2,
+        resistance: { type: 'mental', value: 1 },
+        skills: ['yifei_traincrash', 'yifei_mad_dog'],
+        equip: [],
+        art: 'assets/pictures/unit-yifei.svg',
+        flavor: '强壮的肌肉男子，墨镜、大金链子与黑色飞机头是他的全部名片。'
+      },
+      {
+        id: 'rimple_langsyne', packId: CORE_PACK_ID, name: '𝓡𝓲𝓶𝓹𝓵𝓮 𝓸𝓯 𝓛𝓪𝓷𝓰𝓼𝔂𝓷𝓮', quality: 'rainbow',
+        type: 'unit', faction: 'elderwood', counted: true, hp: 33550337, attack: 0,
+        resistance: { type: 'general', value: 0 },
+        skills: ['rimple_dance', 'rimple_poem'],
+        equip: [],
+        art: 'assets/pictures/unit-rimple.svg',
+        flavor: '尖耳、粉蓝绿渐变长发与幻彩紫瞳。白枝叶冠与紫水晶高跟映着不属于此世的舞曲。'
+      },
+      {
+        id: 'kele_white', packId: CORE_PACK_ID, name: '可莱缇西娅·白', quality: 'white',
+        type: 'unit', faction: 'klee', counted: true, hp: 4, attack: 2,
+        resistance: { type: 'general', value: 1 },
+        skills: ['kele_white_meow'],
+        equip: [],
+        art: 'assets/pictures/unit-kele-missing.svg',
+        flavor: '图片被可莱吃掉了。这张卡只好使用灰色提示图。'
+      },
+      {
+        id: 'kele_blue', packId: CORE_PACK_ID, name: '可莱缇西娅·蓝', quality: 'blue',
+        type: 'unit', faction: 'klee', counted: true, hp: 6, attack: 2,
+        resistance: { type: 'general', value: 1 },
+        skills: ['kele_blue_meow'],
+        equip: [],
+        art: 'assets/pictures/unit-kele-missing.svg',
+        flavor: '还是那张灰底提示图。看起来可莱又把新图吃掉了。'
       }
     ],
     skills: [
@@ -268,6 +323,96 @@ const CORE_PACK = {
           { kind: 'addEffect', target: 'chosen', effectId: 'undying', stacks: '1' },
           { kind: 'forceRetreat', target: 'self' }
         ]
+      },
+      {
+        id: 'qu_arrive', packId: CORE_PACK_ID, name: '区到你了', type: 'active', op: 'attack',
+        quality: 'rainbow', targetMode: 'enemy', multiplier: 100,
+        description: '主动技，攻击。造成 1 点无视抗性的精神伤害。',
+        trigger: { event: 'manual' }, requirements: [],
+        steps: [
+          { kind: 'damage', target: 'chosen', damageType: 'mental', formula: '1', ignoreResistance: true }
+        ]
+      },
+      {
+        id: 'qu_hungry', packId: CORE_PACK_ID, name: '饿啊', type: 'passive', op: 'special',
+        quality: 'rainbow', targetMode: 'none', multiplier: 100,
+        description: '被动技。被击败时变成两个「区」。',
+        trigger: { event: 'defeated' }, requirements: [],
+        steps: [
+          { kind: 'summon', unitId: 'qu', count: '2' }
+        ]
+      },
+      {
+        id: 'mimi_bond', packId: CORE_PACK_ID, name: '伙伴！一起！', type: 'passive', op: 'support',
+        quality: 'gold', targetMode: 'none', multiplier: 100,
+        aura: { dmgFlat: 1 },
+        description: '被动技，永久生效。我方全体伤害提升值 +1。',
+        trigger: { event: 'rule' }, requirements: [],
+        steps: []
+      },
+      {
+        id: 'mimi_help', packId: CORE_PACK_ID, name: '我会！帮你！', type: 'active', op: 'support',
+        quality: 'gold', targetMode: 'ally', multiplier: 100,
+        description: '主动技，辅助。消耗我方全体各一层「迷迷的声援」（没有也可以触发），为一个我方单位施加一层「迷迷的声援」，然后对所有敌人造成 1 点真实伤害。',
+        trigger: { event: 'manual' }, requirements: [],
+        steps: [
+          { kind: 'removeEffect', target: 'allAllies', effectId: 'mimi_cheer', stacks: '1', force: true },
+          { kind: 'addEffect', target: 'chosen', effectId: 'mimi_cheer', stacks: '1' },
+          { kind: 'damage', target: 'allEnemies', damageType: 'true', formula: '1' }
+        ]
+      },
+      {
+        id: 'yifei_traincrash', packId: CORE_PACK_ID, name: 'traincrash', type: 'active', op: 'attack',
+        quality: 'blue', targetMode: 'allEnemies', multiplier: 100,
+        description: '主动技，攻击。对所有敌人造成 2 点物理伤害。',
+        trigger: { event: 'manual' }, requirements: [],
+        steps: [
+          { kind: 'damage', target: 'chosen', damageType: 'physical', formula: '2' }
+        ]
+      },
+      {
+        id: 'yifei_mad_dog', packId: CORE_PACK_ID, name: '疯狗咬人', type: 'passive', op: 'attack',
+        quality: 'blue', targetMode: 'none', multiplier: 100,
+        description: '被动技。自身攻击时，对本次攻击目标额外造成 1 点精神伤害。',
+        trigger: { event: 'selfAttack' }, requirements: [],
+        steps: [
+          { kind: 'damage', target: 'eventTargets', damageType: 'mental', formula: '1' }
+        ]
+      },
+      {
+        id: 'rimple_dance', packId: CORE_PACK_ID, name: '花与箭的舞曲', type: 'active', op: 'attack',
+        quality: 'rainbow', targetMode: 'allEnemies', multiplier: 100,
+        description: '主动技，群攻。造成 33550336 点附加伤害（视为真实伤害，但不受任何增益、减伤与抗性影响，也不视作独立攻击）。',
+        trigger: { event: 'manual' }, requirements: [],
+        steps: [
+          { kind: 'damage', target: 'chosen', damageType: 'true', formula: '33550336', bonus: true }
+        ]
+      },
+      {
+        id: 'rimple_poem', packId: CORE_PACK_ID, name: '此诗，献予一切生命', type: 'passive', op: 'support',
+        quality: 'rainbow', targetMode: 'none', multiplier: 100,
+        aura: { finalDmgFlat: 33550336 },
+        description: '被动技，永久生效。我方全体的最终伤害提升值 +33550336。',
+        trigger: { event: 'rule' }, requirements: [],
+        steps: []
+      },
+      {
+        id: 'kele_white_meow', packId: CORE_PACK_ID, name: '喵', type: 'active', op: 'attack',
+        quality: 'white', targetMode: 'enemy', multiplier: 100,
+        description: '主动技，攻击。造成 2 点物理伤害。',
+        trigger: { event: 'manual' }, requirements: [],
+        steps: [
+          { kind: 'damage', target: 'chosen', damageType: 'physical', formula: '2' }
+        ]
+      },
+      {
+        id: 'kele_blue_meow', packId: CORE_PACK_ID, name: '喵喵', type: 'active', op: 'attack',
+        quality: 'blue', targetMode: 'enemy', multiplier: 100,
+        description: '主动技，攻击。造成 4 点物理伤害。',
+        trigger: { event: 'manual' }, requirements: [],
+        steps: [
+          { kind: 'damage', target: 'chosen', damageType: 'physical', formula: '4' }
+        ]
       }
     ],
     effects: [
@@ -287,6 +432,14 @@ const CORE_PACK = {
           { kind: 'heal', target: 'self', formula: '$hpMax - $hp' }
         ],
         description: '持有者造成的最终伤害被削减至极限。受到致命伤害或处决时，免疫伤害并强制回复生命至上限。若持有者造成伤害，伤害归零。'
+      },
+      {
+        id: 'mimi_cheer', packId: CORE_PACK_ID, name: '迷迷的声援', type: 'positive',
+        removable: false, stackable: true, stackMax: 1, mods: {}, grantedSkills: [],
+        trigger: { event: 'none' }, steps: [],
+        damageRider: { ratio: 0.5, rounding: 'ceil', damageType: 'true' },
+        extraActionAtRoundEnd: true,
+        description: '此效果影响的单位行动时，附加相当于原伤害最终伤害 50%（向上取整）的真实伤害。此效果影响的单位在结束阶段额外行动一次。不可解除，层数上限 1。'
       }
     ],
     equipment: [
