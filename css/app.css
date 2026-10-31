@@ -1949,3 +1949,8 @@
 .unit-card.auto-unit.selectable { cursor: default; }
 .unit-acted-label.auto-label { color: var(--gold-deep); border-color: rgba(160,125,66,.55); background: var(--gold-soft); }
 .action-empty.auto-action .ae-icon { color: var(--gold-deep); border-color: var(--gold); background: var(--gold-soft); }
+
+/* Combat animation gate: the previous visible board stays put until FX finish. */
+.battle-page.fx-locked .battle-grid,
+.battle-page.fx-locked .battle-titlebar-actions { pointer-events: none; }
+.battle-page.fx-locked { cursor: progress; }
