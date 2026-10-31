@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a3f33"/>
+      <stop offset=".52" stop-color="#2d2721"/>
+      <stop offset="1" stop-color="#4a3f33"/>
+    </linearGradient>
+    <pattern id="p" width="26" height="26" patternUnits="userSpaceOnUse">
+      <path d="M13 2l11 11-11 11L2 13Z" fill="none" stroke="#b89a63" stroke-width=".6" opacity=".45"/>
+      <circle cx="13" cy="13" r="1.2" fill="#b89a63" opacity=".55"/>
+    </pattern>
+  </defs>
+  <rect width="240" height="336" rx="12" fill="url(#bg)"/>
+  <rect x="9" y="9" width="222" height="318" rx="7" fill="url(#p)" stroke="#b89a63" stroke-width="1" opacity=".9"/>
+  <rect x="19" y="19" width="202" height="298" rx="4" fill="none" stroke="#b89a63" stroke-width=".7" opacity=".7"/>
+  <g transform="translate(120 168)" fill="none" stroke="#d5bd8e" stroke-width="1.5">
+    <path d="M0-72 55-20 0 66-55-20Z" opacity=".75"/>
+    <path d="M0-50c22 15 34 34 34 53 0 16-11 29-34 41-23-12-34-25-34-41 0-19 12-38 34-53Z"/>
+    <path d="M0-26v73M-22-1c9 2 16 5 22 10M22-1c-9 2-16 5-22 10M-22 27c9-2 16-5 22-9M22 27c-9-2-16-5-22-9" stroke="#8c6b46"/>
+    <circle cy="55" r="4.5" fill="#b89a63" stroke="none"/>
+  </g>
+  <text x="120" y="300" text-anchor="middle" font-family="Georgia, serif" font-size="10" letter-spacing="5" fill="#cdb789">CAEROGUE</text>
+</svg>
