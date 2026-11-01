@@ -1,0 +1,851 @@
+{
+  "format": "caerogue.expansion",
+  "id": "core",
+  "name": "基础牌组",
+  "version": "1.0.0",
+  "author": "CaeRogue 制作组",
+  "description": "史莱姆、猫娘、执念与不死诅咒。包含游戏运行所需的基础卡牌、技能与高级效果。",
+  "dependencies": [],
+  "builtin": true,
+  "countDefs": {
+    "sakurafade": "樱落",
+    "ha": "哈气"
+  },
+  "content": {
+    "units": [
+      {
+        "id": "slime_small",
+        "packId": "core",
+        "name": "普通的史莱姆",
+        "quality": "white",
+        "type": "unit",
+        "faction": "slime",
+        "counted": true,
+        "hp": 4,
+        "attack": 2,
+        "resistance": {
+          "type": "physical",
+          "value": 1
+        },
+        "skills": [
+          "slime_strike"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-slime-small.svg",
+        "flavor": "常见的黏液生物。它并没有恶意，只是挡在了路上。"
+      },
+      {
+        "id": "slime_big",
+        "packId": "core",
+        "name": "大大的史莱姆",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "slime",
+        "counted": true,
+        "hp": 6,
+        "attack": 2,
+        "resistance": {
+          "type": "physical",
+          "value": 1
+        },
+        "skills": [
+          "slime_strike",
+          "slime_brood"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-slime-big.svg",
+        "flavor": "史莱姆的聚合体。倒下去以后，分裂才刚刚开始。"
+      },
+      {
+        "id": "catgirl_jk",
+        "packId": "core",
+        "name": "一般猫娘(jk)",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "sakura",
+        "counted": true,
+        "hp": 9,
+        "attack": 2,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "cat_sweep",
+          "cat_burst"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-catgirl.svg",
+        "flavor": "实在不知道写什么了"
+      },
+      {
+        "id": "philia093",
+        "packId": "core",
+        "name": "Philia093",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "choir",
+        "counted": false,
+        "hp": 4,
+        "attack": 0,
+        "maxHpCap": 4,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "philia_verse",
+          "philia_epitaph_limit",
+          "philia_fatal",
+          "philia_echo"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-philia.svg",
+        "flavor": "因为，人家的魅力，就是始终如一呀♪"
+      },
+      {
+        "id": "yonava",
+        "packId": "core",
+        "name": "若娜瓦",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "covenant",
+        "counted": false,
+        "hp": 999,
+        "attack": 0,
+        "resistance": {
+          "type": "general",
+          "value": 999
+        },
+        "skills": [
+          "yonava_curse"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-yonava.svg",
+        "flavor": "天理之影，死之执政"
+      },
+      {
+        "id": "qu",
+        "packId": "core",
+        "name": "区",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "caterpillar",
+        "counted": true,
+        "hp": 1,
+        "attack": 0,
+        "autoAttack": true,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "qu_arrive",
+          "qu_hungry"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-qu.svg",
+        "flavor": "？!区区!？"
+      },
+      {
+        "id": "mimi",
+        "packId": "core",
+        "name": "迷迷",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "fae",
+        "counted": true,
+        "hp": 6,
+        "attack": 0,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "mimi_bond",
+          "mimi_help"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-mimi.svg",
+        "flavor": "当然啦，这可是「昔涟」写下的第一个故事。哆、徕、咪、发、嗦、啦、嘻，七种音符谱写出数不尽的歌谣，就像一成不变的岁月，也能创造不同以往的故事♪"
+      },
+      {
+        "id": "yifei",
+        "packId": "core",
+        "name": "逸飞巨菜",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "street",
+        "counted": true,
+        "hp": 6,
+        "attack": 2,
+        "resistance": {
+          "type": "mental",
+          "value": 1
+        },
+        "skills": [
+          "yifei_traincrash",
+          "yifei_mad_dog"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-yifei.svg",
+        "flavor": "也够"
+      },
+      {
+        "id": "rimple_langsyne",
+        "packId": "core",
+        "name": "𝓡𝓲𝓶𝓹𝓵𝓮 𝓸𝓯 𝓛𝓪𝓷𝓰𝓼𝔂𝓷𝓮",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "elderwood",
+        "counted": true,
+        "hp": 33550337,
+        "attack": 0,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "rimple_dance",
+          "rimple_poem"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-rimple.svg",
+        "flavor": "那…就像初遇时那样，再一次呼唤我「昔涟」，好吗？"
+      },
+      {
+        "id": "kele_white",
+        "packId": "core",
+        "name": "可莱缇西娅·白",
+        "quality": "white",
+        "type": "unit",
+        "faction": "klee",
+        "counted": true,
+        "hp": 4,
+        "attack": 2,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "kele_white_meow"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-kele-missing.svg",
+        "flavor": "图片被可莱吃掉了。这张卡只好使用灰色提示图。"
+      },
+      {
+        "id": "kele_blue",
+        "packId": "core",
+        "name": "可莱缇西娅·蓝",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "klee",
+        "counted": true,
+        "hp": 6,
+        "attack": 2,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "kele_blue_meow"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-kele-missing.svg",
+        "flavor": "还是那张灰底提示图。看起来可莱又把新图吃掉了。"
+      }
+    ],
+    "skills": [
+      {
+        "id": "slime_strike",
+        "packId": "core",
+        "name": "普攻",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "主动技，操作攻击。对单个敌方单位造成 2 点物理伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2",
+            "ignoreResistance": false
+          }
+        ]
+      },
+      {
+        "id": "slime_brood",
+        "packId": "core",
+        "name": "分裂",
+        "type": "passive",
+        "op": "special",
+        "quality": "blue",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "被动技。被击败时触发，召唤两个“普通的史莱姆”。该触发遵循退场、处决、击败优先级。",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "summon",
+            "unitId": "slime_small",
+            "count": "2",
+            "slot": "field"
+          }
+        ]
+      },
+      {
+        "id": "cat_sweep",
+        "packId": "core",
+        "name": "樱吹雪",
+        "type": "active",
+        "op": "attack",
+        "quality": "blue",
+        "targetMode": "allEnemies",
+        "multiplier": 80,
+        "description": "主动技，群攻物理伤害 2 点。造成伤害后，按本次命中的敌人数获得「樱落」。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2",
+            "ignoreResistance": false
+          },
+          {
+            "kind": "modifyCount",
+            "scope": "unit",
+            "countId": "sakurafade",
+            "mode": "add",
+            "formula": "$lastHitCount"
+          }
+        ]
+      },
+      {
+        "id": "cat_burst",
+        "packId": "core",
+        "name": "樱落斩",
+        "type": "active",
+        "op": "attack",
+        "quality": "blue",
+        "targetMode": "enemy",
+        "multiplier": 200,
+        "description": "主动技，需要「樱落」大于等于 3 才能释放。消耗 3 层「樱落」，对单体造成 4 点物理伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [
+          {
+            "scope": "unit",
+            "countId": "sakurafade",
+            "op": "gte",
+            "value": "3",
+            "label": "樱落不少于 3 层"
+          }
+        ],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "4",
+            "ignoreResistance": false
+          },
+          {
+            "kind": "modifyCount",
+            "scope": "unit",
+            "countId": "sakurafade",
+            "mode": "add",
+            "formula": "-3"
+          }
+        ]
+      },
+      {
+        "id": "philia_verse",
+        "packId": "core",
+        "name": "♪",
+        "type": "active",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "主动技，获得一层「执念」。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "self",
+            "effectId": "poem",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "philia_epitaph_limit",
+        "packId": "core",
+        "name": "「哀怜」的种子",
+        "type": "passive",
+        "op": "special",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "被动技，生命上限固定为 4。",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": []
+      },
+      {
+        "id": "philia_fatal",
+        "packId": "core",
+        "name": "-格式化进程已完成-",
+        "type": "passive",
+        "op": "special",
+        "quality": "gold",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "被动技。受到致命伤害时，免疫此次伤害，强制回复生命至上限，然后获得一层「执念」。",
+        "trigger": {
+          "event": "fatalDamage"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "immuneDamage"
+          },
+          {
+            "kind": "heal",
+            "target": "self",
+            "formula": "$hpMax - $hp"
+          },
+          {
+            "kind": "addEffect",
+            "target": "self",
+            "effectId": "poem",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "philia_echo",
+        "packId": "core",
+        "name": "回声",
+        "type": "passive",
+        "op": "special",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "被动技。我方单位攻击时触发，对本次攻击目标追加真实伤害，数值为 Philia093 当前「执念」层数乘以 2，最多计入 9 层。",
+        "trigger": {
+          "event": "allyAttack"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "eventTarget",
+            "damageType": "true",
+            "formula": "min($effect.poem, 9) * 2",
+            "ignoreResistance": true
+          }
+        ]
+      },
+      {
+        "id": "yonava_curse",
+        "packId": "core",
+        "name": "不死诅咒",
+        "type": "active",
+        "op": "special",
+        "quality": "rainbow",
+        "targetMode": "ally",
+        "multiplier": 100,
+        "description": "主动技。指定一个我方单位，为其附加高级效果「不死诅咒」，然后若娜瓦立刻退场。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "undying",
+            "stacks": "1"
+          },
+          {
+            "kind": "forceRetreat",
+            "target": "self"
+          }
+        ]
+      },
+      {
+        "id": "qu_arrive",
+        "packId": "core",
+        "name": "区到你了",
+        "type": "active",
+        "op": "attack",
+        "quality": "rainbow",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "主动技，攻击。区轮到自己时会随机选择一名敌人，造成 1 点无视抗性的精神伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "1",
+            "ignoreResistance": true
+          }
+        ]
+      },
+      {
+        "id": "qu_hungry",
+        "packId": "core",
+        "name": "饿啊",
+        "type": "passive",
+        "op": "special",
+        "quality": "rainbow",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "被动技。被击败时变成两个「区」。区不受一方场地上限限制，可以无限叠加。",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "summon",
+            "unitId": "qu",
+            "count": "2",
+            "ignoreFieldLimit": true
+          }
+        ]
+      },
+      {
+        "id": "mimi_bond",
+        "packId": "core",
+        "name": "伙伴！一起！",
+        "type": "passive",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "aura": {
+          "dmgFlat": 1
+        },
+        "description": "被动技，永久生效。我方全体伤害提升值 +1。",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": []
+      },
+      {
+        "id": "mimi_help",
+        "packId": "core",
+        "name": "我会！帮你！",
+        "type": "active",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "ally",
+        "multiplier": 100,
+        "description": "主动技，辅助。消耗我方全体各一层「迷迷的声援」（没有也可以触发），为一个我方单位施加一层「迷迷的声援」，然后对所有敌人造成 1 点真实伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "allAllies",
+            "effectId": "mimi_cheer",
+            "stacks": "1",
+            "force": true
+          },
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "mimi_cheer",
+            "stacks": "1"
+          },
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "true",
+            "formula": "1"
+          }
+        ]
+      },
+      {
+        "id": "yifei_traincrash",
+        "packId": "core",
+        "name": "traincrash",
+        "type": "active",
+        "op": "attack",
+        "quality": "blue",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "主动技，攻击。对所有敌人造成 2 点物理伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2"
+          }
+        ]
+      },
+      {
+        "id": "yifei_mad_dog",
+        "packId": "core",
+        "name": "疯狗咬人",
+        "type": "passive",
+        "op": "attack",
+        "quality": "blue",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "被动技。自身攻击时，对本次攻击目标额外造成 1 点精神伤害。",
+        "trigger": {
+          "event": "selfAttack"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "eventTargets",
+            "damageType": "mental",
+            "formula": "1"
+          }
+        ]
+      },
+      {
+        "id": "rimple_dance",
+        "packId": "core",
+        "name": "花与箭的舞曲",
+        "type": "active",
+        "op": "attack",
+        "quality": "rainbow",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "主动技，群攻。造成 33550336 点附加伤害（视为真实伤害，但不受任何增益、减伤与抗性影响，也不视作独立攻击）。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "true",
+            "formula": "33550336",
+            "bonus": true
+          }
+        ]
+      },
+      {
+        "id": "rimple_poem",
+        "packId": "core",
+        "name": "此诗，献予一切生命",
+        "type": "passive",
+        "op": "support",
+        "quality": "rainbow",
+        "targetMode": "none",
+        "multiplier": 100,
+        "aura": {
+          "finalDmgFlat": 33550336
+        },
+        "description": "被动技，永久生效。我方全体的最终伤害提升值 +33550336。",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": []
+      },
+      {
+        "id": "kele_white_meow",
+        "packId": "core",
+        "name": "喵",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "主动技，攻击。造成 2 点物理伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2"
+          }
+        ]
+      },
+      {
+        "id": "kele_blue_meow",
+        "packId": "core",
+        "name": "喵喵",
+        "type": "active",
+        "op": "attack",
+        "quality": "blue",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "主动技，攻击。造成 4 点物理伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "4"
+          }
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "id": "poem",
+        "packId": "core",
+        "name": "执念",
+        "type": "positive",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 9,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": "执念本身仅作为层数记录，由 Philia093 的被动技能读取。"
+      },
+      {
+        "id": "undying",
+        "packId": "core",
+        "name": "不死诅咒",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "setUncounted": true,
+        "mods": {
+          "finalDmgPct": -99999
+        },
+        "grantedSkills": [],
+        "trigger": {
+          "event": "fatalDamage"
+        },
+        "steps": [
+          {
+            "kind": "immuneDamage"
+          },
+          {
+            "kind": "heal",
+            "target": "self",
+            "formula": "$hpMax - $hp"
+          }
+        ],
+        "description": "持有者视为不计数单位，造成的最终伤害被削减至极限。受到致命伤害或处决时，免疫伤害并强制回复生命至上限。若持有者造成伤害，伤害归零。"
+      },
+      {
+        "id": "mimi_cheer",
+        "packId": "core",
+        "name": "迷迷的声援",
+        "type": "positive",
+        "removable": false,
+        "stackable": true,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "damageRider": {
+          "ratio": 0.5,
+          "rounding": "ceil",
+          "damageType": "true"
+        },
+        "extraActionAtRoundEnd": true,
+        "description": "此效果影响的单位行动时，附加相当于原伤害最终伤害 50%（向上取整）的真实伤害。此效果影响的单位在结束阶段额外行动一次。不可解除，层数上限 1。"
+      }
+    ],
+    "equipment": [
+      {
+        "id": "soap",
+        "packId": "core",
+        "name": "肥皂",
+        "quality": "white",
+        "type": "equipment",
+        "slot": "accessory",
+        "mods": {
+          "dmgFlat": 1
+        },
+        "grantedSkills": [],
+        "description": "数值：伤害提升值 +1。滑手，但不影响挥出下一次攻击。",
+        "art": "assets/pictures/equipment-soap.svg"
+      }
+    ],
+    "runes": [
+      {
+        "id": "war_spirit",
+        "packId": "core",
+        "name": "战意",
+        "quality": "white",
+        "type": "rune",
+        "faction": "any",
+        "mods": {
+          "dmgFlat": 1
+        },
+        "grantedSkills": [],
+        "description": "数值：伤害提升值 +1。所属阵营全体单位有效。",
+        "art": "assets/pictures/rune-art.svg"
+      },
+      {
+        "id": "agility",
+        "packId": "core",
+        "name": "敏捷",
+        "quality": "white",
+        "type": "rune",
+        "faction": "any",
+        "mods": {
+          "physicalResist": 1
+        },
+        "grantedSkills": [],
+        "description": "数值：物理属性抗性 +1。所属阵营全体单位有效。",
+        "art": "assets/pictures/rune-art.svg"
+      }
+    ]
+  }
+}
