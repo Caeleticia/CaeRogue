@@ -2564,6 +2564,11 @@ App.publishEditorDraft = function () {
     this.toast(L('ui.29f098d8e19b'), 'error');
     return;
   }
+  const skilllessUnits = (draft.content.units || []).filter(unit => !(unit.skills || []).length);
+  if (skilllessUnits.length) {
+    this.toast(L('ui.b95ba619b925') + skilllessUnits.map(unit => unit.name || unit.id).join('、') + L('ui.4f63518bc3a4'), 'error');
+    return;
+  }
   const raw = deepClone(draft);
   raw.id = raw.id || 'draft.local';
   for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
@@ -2583,70 +2588,6 @@ App.publishEditorDraft = function () {
   this.workshopSelected = imported.pack.id;
   this.render();
   this.toast(L('ui.f851fbe7cf9a'), 'success');
-};
-
-App.openUnitCreator = function () {
-  const qualityOptions = Object.keys(QUALITIES).map(key => '<option value="' + key + '">' + QUALITIES[key].label + '</option>').join('');
-  const skillOptions = Store.index.skills.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'zh')).map(skill => '<label class="form-check-inline"><input type="checkbox" data-unit-skill value="' + attr(skill.id) + '"> ' + esc(skill.name) + ' <span class="faint tiny">' + esc(skillTypeLabel(skill.type)) + '</span></label>').join('');
-  const resistOptions = Object.keys(RESISTANCE_TYPES).map(key => '<option value="' + key + '">' + esc(RESISTANCE_TYPES[key].label) + '</option>').join('');
-  this.openModal({
-    title: L('ui.4b92534b4c94'),
-    subtitle: L('ui.ddca0af3122a'),
-    size: 'large',
-    body: '<div class="form-grid">' +
-      L('ui.149f8e2ad0fa') +
-      L('ui.ba0f08595bbb') + qualityOptions + '</select></div>' +
-      L('ui.e29b332c2e28') +
-      L('ui.43ebf1f30ed9') +
-      L('ui.c0f113046612') +
-      L('ui.0fd2758bee64') + resistOptions + '</select></div>' +
-      L('ui.ffd80668198e') +
-      L('ui.85ecb67a9ea9') +
-      L('ui.0084d02b7cdb') +
-      L('ui.15572ef9c40e') + (skillOptions || L('ui.2c2438240d16')) + '</div></div>' +
-    L('ui.1eac203f4acf'),
-    foot: L('ui.09b8226ce3b5')
-  });
-};
-
-App.saveCreatedUnit = function () {
-  const nameInput = document.getElementById('unit-create-name');
-  const name = nameInput ? nameInput.value.trim() : '';
-  if (!name) { this.toast(L('ui.48dbd9fe5c45'), 'error'); return; }
-  const hp = Math.max(1, parseInt(document.getElementById('unit-create-hp')?.value, 10) || 1);
-  const attack = Math.max(0, parseInt(document.getElementById('unit-create-atk')?.value, 10) || 0);
-  const resistValue = Math.max(0, parseInt(document.getElementById('unit-create-resist-value')?.value, 10) || 0);
-  const quality = document.getElementById('unit-create-quality')?.value || 'white';
-  const faction = (document.getElementById('unit-create-faction')?.value || 'player').trim() || 'player';
-  const counted = !!document.getElementById('unit-create-counted')?.checked;
-  const flavor = (document.getElementById('unit-create-flavor')?.value || '').trim();
-  const resistType = document.getElementById('unit-create-resist-type')?.value || 'general';
-  const skills = Array.from(document.querySelectorAll('[data-unit-skill]:checked')).map(input => input.value);
-  const pack = Store.getEditorPack();
-  let seq = (pack.content.units || []).length + 1;
-  let id = pack.id + '.unit_' + seq;
-  while (Store.index.maps.units.has(id) || (pack.content.units || []).some(unit => unit.id === id)) { seq += 1; id = pack.id + '.unit_' + seq; }
-  const unit = {
-    id, packId: pack.id, name, quality, type: 'unit', faction, counted,
-    hp, attack, resistance: { type: resistType, value: resistValue },
-    skills, equip: [], art: 'assets/pictures/brand-mark.svg',
-    flavor: flavor || L('ui.5c4901ad1e81')
-  };
-  pack.content.units = pack.content.units || [];
-  pack.content.units.push(unit);
-  Store.saveEditorPack();
-  const raw = deepClone(pack);
-  for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
-    (raw.content[category] || []).forEach(item => { item.packId = raw.id; });
-  }
-  const imported = Store.importPack(raw, { replace: true });
-  if (!imported.ok) {
-    this.toast(imported.errors[0] || L('ui.f331bf221e25'), 'error');
-    return;
-  }
-  this.closeModal(true);
-  this.go('library');
-  this.toast(L('ui.9c9caa9a2a06') + name + L('ui.8828921f205a'), 'success');
 };
 
 App.setInterfaceLocale = function (locale) {
@@ -3105,11 +3046,8 @@ App.handleAction = function (action, el, event) {
     case 'workshop-publish-draft':
       this.publishEditorDraft();
       break;
-    case 'unit-create-open':
-      this.openUnitCreator();
-      break;
-    case 'unit-create-save':
-      this.saveCreatedUnit();
+    case 'editor-publish-draft':
+      this.publishEditorDraft();
       break;
     case 'setting-toggle':
       Store.toggleSetting(data.setting);
