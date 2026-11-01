@@ -1,4 +1,4 @@
-/* CaeRogue - visual skill and advanced effect editor. */
+/* CaeRogue - unified card editor for units, skills, effects, equipment and runes. */
 'use strict';
 
 const EDITOR_STEP_TARGETS = [
@@ -18,10 +18,18 @@ const EDITOR_CONDITION_OPS = [
   { value: 'eq', label: L('ui.9653e1d99f01') }, { value: 'neq', label: L('ui.571002599134') }
 ];
 
+const EDITOR_MODES = [
+  { id: 'units', kind: 'unit', collection: 'units', label: L('ui.6b26695e4dce'), newAction: 'ed-new-unit', card: true },
+  { id: 'skills', kind: 'skill', collection: 'skills', label: L('ui.53da139b6a5c'), newAction: 'ed-new-skill', card: false },
+  { id: 'effects', kind: 'effect', collection: 'effects', label: L('ui.151ddd4f1f9f'), newAction: 'ed-new-effect', card: false },
+  { id: 'equipment', kind: 'equipment', collection: 'equipment', label: L('ui.1faf3321a84f'), newAction: 'ed-new-equipment', card: true },
+  { id: 'runes', kind: 'rune', collection: 'runes', label: L('ui.52bd5ee23b8d'), newAction: 'ed-new-rune', card: true }
+];
+
 function deepListClone(value) { return JSON.parse(JSON.stringify(value)); }
 
 const EditorUI = {
-  mode: 'skills',
+  mode: 'units',
   selectedId: null,
   dirty: false,
   _lastFormulaInput: null,
@@ -29,7 +37,7 @@ const EditorUI = {
   _lastValidation: null,
 
   reset() {
-    this.mode = 'skills';
+    this.mode = 'units';
     this.selectedId = null;
     this.dirty = false;
     this._lastFormulaInput = null;
@@ -37,10 +45,14 @@ const EditorUI = {
     this._lastValidation = null;
   },
 
+  modeInfo(mode) {
+    return EDITOR_MODES.find(item => item.id === (mode || this.mode)) || EDITOR_MODES[0];
+  },
+
   enter(app) {
     const pack = Store.getEditorPack();
     if (!pack) return;
-    if (!['skills', 'effects'].includes(this.mode)) this.mode = 'skills';
+    if (!EDITOR_MODES.some(item => item.id === this.mode)) this.mode = 'units';
     const items = this.itemsForMode(pack, this.mode);
     const external = this.referenceItems(this.mode, pack);
     if (!this.selectedId || !items.concat(external).some(item => item.id === this.selectedId)) {
@@ -51,12 +63,14 @@ const EditorUI = {
 
   itemsForMode(pack, mode) {
     if (!pack) return [];
-    return mode === 'skills' ? (pack.content.skills || []) : (pack.content.effects || []);
+    const info = this.modeInfo(mode);
+    return (pack.content && pack.content[info.collection]) || [];
   },
 
   referenceItems(mode, pack) {
     const draftIds = new Set(this.itemsForMode(pack, mode).map(item => item.id));
-    const source = mode === 'skills' ? Store.index.skills : Store.index.effects;
+    const info = this.modeInfo(mode);
+    const source = Store.index[info.collection] || [];
     return source.filter(item => !draftIds.has(item.id));
   },
 
@@ -65,8 +79,8 @@ const EditorUI = {
     if (!pack || !this.selectedId) return null;
     const draft = this.itemsForMode(pack, this.mode).find(item => item.id === this.selectedId);
     if (draft) return draft;
-    const map = this.mode === 'skills' ? Store.index.maps.skills : Store.index.maps.effects;
-    return map.get(this.selectedId) || null;
+    const map = Store.index.maps[this.modeInfo(this.mode).collection];
+    return map ? (map.get(this.selectedId) || null) : null;
   },
 
   isReadOnly(app) {
@@ -98,8 +112,10 @@ const EditorUI = {
   makeId(pack, kind) {
     const prefix = pack.id + '.' + kind + '.';
     const used = new Set();
-    [...(pack.content.skills || []), ...(pack.content.effects || [])].forEach(item => used.add(item.id));
-    Store.index.skills.concat(Store.index.effects).forEach(item => used.add(item.id));
+    for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+      (pack.content[category] || []).forEach(item => used.add(item.id));
+      (Store.index[category] || []).forEach(item => used.add(item.id));
+    }
     let index = 1;
     while (used.has(prefix + index)) index += 1;
     return prefix + index;
@@ -153,16 +169,92 @@ const EditorUI = {
     app.render();
   },
 
+  newUnit(app) {
+    const pack = Store.getEditorPack();
+    const item = {
+      id: this.makeId(pack, 'unit'),
+      packId: pack.id,
+      name: L('ui.6eb8bd65f93e'),
+      quality: 'white',
+      type: 'unit',
+      faction: 'player',
+      counted: true,
+      hp: 4,
+      attack: 1,
+      resistance: { type: 'general', value: 0 },
+      skills: [],
+      equip: [],
+      autoAttack: false,
+      maxHpCap: 0,
+      art: 'assets/pictures/brand-mark.svg',
+      flavor: ''
+    };
+    pack.content.units = pack.content.units || [];
+    pack.content.units.push(item);
+    this.mode = 'units';
+    this.selectedId = item.id;
+    this.dirty = true;
+    Store.saveEditorPack();
+    app.render();
+  },
+
+  newEquipment(app) {
+    const pack = Store.getEditorPack();
+    const item = {
+      id: this.makeId(pack, 'equipment'),
+      packId: pack.id,
+      name: L('ui.fe6afac70942'),
+      quality: 'white',
+      type: 'equipment',
+      slot: 'accessory',
+      mods: { dmgFlat: 1 },
+      grantedSkills: [],
+      art: 'assets/pictures/equipment-soap.svg',
+      description: ''
+    };
+    pack.content.equipment = pack.content.equipment || [];
+    pack.content.equipment.push(item);
+    this.mode = 'equipment';
+    this.selectedId = item.id;
+    this.dirty = true;
+    Store.saveEditorPack();
+    app.render();
+  },
+
+  newRune(app) {
+    const pack = Store.getEditorPack();
+    const item = {
+      id: this.makeId(pack, 'rune'),
+      packId: pack.id,
+      name: L('ui.aefdfb3b8d82'),
+      quality: 'white',
+      type: 'rune',
+      faction: 'any',
+      mods: { dmgFlat: 1 },
+      grantedSkills: [],
+      art: 'assets/pictures/rune-art.svg',
+      description: ''
+    };
+    pack.content.runes = pack.content.runes || [];
+    pack.content.runes.push(item);
+    this.mode = 'runes';
+    this.selectedId = item.id;
+    this.dirty = true;
+    Store.saveEditorPack();
+    app.render();
+  },
+
   copyCurrent(app) {
     const pack = Store.getEditorPack();
+    const info = this.modeInfo(this.mode);
     const item = this.currentItem(app);
     if (!item) return;
-    const isEffect = this.mode === 'effects';
     const clone = deepListClone(item);
-    clone.id = this.makeId(pack, isEffect ? 'effect' : 'skill');
+    clone.id = this.makeId(pack, info.kind);
     clone.packId = pack.id;
-    clone.name = item.name + L('ui.21ddfa7fb7e7');
-    pack.content[isEffect ? 'effects' : 'skills'].push(clone);
+    clone.name = (item.name || item.id) + L('ui.69b8ea0a8ccb');
+    pack.content[info.collection] = pack.content[info.collection] || [];
+    pack.content[info.collection].push(clone);
     this.selectedId = clone.id;
     this.dirty = true;
     Store.saveEditorPack();
@@ -172,8 +264,8 @@ const EditorUI = {
 
   deleteCurrent(app) {
     const pack = Store.getEditorPack();
-    const isEffect = this.mode === 'effects';
-    const list = pack.content[isEffect ? 'effects' : 'skills'];
+    const info = this.modeInfo(this.mode);
+    const list = pack.content[info.collection] || [];
     const pos = list.findIndex(item => item.id === this.selectedId);
     if (pos < 0) return;
     const removed = list[pos];
@@ -194,13 +286,14 @@ const EditorUI = {
   },
 
   selectItem(app, kind, id) {
-    this.mode = kind === 'effect' ? 'effects' : 'skills';
+    const info = EDITOR_MODES.find(item => item.kind === kind) || this.modeInfo(this.mode);
+    this.mode = info.id;
     this.selectedId = id;
     app.render();
   },
 
   switchMode(app, mode) {
-    this.mode = mode === 'effects' ? 'effects' : 'skills';
+    this.mode = EDITOR_MODES.some(item => item.id === mode) ? mode : 'units';
     const pack = Store.getEditorPack();
     const draft = this.itemsForMode(pack, this.mode);
     const refs = this.referenceItems(this.mode, pack);
@@ -449,17 +542,21 @@ const EditorUI = {
     const errors = [];
     const warnings = [];
     const pack = Store.getEditorPack();
-    const skill = this.mode === 'skills';
+    const mode = this.mode;
+    const skill = mode === 'skills';
+    const effect = mode === 'effects';
     if (!item.name || !String(item.name).trim()) errors.push(L('ui.bef8696071ea'));
     if (!item.id) errors.push(L('ui.8b116c26c58b'));
     if (item.id && !String(item.id).startsWith(pack.id + '.')) warnings.push(L('ui.1b1431afeade') + pack.id + '。');
+    if (item.quality && !QUALITIES[item.quality]) errors.push(L('ui.f07f0ab2803c'));
     const externalIds = new Set();
-    for (const category of ['skills', 'effects']) {
-      for (const ext of Store.index[category]) {
+    for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+      for (const ext of Store.index[category] || []) {
         if (ext.packId !== pack.id) externalIds.add(ext.id);
       }
     }
-    const draftAll = [...(pack.content.skills || []), ...(pack.content.effects || [])];
+    const draftAll = [];
+    for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) draftAll.push(...(pack.content[category] || []));
     const duplicate = draftAll.filter(entry => entry.id === item.id).length;
     if (duplicate > 1) errors.push(L('ui.9a66a2d28de4') + item.id);
     if (externalIds.has(item.id)) errors.push(L('ui.e643bf84f170') + item.id);
@@ -474,14 +571,40 @@ const EditorUI = {
       const referenced = Store.index.units.some(unit => (unit.skills || []).includes(item.id)) ||
         Store.index.equipment.some(gear => (gear.grantedSkills || []).includes(item.id)) ||
         Store.index.runes.some(rune => (rune.grantedSkills || []).includes(item.id)) ||
-        Store.index.effects.some(effect => (effect.grantedSkills || []).includes(item.id)) ||
-        (pack.content.effects || []).some(effect => (effect.grantedSkills || []).includes(item.id));
+        Store.index.effects.some(effectItem => (effectItem.grantedSkills || []).includes(item.id)) ||
+        (pack.content.effects || []).some(effectItem => (effectItem.grantedSkills || []).includes(item.id));
       if (!referenced && !readOnly) warnings.push(L('ui.db54bdef9686'));
-    } else {
+    } else if (effect) {
       if (!EFFECT_TYPES[item.type]) errors.push(L('ui.79a0bd676e89'));
       if (item.stackable && (!Number(item.stackMax) || Number(item.stackMax) < 1)) errors.push(L('ui.e542b7f44585'));
       if (!(item.steps || []).length && (!item.mods || !Object.keys(item.mods).length) && !(item.grantedSkills || []).length) warnings.push(L('ui.ed884c417441'));
       if (!String(item.description || '').trim()) warnings.push(L('ui.d1ed3d82270f'));
+    } else if (mode === 'units') {
+      const hp = Number(item.hp);
+      const attack = Number(item.attack);
+      const resist = item.resistance || {};
+      if (!Number.isFinite(hp) || hp < 1 || !Number.isInteger(hp)) errors.push(L('ui.17ed8d9d076b'));
+      if (!Number.isFinite(attack) || attack < 0) errors.push(L('ui.4c6dfc0d69c0'));
+      if (!RESISTANCE_TYPES[resist.type]) errors.push(L('ui.9775dc9eb377'));
+      if (!Number.isFinite(Number(resist.value)) || Number(resist.value) < 0) errors.push(L('ui.a901a114c657'));
+      if (item.maxHpCap != null && item.maxHpCap !== '' && (!Number.isFinite(Number(item.maxHpCap)) || Number(item.maxHpCap) < 0)) errors.push(L('ui.962ed3551b34'));
+      const knownSkills = new Set(this.allSkillRefs().map(entry => entry.id));
+      for (const skillId of item.skills || []) {
+        if (!knownSkills.has(skillId)) errors.push(L('ui.bc5a9193ee77') + skillId);
+      }
+      if (!(item.skills || []).length) errors.push(L('ui.c22b06c7c6a4'));
+      if (!String(item.flavor || '').trim()) warnings.push(L('ui.b7eaa3a782f8'));
+      if (!String(item.art || '').trim()) warnings.push(L('ui.c267ba04684d'));
+    } else if (mode === 'equipment') {
+      if (!['weapon', 'accessory'].includes(item.slot)) errors.push(L('ui.8900ab1e49a0'));
+      if ((!item.mods || !Object.keys(item.mods).length) && !(item.grantedSkills || []).length) warnings.push(L('ui.a29d379ad387'));
+      if (!String(item.description || '').trim()) warnings.push(L('ui.0bf9b9110726'));
+      if (!String(item.art || '').trim()) warnings.push(L('ui.17ffd1ee1dbd'));
+    } else if (mode === 'runes') {
+      if (!String(item.faction || '').trim()) errors.push(L('ui.95d07294c2f7'));
+      if ((!item.mods || !Object.keys(item.mods).length) && !(item.grantedSkills || []).length) warnings.push(L('ui.afc03faa59f6'));
+      if (!String(item.description || '').trim()) warnings.push(L('ui.a0e56cddcd56'));
+      if (!String(item.art || '').trim()) warnings.push(L('ui.674a45621083'));
     }
     if (item.trigger && item.trigger.condition) {
       try {
@@ -535,28 +658,130 @@ const EditorUI = {
     return { errors, warnings, readOnly };
   },
 
+  cardTypeLabel(item) {
+    if (this.mode === 'units') return L('ui.11d4fcf2be9c') + (item.hp == null ? 0 : item.hp) + ' · ' + (item.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26'));
+    if (this.mode === 'equipment') return (item.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + ' · ' + (modSummary(item.mods, true) || L('ui.d9f936d25fe4'));
+    if (this.mode === 'runes') return (item.faction === 'any' ? L('ui.d13a98752b5d') : (item.faction || L('ui.8c577dc72c73'))) + ' · ' + (modSummary(item.mods, true) || L('ui.d9f936d25fe4'));
+    if (this.mode === 'skills') return (SKILL_TYPES[item.type] || { label: item.type }).label;
+    return (EFFECT_TYPES[item.type] || { label: item.type }).label;
+  },
+
   renderList(app, pack, mode) {
     const draft = this.itemsForMode(pack, mode);
     const refs = this.referenceItems(mode, pack);
-    const draftHtml = draft.length ? draft.map(item => this.renderListItem(item, false)) .join('') : L('ui.c5bae88ea3b2');
-    const refHtml = refs.length ? refs.map(item => this.renderListItem(item, true)).join('') : L('ui.175ba42cb7e4');
+    const draftHtml = draft.length ? draft.map(item => this.renderListItem(item, false)).join('') : L('ui.7e18916636f6');
+    const refHtml = refs.length ? refs.map(item => this.renderListItem(item, true)).join('') : L('ui.e5a096c67afc');
     return '<div class="editor-list">' +
-      L('ui.e198308ea434') + draft.length + '</div>' + draftHtml +
-      L('ui.1c14f56736f7') + refs.length + '</div>' + refHtml +
+      L('ui.3f2f120f4735') + draft.length + '</div>' + draftHtml +
+      L('ui.9d6819d24aca') + refs.length + '</div>' + refHtml +
     '</div>';
   },
 
   renderListItem(item, reference) {
-    const active = item.id === this.selectedId;
-    const skill = this.mode === 'skills';
-    const typeLabel = skill ? (SKILL_TYPES[item.type] || { label: item.type }).label : (EFFECT_TYPES[item.type] || { label: item.type }).label;
-    return '<button class="editor-list-item' + (active ? ' active' : '') + '" type="button" data-action="ed-select" data-kind="' + (skill ? 'skill' : 'effect') + '" data-id="' + attr(item.id) + '">' +
+    const info = this.modeInfo(this.mode);
+    return '<button class="editor-list-item' + (item.id === this.selectedId ? ' active' : '') + '" type="button" data-action="ed-select" data-kind="' + attr(info.kind) + '" data-id="' + attr(item.id) + '">' +
       '<span class="eli-mark">' + (reference ? L('ui.a6c9557b8c29') : L('ui.e63d41bedeb6')) + '</span>' +
-      '<span class="eli-main"><strong>' + esc(item.name || item.id) + '</strong><small>' + esc(typeLabel) + ' · ' + esc(item.id) + '</small></span>' +
+      '<span class="eli-main"><strong>' + esc(item.name || item.id) + '</strong><small>' + esc(this.cardTypeLabel(item)) + ' · ' + esc(item.id) + '</small></span>' +
     '</button>';
   },
 
+  renderQualityPicker(item, readOnly) {
+    return L('ui.73c082a28e31') +
+      Object.keys(QUALITIES).map(key => '<button class="quality-choice ' + qualityClass(key) + ((item.quality || 'white') === key ? ' active' : '') + '" type="button" data-action="ed-set-quality" data-quality="' + key + L('ui.f54702ea891c') + QUALITIES[key].label + '"' + (readOnly ? ' disabled' : '') + '></button>').join('') +
+    '</div></div>';
+  },
+
+  renderToggleRow(label, field, active, readOnly, hint) {
+    return '<div class="form-row span-2"><div class="toggle-row"><div class="toggle-copy"><strong>' + esc(label) + '</strong>' + (hint ? '<small>' + esc(hint) + '</small>' : '') + '</div><button class="toggle' + (active ? ' on' : '') + '" type="button" aria-pressed="' + (active ? 'true' : 'false') + '" data-action="ed-toggle-meta" data-field="' + attr(field) + '" aria-label="' + attr(label) + '"' + (readOnly ? ' disabled' : '') + '></button></div></div>';
+  },
+
+  renderCardMetadata(app, item, readOnly) {
+    const disabled = readOnly ? ' disabled' : '';
+    const mode = this.mode;
+    const skills = this.allSkillRefs();
+    const selectedSkills = new Set(item.skills || []);
+    const commonTop = L('ui.7635c36819fd') + attr(item.name || '') + '" data-meta-field="name"' + disabled + '></div>' +
+      '<div class="form-row"><label class="field-label">ID</label><input class="input mono" value="' + attr(item.id) + '" readonly></div>' +
+      this.renderQualityPicker(item, readOnly);
+    const artRow = L('ui.2772217f8945') + attr(item.art || '') + '" data-meta-field="art" placeholder="assets/pictures/..."' + disabled + L('ui.953655b0d171');
+    if (mode === 'units') {
+      return '<div class="form-grid">' + commonTop +
+        L('ui.8e3232d487ca') + attr(item.faction || '') + '" data-meta-field="faction"' + disabled + '></div>' +
+        L('ui.b6ee21a2d52b') + attr(item.hp == null ? 4 : item.hp) + '" data-meta-field="hp"' + disabled + '></div>' +
+        L('ui.3405d40e7f81') + attr(item.attack == null ? 0 : item.attack) + '" data-meta-field="attack"' + disabled + '></div>' +
+        L('ui.bddf6db72a26') + disabled + '>' + this.optionList(Object.keys(RESISTANCE_TYPES).map(key => ({ value: key, label: RESISTANCE_TYPES[key].label })), (item.resistance || {}).type || 'general') + '</select></div>' +
+        L('ui.7bf52bf73d66') + attr((item.resistance || {}).value || 0) + '" data-meta-field="resistanceValue"' + disabled + '></div>' +
+        L('ui.81fa19452a94') + attr(item.maxHpCap || 0) + '" data-meta-field="maxHpCap"' + disabled + L('ui.21839d09c67b') +
+        artRow +
+        this.renderToggleRow(L('ui.64e904249960'), 'counted', item.counted !== false, readOnly, L('ui.f8a1ac1d6b1d')) +
+        this.renderToggleRow(L('ui.9456ff9f51bf'), 'autoAttack', !!item.autoAttack, readOnly, L('ui.ed09a5fcb674')) +
+        L('ui.37e3e7d1a038') + disabled + '>' + esc(item.flavor || '') + '</textarea></div>' +
+        L('ui.defbed68f4ea') +
+          (skills.length ? skills.map(skill => '<label class="form-check-inline"><input type="checkbox" data-unit-skill="' + attr(skill.id) + '"' + (selectedSkills.has(skill.id) ? ' checked' : '') + (readOnly ? ' disabled' : '') + '> ' + esc(skill.name) + '</label>').join('') : L('ui.441b15fec097')) +
+        '</div></div>' +
+      '</div>';
+    }
+    if (mode === 'equipment') {
+      return '<div class="form-grid">' + commonTop +
+        L('ui.e0c46cffcc1d') + disabled + '>' + this.optionList([{ value: 'weapon', label: L('ui.6f0f16e0c098') }, { value: 'accessory', label: L('ui.2074803effdd') }], item.slot || 'accessory') + '</select></div>' +
+        artRow +
+        L('ui.a40181527e3e') + disabled + '>' + esc(item.description || '') + '</textarea></div>' +
+        L('ui.a5e44b83cd98') + this.renderMods(item, readOnly) + '</div>' +
+        L('ui.cc87a927efe9') + this.renderGrantedSkills(item, readOnly) + '</div>' +
+      '</div>';
+    }
+    return '<div class="form-grid">' + commonTop +
+      L('ui.b9714b320651') + attr(item.faction || 'any') + '" data-meta-field="faction" placeholder="any"' + disabled + L('ui.bea421529ada') +
+      artRow +
+      L('ui.47beac9b6150') + disabled + '>' + esc(item.description || '') + '</textarea></div>' +
+      L('ui.a5e44b83cd98') + this.renderMods(item, readOnly) + '</div>' +
+      L('ui.cc87a927efe9') + this.renderGrantedSkills(item, readOnly) + '</div>' +
+    '</div>';
+  },
+
+  renderCardWorkspace(app, item, readOnly) {
+    const info = this.modeInfo(this.mode);
+    const header = '<div class="editor-workspace-head"><div><div class="eyebrow">' + (readOnly ? 'REFERENCE / READ ONLY' : 'CARD DRAFT / LOCAL ARCHIVE') + '</div><h2>' + esc(item ? item.name : L('ui.763694bdf43c')) + '</h2><p>' + (item ? esc(item.id) + ' · ' + esc(info.label) + ' · ' + (readOnly ? L('ui.1c45c2cec410') : L('ui.8107ccd58593')) : L('ui.0135635b14c7')) + '</p></div><div class="head-actions">' +
+      (item ? '<button class="btn btn-sm" type="button" data-action="ed-copy">' + (readOnly ? L('ui.198a314aa63f') : L('ui.a11534a1b557')) + '</button>' : '') +
+      (item ? L('ui.561bc81a124a') : '') +
+      (!readOnly && item ? L('ui.c8b012e16e88') : '') +
+      '</div></div>';
+    if (!item) return '<section class="panel editor-workspace">' + header + L('ui.59eec00d41a0');
+    return '<section class="panel editor-workspace">' + header +
+      '<form class="editor-form" onsubmit="return false">' +
+        L('ui.29f92cd1b3c2') + this.renderCardMetadata(app, item, readOnly) + '</div>' +
+        '<div class="editor-savebar"><span class="autosave-status' + (this.dirty ? ' dirty' : '') + '">' + (readOnly ? L('ui.a87449d09e88') : this.dirty ? L('ui.b035e280075e') : L('ui.9d84cfe84d8b')) + '</span><div class="btn-row">' +
+          (!readOnly ? L('ui.4be89e8b92e1') : '') +
+        '</div></div>' +
+      '</form></section>';
+  },
+
+  renderCardAside(app, item, readOnly) {
+    const info = this.modeInfo(this.mode);
+    const validation = this.validateCurrent(app);
+    const usedDecks = ['A', 'B'].filter(side => {
+      const deck = (Store.state.decks && Store.state.decks[side]) || {};
+      if (this.mode === 'units') return (deck.units || []).includes(item.id);
+      if (this.mode === 'equipment') return (deck.equipment || []).includes(item.id);
+      if (this.mode === 'runes') return (deck.runes || []).includes(item.id);
+      return false;
+    }).map(side => side === 'A' ? L('ui.914cb0429d9d') : L('ui.1c1b9fdb0e3f'));
+    return '<aside class="editor-aside">' +
+      L('ui.5aede22d5dcf') + (validation.errors.length ? validation.errors.length + L('ui.c189fab0228a') : L('ui.dcc4233255ab')) + '</span></div><div class="panel-body" id="editor-validation">' + this.renderValidationBox(validation) + (readOnly ? L('ui.ffdcae5464e6') : '') + '</div></section>' +
+      L('ui.740747e0c1a3') +
+        L('ui.f306b423ed45') + esc(info.label) + '</span></div>' +
+        '<div class="kv"><span class="k">ID</span><span class="v mono">' + esc(item.id) + '</span></div>' +
+        L('ui.4fa3034b9a9a') + (readOnly ? L('ui.1c45c2cec410') : L('ui.8107ccd58593')) + '</span></div>' +
+        (this.mode === 'units' ? L('ui.f9272d04e7a6') + esc(item.hp) + ' / ' + esc(item.attack) + '</span></div>' : '') +
+        (this.mode === 'equipment' ? L('ui.11b5cc2a4750') + (item.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + '</span></div>' : '') +
+        (this.mode === 'runes' ? L('ui.cb04068af037') + esc(item.faction === 'any' ? L('ui.b19d3ebfba21') : item.faction) + '</span></div>' : '') +
+      '</div>' + (usedDecks.length ? L('ui.515b35a7b67a') + esc(usedDecks.join('、')) + L('ui.2e1c27c26835') : '') + '</div></section>' +
+      L('ui.51aa8216881b') +
+    '</aside>';
+  },
+
   renderWorkspace(app, item, readOnly) {
+    if (this.modeInfo(this.mode).card) return this.renderCardWorkspace(app, item, readOnly);
     const skill = this.mode === 'skills';
     const trigger = item && item.trigger ? item.trigger.event : '';
     const header = '<div class="editor-workspace-head"><div><div class="eyebrow">' + (readOnly ? 'REFERENCE / READ ONLY' : 'DRAFT / VISUAL FLOW') + '</div><h2>' + esc(item ? item.name : L('ui.763694bdf43c')) + '</h2><p>' + (item ? esc(item.id) + ' · ' + (skill ? skillTypeLabel(item.type) : L('ui.6a4f4be10d6e')) + ' · ' + (readOnly ? L('ui.385ff977152d') : L('ui.8107ccd58593')) : L('ui.446abbfa06d9')) + '</p></div><div class="head-actions">' +
@@ -580,6 +805,7 @@ const EditorUI = {
   },
 
   renderAside(app, item, readOnly) {
+    if (this.modeInfo(this.mode).card) return this.renderCardAside(app, item, readOnly);
     const validation = this.validateCurrent(app);
     const flow = item ? renderFlowTree(item.steps || []) : '';
     const variables = VARIABLE_PALETTE.map(variable => '<button class="palette-btn" type="button" data-action="ed-insert-token" data-token="' + attr(variable.token) + '" title="' + attr(variable.hint) + '">' + esc(variable.label) + '<code>' + esc(variable.token) + '</code></button>').join('');
@@ -597,6 +823,7 @@ const EditorUI = {
   render(app) {
     const pack = Store.getEditorPack();
     if (!pack) return app.renderMissingModule(L('ui.25d2af3207d3'));
+    const info = this.modeInfo(this.mode);
     let item = this.currentItem(app);
     if (!item) {
       const draft = this.itemsForMode(pack, this.mode);
@@ -608,17 +835,22 @@ const EditorUI = {
       }
     }
     const readOnly = this.isReadOnly(app);
-    const refCount = this.referenceItems(this.mode, pack).length;
-    const draftCount = this.itemsForMode(pack, this.mode).length;
+    const tabs = EDITOR_MODES.map(modeInfo => '<button class="segment' + (this.mode === modeInfo.id ? ' active' : '') + '" type="button" data-action="ed-tab" data-mode="' + modeInfo.id + '">' + esc(modeInfo.label) + '</button>').join('');
+    const counts = EDITOR_MODES.map(modeInfo => '<span class="chip tiny">' + esc(modeInfo.label) + ' ' + ((pack.content[modeInfo.collection] || []).length) + '</span>').join(' ');
     return '' +
       '<div class="page-wrap editor-page">' +
-        L('ui.ec83bb3da6c9') + (this.dirty ? 'gold' : 'green') + '">' + (this.dirty ? L('ui.b2680641e394') : L('ui.9d84cfe84d8b')) + L('ui.876abc17b1d6') +
+        L('ui.ef25c30b7a80') + (this.dirty ? 'gold' : 'green') + '">' + (this.dirty ? L('ui.b035e280075e') : L('ui.9d84cfe84d8b')) + '</span><span class="chip">' + esc(info.label) + '</span></div></div>' +
         '<div class="editor-layout">' +
           '<aside class="editor-sidebar">' +
-            '<div class="segmented editor-tabs"><button class="segment' + (this.mode === 'skills' ? ' active' : '') + L('ui.4269cfb7ff92') + (this.mode === 'effects' ? ' active' : '') + L('ui.58fb4d4cf2a9') +
-            '<section class="panel editor-panel"><div class="panel-head"><div><h3>' + (this.mode === 'skills' ? L('ui.c0e4b0f5b0e1') : L('ui.7368fef6e84a')) + L('ui.65161b9afdfa') + draftCount + L('ui.4141f8660fac') + refCount + '</div></div></div><div class="panel-body"><div class="editor-list">' + this.renderList(app, pack, this.mode) + '</div></div></section>' +
-            '<div class="editor-side-actions"><button class="btn btn-sm btn-primary" type="button" data-action="' + (this.mode === 'skills' ? 'ed-new-skill' : 'ed-new-effect') + L('ui.0552d39ccd0f') + (this.mode === 'skills' ? L('ui.53da139b6a5c') : L('ui.151ddd4f1f9f')) + L('ui.3c685d9972f8') +
-            L('ui.7b3851aed094') + esc(pack.id) + '<br>' + (pack.content.skills || []).length + L('ui.c9d70a03539f') + (pack.content.effects || []).length + L('ui.c9d88257859d') +
+            '<div class="segmented editor-tabs five">' + tabs + '</div>' +
+            '<section class="panel editor-panel"><div class="panel-head"><div><h3>' + esc(info.label) + L('ui.cdf6fcfe0d03') + this.itemsForMode(pack, this.mode).length + L('ui.4141f8660fac') + this.referenceItems(this.mode, pack).length + '</div></div></div><div class="panel-body">' + this.renderList(app, pack, this.mode) + '</div></section>' +
+            '<div class="editor-side-actions">' +
+              '<button class="btn btn-sm btn-primary" type="button" data-action="' + info.newAction + L('ui.0552d39ccd0f') + esc(info.label) + '</button>' +
+              '<button class="btn btn-sm" type="button" data-action="ed-copy">' + (readOnly ? L('ui.198a314aa63f') : L('ui.ff28b37bb58f')) + '</button>' +
+              L('ui.51cdf6c33786') +
+              L('ui.253166bf81f7') +
+            '</div>' +
+            L('ui.7b3851aed094') + esc(pack.id) + '<br>' + counts + L('ui.21f156d0e82b') +
           '</aside>' +
           this.renderWorkspace(app, item, readOnly) +
           this.renderAside(app, item, readOnly) +
@@ -687,6 +919,15 @@ const EditorUI = {
         return true;
       case 'ed-new-effect':
         this.newEffect(app);
+        return true;
+      case 'ed-new-unit':
+        this.newUnit(app);
+        return true;
+      case 'ed-new-equipment':
+        this.newEquipment(app);
+        return true;
+      case 'ed-new-rune':
+        this.newRune(app);
         return true;
       case 'ed-select':
         this.selectItem(app, data.kind, data.id);
@@ -796,7 +1037,7 @@ const EditorUI = {
       }
       case 'ed-export-item': {
         if (!item) return true;
-        app.downloadJson(item.id + '.caerogue-item.json', { kind: this.mode === 'skills' ? 'skill' : 'effect', item });
+        app.downloadJson(item.id + '.caerogue-item.json', { kind: this.modeInfo(this.mode).kind, item });
         return true;
       }
       case 'ed-export-draft':
@@ -815,21 +1056,35 @@ const EditorUI = {
     if (!item || this.isReadOnly(app)) return;
     if (target.matches('[data-meta-field]')) {
       const field = target.dataset.metaField;
+      const numericFields = ['multiplier', 'stackMax', 'hp', 'attack', 'maxHpCap', 'resistanceValue'];
       if (field === 'triggerEvent') {
         item.trigger = item.trigger || {};
         item.trigger.event = target.value;
       } else if (field === 'triggerCondition') {
         item.trigger = item.trigger || {};
         item.trigger.condition = target.value;
-      } else if (field === 'multiplier') {
-        item.multiplier = Number(target.value) || 0;
-      } else if (field === 'stackMax') {
-        item.stackMax = Math.max(1, Number(target.value) || 1);
+      } else if (field === 'resistanceType') {
+        item.resistance = item.resistance || { type: 'general', value: 0 };
+        item.resistance.type = target.value;
+      } else if (field === 'resistanceValue') {
+        item.resistance = item.resistance || { type: 'general', value: 0 };
+        item.resistance.value = Math.max(0, Number(target.value) || 0);
+      } else if (numericFields.includes(field)) {
+        const minimum = field === 'hp' || field === 'stackMax' ? 1 : 0;
+        item[field] = Math.max(minimum, Number(target.value) || (field === 'hp' ? 1 : 0));
       } else {
         item[field] = target.value;
       }
       this.markDirty();
       if (event.type === 'change' && (target.tagName === 'SELECT' || target.type === 'checkbox')) app.render();
+      return;
+    }
+    if (target.matches('[data-unit-skill]')) {
+      item.skills = item.skills || [];
+      const id = target.dataset.unitSkill;
+      if (target.checked && !item.skills.includes(id)) item.skills.push(id);
+      if (!target.checked) item.skills = item.skills.filter(skillId => skillId !== id);
+      this.markDirty();
       return;
     }
     if (target.matches('[data-req-field]')) {
