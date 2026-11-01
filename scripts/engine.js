@@ -49,8 +49,9 @@ function tokenizeFormula(source) {
     if (two === '>=' || two === '<=' || two === '==' || two === '!=') {
       tokens.push({ type: 'op', value: two }); i += 2; continue;
     }
+    if (two === '**') { tokens.push({ type: 'op', value: '^' }); i += 2; continue; }
     if (ch === '>' || ch === '<') { tokens.push({ type: 'op', value: ch }); i += 1; continue; }
-    if ('+-*/(),'.includes(ch)) { tokens.push({ type: 'op', value: ch }); i += 1; continue; }
+    if ('+-*/^(),'.includes(ch)) { tokens.push({ type: 'op', value: ch }); i += 1; continue; }
     if (/[A-Za-z_]/.test(ch)) {
       let j = i + 1;
       while (j < text.length && /[A-Za-z0-9_]/.test(text[j])) j += 1;
@@ -85,6 +86,7 @@ class FormulaParser {
   parse() {
     const value = this.parseComparison();
     if (this.pos < this.tokens.length) throw new FormulaError(L('ui.57976eb8f7ed'));
+    if (!Number.isFinite(value)) throw new FormulaError(L('ui.5bd421f4a26b'));
     return value;
   }
   parseComparison() {
@@ -122,7 +124,17 @@ class FormulaParser {
   parseUnary() {
     if (this.peek() && this.peek().value === '-') { this.take(); return -this.parseUnary(); }
     if (this.peek() && this.peek().value === '+') { this.take(); return this.parseUnary(); }
-    return this.parsePrimary();
+    return this.parsePower();
+  }
+
+  parsePower() {
+    let left = this.parsePrimary();
+    if (this.peek() && this.peek().value === '^') {
+      this.take();
+      const right = this.parseUnary();
+      left = Math.pow(left, right);
+    }
+    return left;
   }
   parsePrimary() {
     const token = this.peek();
@@ -131,18 +143,36 @@ class FormulaParser {
     if (token.type === 'var') { this.take(); return Number(this.resolver(token.value)) || 0; }
     if (token.type === 'name') {
       this.take();
+      if (token.value === 'pi') return Math.PI;
+      if (token.value === 'e') return Math.E;
       if (token.value === 'min' || token.value === 'max') {
-        this.expect('(');
-        const args = [this.parseExpression()];
-        while (this.take(',')) args.push(this.parseExpression());
-        this.expect(')');
+        const args = this.parseArgs();
         return token.value === 'min' ? Math.min(...args) : Math.max(...args);
       }
-      if (token.value === 'floor' || token.value === 'ceil' || token.value === 'round' || token.value === 'abs') {
-        this.expect('(');
-        const arg = this.parseExpression();
-        this.expect(')');
-        return Math[token.value](arg);
+      if (['floor', 'ceil', 'round', 'abs', 'sqrt', 'exp', 'ln', 'log10', 'log2'].includes(token.value)) {
+        const args = this.parseArgs();
+        const value = args[0] || 0;
+        switch (token.value) {
+          case 'floor': return Math.floor(value);
+          case 'ceil': return Math.ceil(value);
+          case 'round': return Math.round(value);
+          case 'abs': return Math.abs(value);
+          case 'sqrt': return Math.sqrt(value);
+          case 'exp': return Math.exp(value);
+          case 'ln': return Math.log(value);
+          case 'log10': return Math.log10(value);
+          case 'log2': return Math.log2(value);
+          default: return 0;
+        }
+      }
+      if (token.value === 'pow') {
+        const args = this.parseArgs();
+        return Math.pow(args[0] || 0, args[1] || 0);
+      }
+      if (token.value === 'log') {
+        const args = this.parseArgs();
+        if (args.length < 2) return Math.log10(args[0] || 0);
+        return Math.log(args[0]) / Math.log(args[1]);
       }
       throw new FormulaError(L('ui.23571af050fb') + token.value);
     }
@@ -153,6 +183,16 @@ class FormulaParser {
       return value;
     }
     throw new FormulaError(L('ui.01e7606db3f5') + token.value);
+  }
+
+  parseArgs() {
+    this.expect('(');
+    const args = [];
+    if (this.peek() && this.peek().value === ')') { this.take(); return args; }
+    args.push(this.parseExpression());
+    while (this.take(',')) args.push(this.parseExpression());
+    this.expect(')');
+    return args;
   }
 }
 
@@ -481,6 +521,11 @@ class Battle {
     };
   }
 
+  formulaTarget(ctx) {
+    if (!ctx) return null;
+    return ctx.target || (ctx.chosen && ctx.chosen[0]) || (ctx.eventData && (ctx.eventData.target || (ctx.eventData.targets && ctx.eventData.targets[0]))) || ctx.unit || null;
+  }
+
   evalFormula(formula, ctx) {
     if (formula === undefined || formula === null || formula === '') return 0;
     if (typeof formula === 'number') return formula;
@@ -508,8 +553,20 @@ class Battle {
         const key = token.slice(7);
         return (ctx.eventData && ctx.eventData[key]) || 0;
       }
-      if (token === '$target.hp') return (ctx.chosen && ctx.chosen[0] && ctx.chosen[0].hp) || 0;
-      if (token === '$target.hpMax') return (ctx.chosen && ctx.chosen[0] && ctx.chosen[0].maxHp) || 0;
+      const target = this.formulaTarget(ctx);
+      if (token === '$target.hp') return target ? target.hp : 0;
+      if (token === '$target.hpMax' || token === '$target.maxHp') return target ? target.maxHp : 0;
+      if (token === '$target.missingHp') return target ? Math.max(0, target.maxHp - target.hp) : 0;
+      if (token === '$target.hpPct') return target && target.maxHp > 0 ? (target.hp / target.maxHp) * 100 : 0;
+      if (token === '$target.hpRatio') return target && target.maxHp > 0 ? target.hp / target.maxHp : 0;
+      if (token === '$target.atk') return target ? target.atk : 0;
+      if (token === '$target.resist') return target ? (target.resistance.current || this.getResistance(target, (target.card && target.card.resistance && target.card.resistance.type) || 'general')) : 0;
+      if (token === '$target.counted') return target && target.counted ? 1 : 0;
+      if (token === '$target.effectCount') return target ? target.effects.length : 0;
+      if (token.startsWith('$target.count.')) return target ? this.getCount(target, 'unit', token.slice('$target.count.'.length)) : 0;
+      if (token.startsWith('$target.sideCount.')) return target ? this.getCount(target, 'side', token.slice('$target.sideCount.'.length)) : 0;
+      if (token.startsWith('$target.effect.')) return target ? this.getEffectStacks(target, token.slice('$target.effect.'.length)) : 0;
+      if (token.startsWith('$source.effect.')) return this.getEffectStacks(source, token.slice('$source.effect.'.length));
       return 0;
     };
     try {
@@ -539,7 +596,19 @@ class Battle {
     else if (mode === 'allEnemies') add(this.getEnemies(unit));
     else if (mode === 'allAllies') add(this.getLivingAllies(unit));
     else if (mode === 'item') add(ctx.item ? [ctx.item] : []);
-    else if (mode === 'owner') add([ctx.owner || unit]);
+    else if (mode === 'owner') {
+      if (step.ownerEffectId) {
+        const holders = [];
+        for (const sideId of ['A', 'B']) {
+          for (const candidate of this.getFieldUnits(sideId)) {
+            if (this.getEffectStacks(candidate, step.ownerEffectId) > 0) holders.push(candidate);
+          }
+        }
+        add(holders);
+      } else {
+        add([ctx.owner || unit]);
+      }
+    }
     return targets;
   }
 
@@ -1174,9 +1243,9 @@ class Battle {
           let hit = 0;
           const hitTargets = [];
           const isBonus = !!step.bonus;
-          const formulaValue = this.evalFormula(step.formula, ctx);
           for (const target of targets) {
             if (!target.alive || !target.onField) continue;
+            const formulaValue = this.evalFormula(step.formula, Object.assign({}, ctx, { target }));
             const result = this.dealDamage(ctx.unit, target, formulaValue, step.damageType || 'physical', {
               ignoreResistance: !!step.ignoreResistance || isBonus,
               isAttack: !isBonus && !!(ctx.skill && ctx.skill.op === 'attack' && (ctx.skill.type === 'active' || ctx.skill.type === 'extra')),
@@ -1202,15 +1271,17 @@ class Battle {
         }
         case 'heal': {
           const targets = this.getTargetsForStep(ctx.unit, step, ctx);
-          const amount = this.evalFormula(step.formula, ctx);
-          for (const target of targets) this.healUnit(ctx.unit, target, amount);
+          for (const target of targets) {
+            const amount = this.evalFormula(step.formula, Object.assign({}, ctx, { target }));
+            this.healUnit(ctx.unit, target, amount);
+          }
           break;
         }
         case 'addEffect': {
           const targets = this.getTargetsForStep(ctx.unit, step, ctx);
-          const stacks = Math.max(0, Math.round(this.evalFormula(step.stacks || '1', ctx)));
           const def = this.maps.effects.get(step.effectId);
           for (const target of targets) {
+            const stacks = Math.max(0, Math.round(this.evalFormula(step.stacks || '1', Object.assign({}, ctx, { target }))));
             if (stacks <= 0) continue;
             const applied = this.addEffect(target, step.effectId, stacks, ctx.unit);
             if (applied) {
@@ -1233,7 +1304,6 @@ class Battle {
         }
         case 'removeEffect': {
           const targets = this.getTargetsForStep(ctx.unit, step, ctx);
-          const amount = Math.max(0, Math.round(this.evalFormula(step.stacks || '9999', ctx)));
           const recordRemoval = (target, def) => {
             this.recordVisual({
               kind: 'effect',
@@ -1250,6 +1320,7 @@ class Battle {
             });
           };
           for (const target of targets) {
+            const amount = Math.max(0, Math.round(this.evalFormula(step.stacks || '9999', Object.assign({}, ctx, { target }))));
             if (step.effectId) {
               const def = this.maps.effects.get(step.effectId);
               if (this.removeEffect(target, step.effectId, amount, step.force)) recordRemoval(target, def);
@@ -1290,14 +1361,14 @@ class Battle {
         }
         case 'selectTarget': {
           const mode = step.mode || 'allEnemies';
-          const selected = this.getTargetsForStep(ctx.unit, { target: mode }, ctx);
+          const selected = this.getTargetsForStep(ctx.unit, { target: mode, ownerEffectId: step.ownerEffectId }, ctx);
           ctx.chosen = selected;
           if (step.varName) ctx.vars[step.varName] = selected.length;
           break;
         }
         case 'forEach': {
           const source = step.source || 'chosen';
-          const list = this.getTargetsForStep(ctx.unit, { target: source }, ctx);
+          const list = this.getTargetsForStep(ctx.unit, { target: source, ownerEffectId: step.ownerEffectId }, ctx);
           let guard = 0;
           for (const item of list) {
             if (guard >= ENGINE_LIMITS.loopIterations) break;
@@ -1320,12 +1391,12 @@ class Battle {
           if (targetMode === 'self') chosen = [ctx.unit];
           else if (targetMode === 'allEnemies') chosen = this.getEnemies(ctx.unit);
           else if (targetMode === 'allAllies') chosen = this.getLivingAllies(ctx.unit);
-          else chosen = this.getTargetsForStep(ctx.unit, { target: step.target || 'chosen' }, ctx);
+          else chosen = this.getTargetsForStep(ctx.unit, { target: step.target || 'chosen', ownerEffectId: step.ownerEffectId }, ctx);
           this.executeSkill(ctx.unit, skill, chosen, { allowDeadSource: true });
           break;
         }
         case 'skipAction': {
-          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self' }, ctx);
+          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self', ownerEffectId: step.ownerEffectId }, ctx);
           for (const target of targets) {
             target.acted = true;
             this.log('effect', target.name + L('ui.24aa02f4b605'), { side: target.side });
@@ -1338,7 +1409,7 @@ class Battle {
           break;
         }
         case 'forceRetreat': {
-          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self' }, ctx);
+          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self', ownerEffectId: step.ownerEffectId }, ctx);
           for (const target of targets) {
             if (!target.alive) continue;
             const guards = this.getFatalGuardCandidates(target);
@@ -1372,10 +1443,10 @@ class Battle {
           break;
         }
         case 'modifyStat': {
-          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self' }, ctx);
-          const amount = this.evalFormula(step.formula || '0', ctx);
+          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self', ownerEffectId: step.ownerEffectId }, ctx);
           const stat = step.stat || 'atkFlat';
           for (const target of targets) {
+            const amount = this.evalFormula(step.formula || '0', Object.assign({}, ctx, { target }));
             target.tempMods[stat] = (target.tempMods[stat] || 0) + amount;
             this.recalcUnit(target);
             this.log('effect', target.name + L('ui.9718591ae2b7') + (STAT_KEYS[stat] || stat) + L('ui.94e935dbc13d') + target.tempMods[stat] + '。', { side: target.side });

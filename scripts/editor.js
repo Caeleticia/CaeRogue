@@ -30,6 +30,7 @@ function deepListClone(value) { return JSON.parse(JSON.stringify(value)); }
 
 const EditorUI = {
   mode: 'units',
+  targetPackId: null,
   selectedId: null,
   dirty: false,
   _lastFormulaInput: null,
@@ -38,6 +39,7 @@ const EditorUI = {
 
   reset() {
     this.mode = 'units';
+    this.targetPackId = null;
     this.selectedId = null;
     this.dirty = false;
     this._lastFormulaInput = null;
@@ -49,8 +51,236 @@ const EditorUI = {
     return EDITOR_MODES.find(item => item.id === (mode || this.mode)) || EDITOR_MODES[0];
   },
 
+  resolvePack(id) {
+    if (!id) return null;
+    if (id === CORE_PACK_ID) return CORE_PACK;
+    const editorPack = Store.getEditorPack();
+    if (editorPack && editorPack.id === id) return editorPack;
+    return (Store.state.packs || []).find(pack => pack.id === id) || null;
+  },
+
+  currentPack() {
+    if (!this.targetPackId) this.targetPackId = Store.getEditorPack().id;
+    const resolved = this.resolvePack(this.targetPackId);
+    if (resolved) return resolved;
+    this.targetPackId = Store.getEditorPack().id;
+    return Store.getEditorPack();
+  },
+
+  persistPack() {
+    const pack = this.currentPack();
+    if (!pack) return;
+    if (pack === Store.getEditorPack()) {
+      Store.saveEditorPack();
+    } else if (pack.id === CORE_PACK_ID) {
+      Store.saveCoreOverride();
+    } else {
+      Store.saveLocalPack(pack);
+    }
+  },
+
+  selectPack(app, id) {
+    if (!this.resolvePack(id)) return;
+    this.targetPackId = id;
+    this.selectedId = null;
+    this.dirty = false;
+    app.render();
+  },
+
+  openPackIdEditor(app) {
+    const pack = this.currentPack();
+    if (!pack || pack.id === CORE_PACK_ID) { app.toast(L('ui.cad643af664c'), 'error'); return; }
+    app.openModal({
+      title: L('ui.9bedf391e1e4'),
+      subtitle: L('ui.ad6faec4fc24'),
+      body: L('ui.0e00c9587512') + attr(pack.id) + L('ui.aa6e3ea1d48c'),
+      foot: L('ui.15e72c49d2b0')
+    });
+  },
+
+  openItemIdEditor(app) {
+    const item = this.currentItem(app);
+    if (!item || this.isReadOnly(app)) return;
+    const pack = this.currentPack();
+    const type = this.modeInfo(this.mode).kind;
+    app.openModal({
+      title: L('ui.b3445fa500e9'),
+      subtitle: L('ui.cbcc221c347b'),
+      body: L('ui.add0743b1b3e') + attr(item.id) + L('ui.7acf3485abbc') + esc(pack.id + '_' + type + '_') + L('ui.bd69de8ecc5b'),
+      foot: L('ui.82b5b141b1d5')
+    });
+  },
+
+  rewriteReferences(mapping) {
+    if (!mapping || !Object.keys(mapping).length) return;
+    const replaceList = list => Array.isArray(list) ? list.map(id => mapping[id] || id) : list;
+    const replaceFormula = value => {
+      if (typeof value !== 'string' || !value) return value;
+      let next = value;
+      for (const [oldId, newId] of Object.entries(mapping)) {
+        next = next.split('$effect.' + oldId).join('$effect.' + newId);
+        next = next.split('$target.effect.' + oldId).join('$target.effect.' + newId);
+        next = next.split('$source.effect.' + oldId).join('$source.effect.' + newId);
+      }
+      return next;
+    };
+    const replaceSteps = steps => {
+      if (!Array.isArray(steps)) return;
+      for (const step of steps) {
+        if (!step) continue;
+        if (mapping[step.effectId]) step.effectId = mapping[step.effectId];
+        if (mapping[step.skillId]) step.skillId = mapping[step.skillId];
+        if (mapping[step.unitId]) step.unitId = mapping[step.unitId];
+        for (const field of ['formula', 'times', 'left', 'right', 'stacks']) {
+          if (step[field] !== undefined) step[field] = replaceFormula(step[field]);
+        }
+        replaceSteps(step.then);
+        replaceSteps(step.elseSteps);
+        replaceSteps(step.steps);
+      }
+    };
+    const packs = [CORE_PACK, Store.getEditorPack()].concat(Store.state.packs || []);
+    const seen = new Set();
+    for (const pack of packs) {
+      if (!pack || !pack.content || seen.has(pack.id)) continue;
+      seen.add(pack.id);
+      for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+        for (const item of pack.content[category] || []) {
+          if (item.skills) item.skills = replaceList(item.skills);
+          if (item.equip) item.equip = replaceList(item.equip);
+          if (item.grantedSkills) item.grantedSkills = replaceList(item.grantedSkills);
+          if (item.trigger && item.trigger.condition) item.trigger.condition = replaceFormula(item.trigger.condition);
+          replaceSteps(item.steps);
+        }
+      }
+    }
+    const rewriteDeck = deck => {
+      if (!deck) return;
+      deck.units = replaceList(deck.units);
+      deck.equipment = replaceList(deck.equipment);
+      deck.runes = replaceList(deck.runes);
+    };
+    rewriteDeck(Store.state.decks.A);
+    rewriteDeck(Store.state.decks.B);
+    for (const run of Object.values(Store.state.runs || {})) {
+      if (!run) continue;
+      rewriteDeck(run.deck);
+      run.activeUnits = replaceList(run.activeUnits);
+      run.activeEquipment = replaceList(run.activeEquipment);
+      run.activeRunes = replaceList(run.activeRunes);
+      if (Array.isArray(run.characterShop)) run.characterShop.forEach(offer => { if (mapping[offer.unitId]) offer.unitId = mapping[offer.unitId]; });
+      if (run.upgrades && Array.isArray(run.upgrades.startEffects)) {
+        run.upgrades.startEffects.forEach(item => { if (mapping[item.effectId]) item.effectId = mapping[item.effectId]; });
+      }
+    }
+    for (const challenge of Store.state.customChallenges || []) {
+      for (const stage of challenge.stages || []) {
+        if (stage.opponent) stage.opponent.units = replaceList(stage.opponent.units);
+        if (stage.opponent) stage.opponent.equipment = replaceList(stage.opponent.equipment);
+        if (stage.opponent) stage.opponent.runes = replaceList(stage.opponent.runes);
+      }
+    }
+    DEFAULT_LOADOUT_A.units = replaceList(DEFAULT_LOADOUT_A.units);
+    DEFAULT_LOADOUT_A.equipment = replaceList(DEFAULT_LOADOUT_A.equipment);
+    DEFAULT_LOADOUT_A.runes = replaceList(DEFAULT_LOADOUT_A.runes);
+    DEFAULT_LOADOUT_B.units = replaceList(DEFAULT_LOADOUT_B.units);
+    DEFAULT_LOADOUT_B.equipment = replaceList(DEFAULT_LOADOUT_B.equipment);
+    DEFAULT_LOADOUT_B.runes = replaceList(DEFAULT_LOADOUT_B.runes);
+    for (const challenge of CHALLENGE_DEFINITIONS) {
+      for (const stage of challenge.stages || []) {
+        if (!stage.opponent) continue;
+        stage.opponent.units = replaceList(stage.opponent.units);
+        stage.opponent.equipment = replaceList(stage.opponent.equipment);
+        stage.opponent.runes = replaceList(stage.opponent.runes);
+        if (stage.rule && stage.rule.enemyStartEffect) {
+          if (mapping[stage.rule.enemyStartEffect.target]) stage.rule.enemyStartEffect.target = mapping[stage.rule.enemyStartEffect.target];
+          if (mapping[stage.rule.enemyStartEffect.effect]) stage.rule.enemyStartEffect.effect = mapping[stage.rule.enemyStartEffect.effect];
+        }
+      }
+    }
+  },
+
+  applyPackId(app) {
+    const input = document.getElementById('editor-pack-id');
+    const pack = this.currentPack();
+    if (!input || !pack || pack.id === CORE_PACK_ID) return;
+    const newId = input.value.trim();
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(newId)) { app.toast(L('ui.baf5993e420f'), 'error'); return; }
+    if (newId === CORE_PACK_ID) { app.toast(L('ui.a204c5229054'), 'error'); return; }
+    const collision = (Store.state.packs || []).some(item => item.id === newId && item !== pack) || (Store.getEditorPack().id === newId && Store.getEditorPack() !== pack);
+    if (collision) { app.toast(L('ui.963d32e5f2dc'), 'error'); return; }
+    const oldId = pack.id;
+    const mapping = {};
+    const typeMap = { units: 'unit', skills: 'skill', effects: 'effect', equipment: 'equipment', runes: 'rune' };
+    for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+      for (const item of pack.content[category] || []) {
+        let custom = item.id;
+        for (const prefix of [oldId + '.', oldId + '_']) if (custom.startsWith(prefix)) custom = custom.slice(prefix.length);
+        for (const prefix of [typeMap[category] + '.', typeMap[category] + '_']) if (custom.startsWith(prefix)) custom = custom.slice(prefix.length);
+        custom = custom.replace(/[^A-Za-z0-9_.-]/g, '_') || 'item';
+        const nextId = newId + '_' + typeMap[category] + '_' + custom;
+        mapping[item.id] = nextId;
+        item.id = nextId;
+        item.packId = newId;
+      }
+    }
+    pack.id = newId;
+    if (pack === Store.getEditorPack()) {
+      this.targetPackId = newId;
+    } else {
+      const enabledIndex = Store.state.enabledPacks.indexOf(oldId);
+      if (enabledIndex >= 0) Store.state.enabledPacks[enabledIndex] = newId;
+      for (const other of Store.state.packs) {
+        if (!Array.isArray(other.dependencies)) continue;
+        other.dependencies = other.dependencies.map(dep => dep === oldId ? newId : dep);
+      }
+      this.targetPackId = newId;
+    }
+    this.rewriteReferences(mapping);
+    this.selectedId = mapping[this.selectedId] || null;
+    this.persistPack();
+    this.dirty = false;
+    app.closeModal(true);
+    app.render();
+    app.toast(L('ui.de605339cd8c'), 'success');
+  },
+
+  applyItemId(app) {
+    const input = document.getElementById('editor-item-id');
+    const item = this.currentItem(app);
+    const pack = this.currentPack();
+    if (!input || !item || !pack) return;
+    const newId = input.value.trim();
+    const type = this.modeInfo(this.mode).kind;
+    const required = pack.id + '_' + type + '_';
+    if (!newId.startsWith(required) || newId.length <= required.length) { app.toast(L('ui.6b7be53b217c') + required + L('ui.c7e4cf6c4350'), 'error'); return; }
+    if (!/^[A-Za-z0-9_.-]+$/.test(newId)) { app.toast(L('ui.772ddb498484'), 'error'); return; }
+    const allIds = new Set();
+    const seenPacks = new Set();
+    for (const candidate of [CORE_PACK, Store.getEditorPack()].concat(Store.state.packs || [])) {
+      if (!candidate || seenPacks.has(candidate.id)) continue;
+      seenPacks.add(candidate.id);
+      for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+        for (const entry of (candidate.content && candidate.content[category]) || []) {
+          if (entry !== item) allIds.add(entry.id);
+        }
+      }
+    }
+    if (allIds.has(newId)) { app.toast(L('ui.af831f78e58f'), 'error'); return; }
+    const mapping = { [item.id]: newId };
+    item.id = newId;
+    this.rewriteReferences(mapping);
+    this.selectedId = newId;
+    this.persistPack();
+    this.dirty = false;
+    app.closeModal(true);
+    app.render();
+    app.toast(L('ui.c5cee566ec03'), 'success');
+  },
+
   enter(app) {
-    const pack = Store.getEditorPack();
+    if (!this.targetPackId || !this.resolvePack(this.targetPackId)) this.targetPackId = Store.getEditorPack().id;
+    const pack = this.currentPack();
     if (!pack) return;
     if (!EDITOR_MODES.some(item => item.id === this.mode)) this.mode = 'units';
     const items = this.itemsForMode(pack, this.mode);
@@ -75,7 +305,7 @@ const EditorUI = {
   },
 
   currentItem(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     if (!pack || !this.selectedId) return null;
     const draft = this.itemsForMode(pack, this.mode).find(item => item.id === this.selectedId);
     if (draft) return draft;
@@ -84,7 +314,7 @@ const EditorUI = {
   },
 
   isReadOnly(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     if (!pack || !this.selectedId) return false;
     return !this.itemsForMode(pack, this.mode).some(item => item.id === this.selectedId);
   },
@@ -99,7 +329,7 @@ const EditorUI = {
   },
 
   save(app, silent) {
-    Store.saveEditorPack();
+    this.persistPack();
     this.dirty = false;
     if (!silent) {
       app.toast(L('ui.bbc2b23814a9'), 'success');
@@ -110,7 +340,7 @@ const EditorUI = {
   },
 
   makeId(pack, kind) {
-    const prefix = pack.id + '.' + kind + '.';
+    const prefix = pack.id + '_' + kind + '_';
     const used = new Set();
     for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
       (pack.content[category] || []).forEach(item => used.add(item.id));
@@ -122,7 +352,7 @@ const EditorUI = {
   },
 
   newSkill(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const item = {
       id: this.makeId(pack, 'skill'),
       packId: pack.id,
@@ -141,12 +371,12 @@ const EditorUI = {
     this.mode = 'skills';
     this.selectedId = item.id;
     this.dirty = true;
-    Store.saveEditorPack();
+    this.persistPack();
     app.render();
   },
 
   newEffect(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const item = {
       id: this.makeId(pack, 'effect'),
       packId: pack.id,
@@ -165,12 +395,12 @@ const EditorUI = {
     this.mode = 'effects';
     this.selectedId = item.id;
     this.dirty = true;
-    Store.saveEditorPack();
+    this.persistPack();
     app.render();
   },
 
   newUnit(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const item = {
       id: this.makeId(pack, 'unit'),
       packId: pack.id,
@@ -194,12 +424,12 @@ const EditorUI = {
     this.mode = 'units';
     this.selectedId = item.id;
     this.dirty = true;
-    Store.saveEditorPack();
+    this.persistPack();
     app.render();
   },
 
   newEquipment(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const item = {
       id: this.makeId(pack, 'equipment'),
       packId: pack.id,
@@ -217,12 +447,12 @@ const EditorUI = {
     this.mode = 'equipment';
     this.selectedId = item.id;
     this.dirty = true;
-    Store.saveEditorPack();
+    this.persistPack();
     app.render();
   },
 
   newRune(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const item = {
       id: this.makeId(pack, 'rune'),
       packId: pack.id,
@@ -240,12 +470,12 @@ const EditorUI = {
     this.mode = 'runes';
     this.selectedId = item.id;
     this.dirty = true;
-    Store.saveEditorPack();
+    this.persistPack();
     app.render();
   },
 
   copyCurrent(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const info = this.modeInfo(this.mode);
     const item = this.currentItem(app);
     if (!item) return;
@@ -257,13 +487,13 @@ const EditorUI = {
     pack.content[info.collection].push(clone);
     this.selectedId = clone.id;
     this.dirty = true;
-    Store.saveEditorPack();
+    this.persistPack();
     app.render();
     app.toast(L('ui.edd969b9461a'), 'success');
   },
 
   deleteCurrent(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const info = this.modeInfo(this.mode);
     const list = pack.content[info.collection] || [];
     const pos = list.findIndex(item => item.id === this.selectedId);
@@ -279,7 +509,7 @@ const EditorUI = {
         this.dirty = true;
         const next = list[pos] || list[pos - 1] || this.referenceItems(this.mode, pack)[0];
         this.selectedId = next ? next.id : null;
-        Store.saveEditorPack();
+        this.persistPack();
         app.render();
       }
     });
@@ -294,7 +524,7 @@ const EditorUI = {
 
   switchMode(app, mode) {
     this.mode = EDITOR_MODES.some(item => item.id === mode) ? mode : 'units';
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const draft = this.itemsForMode(pack, this.mode);
     const refs = this.referenceItems(this.mode, pack);
     this.selectedId = (draft[0] || refs[0] || {}).id || null;
@@ -302,14 +532,14 @@ const EditorUI = {
   },
 
   allEffectRefs() {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const map = new Map(Store.index.effects.map(item => [item.id, item]));
     this.itemsForMode(pack, 'effects').forEach(item => map.set(item.id, item));
     return [...map.values()];
   },
 
   allSkillRefs() {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const map = new Map(Store.index.skills.map(item => [item.id, item]));
     this.itemsForMode(pack, 'skills').forEach(item => map.set(item.id, item));
     return [...map.values()];
@@ -361,6 +591,16 @@ const EditorUI = {
   },
 
   stepFields(item, step, listPath, index, readOnly) {
+    const html = this.stepFieldsInner(item, step, listPath, index, readOnly);
+    const ownerMode = step.target === 'owner' || step.mode === 'owner' || step.source === 'owner';
+    if (!ownerMode || !html) return html;
+    const effectOptions = this.allEffectRefs().map(effect => ({ value: effect.id, label: effect.name + ' · ' + effect.id }));
+    const extra = this.fieldRow(L('ui.3571fa81f147'), this.stepInput(listPath, index, 'ownerEffectId', step.ownerEffectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.8035adedbcd1'), disabled: readOnly }), L('ui.dae392f2b7f4'));
+    const pos = html.lastIndexOf('</div>');
+    return pos >= 0 ? html.slice(0, pos) + extra + html.slice(pos) : html + extra;
+  },
+
+  stepFieldsInner(item, step, listPath, index, readOnly) {
     const targetOptions = EDITOR_STEP_TARGETS;
     const disabled = readOnly;
     const targetSelect = (value) => this.stepInput(listPath, index, 'target', value || 'chosen', { type: 'select', options: targetOptions, disabled });
@@ -541,13 +781,13 @@ const EditorUI = {
     if (readOnly) return { errors: [], warnings: [], readOnly: true, reference: true };
     const errors = [];
     const warnings = [];
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const mode = this.mode;
     const skill = mode === 'skills';
     const effect = mode === 'effects';
     if (!item.name || !String(item.name).trim()) errors.push(L('ui.bef8696071ea'));
     if (!item.id) errors.push(L('ui.8b116c26c58b'));
-    if (item.id && !String(item.id).startsWith(pack.id + '.')) warnings.push(L('ui.1b1431afeade') + pack.id + '。');
+    if (item.id && !String(item.id).startsWith(pack.id + '_')) warnings.push(L('ui.1b1431afeade') + pack.id + '。');
     if (item.quality && !QUALITIES[item.quality]) errors.push(L('ui.f07f0ab2803c'));
     const externalIds = new Set();
     for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
@@ -744,6 +984,7 @@ const EditorUI = {
     const header = '<div class="editor-workspace-head"><div><div class="eyebrow">' + (readOnly ? 'REFERENCE / READ ONLY' : 'CARD DRAFT / LOCAL ARCHIVE') + '</div><h2>' + esc(item ? item.name : L('ui.763694bdf43c')) + '</h2><p>' + (item ? esc(item.id) + ' · ' + esc(info.label) + ' · ' + (readOnly ? L('ui.1c45c2cec410') : L('ui.8107ccd58593')) : L('ui.0135635b14c7')) + '</p></div><div class="head-actions">' +
       (item ? '<button class="btn btn-sm" type="button" data-action="ed-copy">' + (readOnly ? L('ui.198a314aa63f') : L('ui.a11534a1b557')) + '</button>' : '') +
       (item ? L('ui.561bc81a124a') : '') +
+      (!readOnly && item ? L('ui.59d7d27fd1ef') : '') +
       (!readOnly && item ? L('ui.c8b012e16e88') : '') +
       '</div></div>';
     if (!item) return '<section class="panel editor-workspace">' + header + L('ui.59eec00d41a0');
@@ -786,6 +1027,7 @@ const EditorUI = {
     const trigger = item && item.trigger ? item.trigger.event : '';
     const header = '<div class="editor-workspace-head"><div><div class="eyebrow">' + (readOnly ? 'REFERENCE / READ ONLY' : 'DRAFT / VISUAL FLOW') + '</div><h2>' + esc(item ? item.name : L('ui.763694bdf43c')) + '</h2><p>' + (item ? esc(item.id) + ' · ' + (skill ? skillTypeLabel(item.type) : L('ui.6a4f4be10d6e')) + ' · ' + (readOnly ? L('ui.385ff977152d') : L('ui.8107ccd58593')) : L('ui.446abbfa06d9')) + '</p></div><div class="head-actions">' +
       (item ? L('ui.59934c503dbc') + (readOnly ? L('ui.198a314aa63f') : L('ui.a11534a1b557')) + '</button>' : '') +
+      (!readOnly && item ? L('ui.59d7d27fd1ef') : '') +
       (!readOnly && item ? L('ui.c8b012e16e88') : '') +
       (!readOnly && item ? L('ui.4be89e8b92e1') : '') +
       '</div></div>';
@@ -812,8 +1054,22 @@ const EditorUI = {
     return '<aside class="editor-aside">' +
       L('ui.64388ae940d7') +
         L('ui.62feaaa205e4') + variables + L('ui.d63d34238e70') +
-        L('ui.514c600bc741') + EDITOR_STEP_TARGETS.map(target => L('ui.dce534653862') + attr(target.label) + '">' + esc(target.label) + '</span>').join('') + '</div></div>' +
+        L('ui.514c600bc741') + EDITOR_STEP_TARGETS.map(target => L('ui.dce534653862') + attr(target.label) + '">' + esc(target.label) + '</span>').join('') + L('ui.a7bf363d0b3e') +
         L('ui.d451d7ed9601') + EDITOR_CONDITION_OPS.map(op => esc(op.label)).join(' · ') + L('ui.d9b093f49744') +
+        L('ui.bc61bb8db524') +
+          L('ui.68e10b4eb8ee') +
+          '<ul>' +
+            L('ui.349edbbe1b76') +
+            L('ui.166edb32d0f1') +
+            L('ui.68efa8778c0d') +
+            L('ui.ad2f49183057') +
+            L('ui.75e9dcc9ec41') +
+            L('ui.3d1ba8ff3ac8') +
+            L('ui.d78a16cf18fc') +
+            L('ui.6b9d0e98a853') +
+          '</ul>' +
+          L('ui.76d60ca32cc1') +
+        '</div>' +
       '</div></section>' +
       L('ui.5aede22d5dcf') + (validation.errors.length ? validation.errors.length + L('ui.c189fab0228a') : L('ui.dcc4233255ab')) + '</span></div><div class="panel-body" id="editor-validation">' + this.renderValidationBox(validation) + '</div></section>' +
       L('ui.ecc45e4b7216') + ((item && item.steps) || []).length + '</span></div><div class="panel-body">' + (flow || L('ui.565968446956')) + '<div class="editor-helper-note mt-2">' + (readOnly ? L('ui.8fa87032da75') : L('ui.90e31a82c675')) + '</div></div></section>' +
@@ -821,7 +1077,7 @@ const EditorUI = {
   },
 
   render(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     if (!pack) return app.renderMissingModule(L('ui.25d2af3207d3'));
     const info = this.modeInfo(this.mode);
     let item = this.currentItem(app);
@@ -837,18 +1093,30 @@ const EditorUI = {
     const readOnly = this.isReadOnly(app);
     const tabs = EDITOR_MODES.map(modeInfo => '<button class="segment' + (this.mode === modeInfo.id ? ' active' : '') + '" type="button" data-action="ed-tab" data-mode="' + modeInfo.id + '">' + esc(modeInfo.label) + '</button>').join('');
     const counts = EDITOR_MODES.map(modeInfo => '<span class="chip tiny">' + esc(modeInfo.label) + ' ' + ((pack.content[modeInfo.collection] || []).length) + '</span>').join(' ');
+    const draftPack = Store.getEditorPack();
+    const packChoices = [draftPack].concat((Store.index.packs || []).filter(item => item.id !== draftPack.id));
+    const uniqueChoices = [];
+    const seenPacks = new Set();
+    for (const choice of packChoices) {
+      if (!choice || seenPacks.has(choice.id)) continue;
+      seenPacks.add(choice.id);
+      uniqueChoices.push(choice);
+    }
+    const packBar = L('ui.06faadfb55ed') + uniqueChoices.map(choice => '<option value="' + attr(choice.id) + '"' + (choice.id === pack.id ? ' selected' : '') + '>' + esc(choice === draftPack ? L('ui.0f436818c0b4') : (choice.builtin ? L('ui.d7d67f212822') : choice.name)) + '</option>').join('') + '</select><button class="btn btn-sm" type="button" data-action="ed-edit-pack-id"' + (pack.id === CORE_PACK_ID ? ' disabled' : '') + L('ui.f94066dba58c') + esc(pack.id) + '</span></div>';
+    const isDraftTarget = pack === draftPack;
     return '' +
       '<div class="page-wrap editor-page">' +
         L('ui.ef25c30b7a80') + (this.dirty ? 'gold' : 'green') + '">' + (this.dirty ? L('ui.b035e280075e') : L('ui.9d84cfe84d8b')) + '</span><span class="chip">' + esc(info.label) + '</span></div></div>' +
         '<div class="editor-layout">' +
           '<aside class="editor-sidebar">' +
+            packBar +
             '<div class="segmented editor-tabs five">' + tabs + '</div>' +
             '<section class="panel editor-panel"><div class="panel-head"><div><h3>' + esc(info.label) + L('ui.cdf6fcfe0d03') + this.itemsForMode(pack, this.mode).length + L('ui.4141f8660fac') + this.referenceItems(this.mode, pack).length + '</div></div></div><div class="panel-body">' + this.renderList(app, pack, this.mode) + '</div></section>' +
             '<div class="editor-side-actions">' +
               '<button class="btn btn-sm btn-primary" type="button" data-action="' + info.newAction + L('ui.0552d39ccd0f') + esc(info.label) + '</button>' +
               '<button class="btn btn-sm" type="button" data-action="ed-copy">' + (readOnly ? L('ui.198a314aa63f') : L('ui.ff28b37bb58f')) + '</button>' +
-              L('ui.51cdf6c33786') +
-              L('ui.253166bf81f7') +
+              (isDraftTarget ? L('ui.51cdf6c33786') : '') +
+              (isDraftTarget ? L('ui.253166bf81f7') : '') +
             '</div>' +
             L('ui.7b3851aed094') + esc(pack.id) + '<br>' + counts + L('ui.21f156d0e82b') +
           '</aside>' +
@@ -898,7 +1166,7 @@ const EditorUI = {
   },
 
   validateDraftPack(app) {
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     if (!pack) return { errors: [], warnings: [] };
     return { errors: [], warnings: [] };
   },
@@ -906,13 +1174,25 @@ const EditorUI = {
   handleAction(action, el, app, event) {
     if (!action || !action.startsWith('ed-')) return false;
     if (!app || app.route !== 'editor') return false;
-    const pack = Store.getEditorPack();
+    const pack = this.currentPack();
     const item = this.currentItem(app);
     const readOnly = this.isReadOnly(app);
     const data = el.dataset;
     switch (action) {
       case 'ed-tab':
         this.switchMode(app, data.mode);
+        return true;
+      case 'ed-edit-pack-id':
+        this.openPackIdEditor(app);
+        return true;
+      case 'ed-apply-pack-id':
+        this.applyPackId(app);
+        return true;
+      case 'ed-edit-item-id':
+        this.openItemIdEditor(app);
+        return true;
+      case 'ed-apply-item-id':
+        this.applyItemId(app);
         return true;
       case 'ed-new-skill':
         this.newSkill(app);
@@ -1052,6 +1332,7 @@ const EditorUI = {
     if (!app || app.route !== 'editor') return;
     const target = event.target;
     if (!target) return;
+    if (target.matches('[data-editor-pack]')) { this.selectPack(app, target.value); return; }
     const item = this.currentItem(app);
     if (!item || this.isReadOnly(app)) return;
     if (target.matches('[data-meta-field]')) {

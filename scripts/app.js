@@ -1808,18 +1808,65 @@ App.chooseBattleSkill = function (uid, skillId, kind) {
   else this.render();
 };
 
-App.confirmBattleSkill = function () {
-  if (!this.battle || this.battle.status !== 'active') return;
-  if (this._autoPendingUid || this.autoUnitWaiting()) return;
-  const context = this.battleSkillContext();
-  if (!context) return;
-  const { actor, skill, kind } = context;
-  const mode = skill.targetMode || 'none';
-  if ((mode === 'enemy' || mode === 'ally') && !this.battleUI.targetUid) {
-    const preview = this.battleTargetPreview();
-    if (!preview.length) { this.toast(L('ui.145ad9524b89'), 'error'); return; }
-    this.toast(L('ui.7ad17dd030a1'), 'error'); return;
+App.battleUncountWarning = function (actor, skill, targetUid) {
+  const battle = this.battle;
+  if (!battle || !actor || !skill) return '';
+  const effectIds = new Set();
+  for (const effect of battle.maps.effects.values()) {
+    if (effect && effect.setUncounted) effectIds.add(effect.id);
   }
+  if (!effectIds.size) return '';
+  const chosen = battle.resolveChosenTargets(actor, skill, targetUid);
+  const targetFor = (mode, step) => {
+    if (mode === 'owner' && step && step.ownerEffectId) {
+      const holders = [];
+      for (const sideId of ['A', 'B']) {
+        for (const candidate of battle.getFieldUnits(sideId)) {
+          if (battle.getEffectStacks(candidate, step.ownerEffectId) > 0) holders.push(candidate);
+        }
+      }
+      return holders;
+    }
+    if (mode === 'self' || mode === 'item' || mode === 'owner') return [actor];
+    if (mode === 'allEnemies') return battle.getEnemies(actor);
+    if (mode === 'allAllies') return battle.getLivingAllies(actor);
+    return chosen;
+  };
+  const findWarning = (steps, depth) => {
+    if (!Array.isArray(steps) || depth > 5) return '';
+    for (const step of steps) {
+      if (!step) continue;
+      if (step.kind === 'addEffect' && effectIds.has(step.effectId)) {
+        for (const target of targetFor(step.target || 'chosen', step)) {
+          if (!target || !target.alive || !target.counted) continue;
+          const otherCounted = battle.getFieldUnits(target.side).filter(unit => unit !== target && unit.alive && unit.counted).length;
+          if (otherCounted === 0) {
+            return L('ui.099a5b42d8b9') + skill.name + L('ui.eba671e81745') + target.name + L('ui.de74ff39e4a7');
+          }
+        }
+      }
+      if (step.kind === 'castSkill' && step.skillId) {
+        const nested = battle.maps.skills.get(step.skillId);
+        if (nested) {
+          const nestedWarning = findWarning(nested.steps || [], depth + 1);
+          if (nestedWarning) return nestedWarning;
+        }
+      }
+      if (step.kind === 'branch') {
+        const warning = findWarning(step.then || [], depth + 1) || findWarning(step.elseSteps || [], depth + 1);
+        if (warning) return warning;
+      }
+      if (step.kind === 'forEach' || step.kind === 'loop') {
+        const warning = findWarning(step.steps || [], depth + 1);
+        if (warning) return warning;
+      }
+    }
+    return '';
+  };
+  return findWarning(skill.steps || [], 0);
+};
+
+App.executeBattleSkill = function (actor, skill, kind) {
   this.beginBattleEngineAction();
   let result;
   if (kind === 'extra') {
@@ -1834,6 +1881,38 @@ App.confirmBattleSkill = function () {
   }
   this.battleUI = { selectedUid: null, skillId: null, kind: 'active', extraUid: null, targetUid: null };
   this.finishBattleEngineAction();
+};
+
+App.confirmBattleSkill = function () {
+  if (!this.battle || this.battle.status !== 'active') return;
+  if (this._autoPendingUid || this.autoUnitWaiting()) return;
+  const context = this.battleSkillContext();
+  if (!context) return;
+  const { actor, skill, kind } = context;
+  const mode = skill.targetMode || 'none';
+  if ((mode === 'enemy' || mode === 'ally') && !this.battleUI.targetUid) {
+    const preview = this.battleTargetPreview();
+    if (!preview.length) { this.toast(L('ui.145ad9524b89'), 'error'); return; }
+    this.toast(L('ui.7ad17dd030a1'), 'error'); return;
+  }
+  const warning = this.battleUncountWarning(actor, skill, this.battleUI.targetUid || null);
+  if (warning) {
+    this.confirm({
+      title: L('ui.b6f1e6afd272'),
+      message: warning,
+      confirmLabel: L('ui.28149b746b71'),
+      danger: true,
+      onConfirm: () => {
+        if (!this.battle || this.battle.status !== 'active' || !actor.alive || actor.acted) {
+          this.toast(L('ui.3a3ab9b06ff5'), 'error');
+          return;
+        }
+        this.executeBattleSkill(actor, skill, kind);
+      }
+    });
+    return;
+  }
+  this.executeBattleSkill(actor, skill, kind);
 };
 
 App.cancelBattleSkill = function () {
@@ -2586,6 +2665,11 @@ App.publishEditorDraft = function () {
     return;
   }
   this.workshopSelected = imported.pack.id;
+  Store.clearEditorDraft();
+  if (window.EditorUI) {
+    EditorUI.targetPackId = null;
+    EditorUI.selectedId = null;
+  }
   this.render();
   this.toast(L('ui.f851fbe7cf9a'), 'success');
 };

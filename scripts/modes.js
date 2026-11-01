@@ -65,6 +65,14 @@ const ModesUI = {
     return L('ui.eedf526fb64e');
   },
 
+  challengeList() {
+    return CHALLENGE_DEFINITIONS.concat(Array.isArray(Store.state.customChallenges) ? Store.state.customChallenges : []);
+  },
+
+  getChallenge(id) {
+    return this.challengeList().find(item => item.id === id) || null;
+  },
+
   /* ---------- Shared helpers ---------- */
   storedDeck(app) {
     let deck = deepClone(Store.state.decks.A || DEFAULT_LOADOUT_A);
@@ -91,7 +99,7 @@ const ModesUI = {
     return {
       hpFlat: modeNumber(upgrades.hpFlat, 0),
       dmgFlat: modeNumber(upgrades.dmgFlat, 0),
-      startingEffects: (upgrades.startEffects || []).map(item => ({ effectId: item.effectId, stacks: item.stacks || 1 }))
+      startingEffects: []
     };
   },
 
@@ -105,16 +113,117 @@ const ModesUI = {
     return run;
   },
 
+  lineupDesired(run) {
+    const owned = [...new Set((run.deck && run.deck.units) || [])].filter(id => Store.index.maps.units.has(id));
+    return Math.min(3, owned.length);
+  },
+
+  ensureRunLineup(run) {
+    const owned = [...new Set((run.deck && run.deck.units) || [])].filter(id => Store.index.maps.units.has(id));
+    run.activeUnits = [...new Set(run.activeUnits || [])].filter(id => owned.includes(id)).slice(0, 3);
+    return run.activeUnits;
+  },
+
+  lineupValid(run) {
+    const owned = [...new Set((run.deck && run.deck.units) || [])].filter(id => Store.index.maps.units.has(id));
+    const active = this.ensureRunLineup(run);
+    if (!active.length) return false;
+    return active.some(id => {
+      const unit = Store.index.maps.units.get(id);
+      return unit && unit.counted !== false;
+    });
+  },
+
   battleLoadout(run) {
     this.ensureRunLoadout(run);
+    this.ensureRunLineup(run);
     const equipment = run.activeEquipment.filter(id => Store.index.maps.equipment.has(id));
     const activeRunes = run.activeRunes.filter(id => Store.index.maps.runes.has(id));
     return {
-      units: (run.deck.units || []).slice(),
+      units: run.activeUnits.slice(),
       equipment,
       runes: [...new Set(run.deck.runes || [])],
       activeRunes
     };
+  },
+
+  characterPrice(quality) {
+    return quality === 'gold' ? 15 : quality === 'blue' ? 10 : 5;
+  },
+
+  rollCharacterQuality() {
+    const roll = Math.random();
+    return roll < 0.5 ? 'white' : roll < 0.9 ? 'blue' : 'gold';
+  },
+
+  generateCharacterShop(run) {
+    if (!run) return [];
+    const owned = new Set((run.deck && run.deck.units) || []);
+    const used = new Set();
+    const offers = [];
+    for (let i = 0; i < 5; i += 1) {
+      let quality = this.rollCharacterQuality();
+      let pool = Store.index.units.filter(unit => unit.quality === quality && !used.has(unit.id) && !owned.has(unit.id));
+      if (!pool.length) pool = Store.index.units.filter(unit => !used.has(unit.id) && !owned.has(unit.id));
+      if (!pool.length) pool = Store.index.units.filter(unit => !used.has(unit.id));
+      if (!pool.length) break;
+      const unit = modeRandom(pool);
+      used.add(unit.id);
+      offers.push({ unitId: unit.id, quality: unit.quality, price: this.characterPrice(unit.quality), sold: false });
+    }
+    run.characterShop = offers;
+    return offers;
+  },
+
+  ensureCharacterShop(run) {
+    if (!run) return [];
+    if (!Array.isArray(run.characterShop) || !run.characterShop.length) this.generateCharacterShop(run);
+    return run.characterShop || [];
+  },
+
+  renderCharacterShop(app, run, mode) {
+    const offers = this.ensureCharacterShop(run);
+    const cards = offers.map((offer, index) => {
+      const unit = Store.index.maps.units.get(offer.unitId);
+      if (!unit) return '';
+      const owned = (run.deck.units || []).includes(unit.id);
+      const disabled = offer.sold || owned || modeNumber(run.gold) < offer.price;
+      return '<div class="character-shop-card' + (offer.sold ? ' sold' : '') + '">' +
+        '<img src="' + attr(cardArt(unit)) + '" alt="">' +
+        '<div class="character-shop-main"><strong>' + esc(unit.name) + '</strong><small>' + qualityBadge(unit.quality) + L('ui.f440b07d0ba3') + unit.hp + ' · ' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>' +
+        '<button class="btn btn-sm" type="button" data-action="mode-character-shop-buy" data-mode="' + mode + '" data-index="' + index + '"' + (disabled ? ' disabled' : '') + '>' + (offer.sold ? L('ui.c9d7f9ccccc9') : owned ? L('ui.a2a9f7d96220') : offer.price + L('ui.18780ade69b4')) + '</button>' +
+      '</div>';
+    }).join('');
+    return L('ui.c0cb13031dcb') + modeNumber(run.gold) + L('ui.561c4f054a15') + (cards || L('ui.b1baec18c743')) + L('ui.01efc35014b7') + mode + '"' + (modeNumber(run.gold) < 10 ? ' disabled' : '') + L('ui.ba2b83b0a188');
+  },
+
+  buyCharacterFromShop(app, mode, index) {
+    const run = Store.state.runs[mode];
+    if (!run || !run.active) return;
+    const offers = this.ensureCharacterShop(run);
+    const offer = offers[Number(index)];
+    if (!offer || offer.sold) return;
+    const unit = Store.index.maps.units.get(offer.unitId);
+    if (!unit) return;
+    if ((run.deck.units || []).includes(unit.id)) { app.toast(L('ui.8ff8595c3edf'), 'error'); return; }
+    if (modeNumber(run.gold) < offer.price) { app.toast(L('ui.9ffa872e8a9e'), 'error'); return; }
+    run.gold = modeNumber(run.gold) - offer.price;
+    run.deck.units.push(unit.id);
+    offer.sold = true;
+    this.storeRun(mode, run);
+    app.render();
+    app.toast('「' + unit.name + L('ui.1ada621eaf15'), 'success');
+  },
+
+  refreshCharacterShop(app, mode) {
+    const run = Store.state.runs[mode];
+    if (!run || !run.active) return;
+    if (modeNumber(run.gold) < 10) { app.toast(L('ui.e72760660183'), 'error'); return; }
+    run.gold = modeNumber(run.gold) - 10;
+    this.generateCharacterShop(run);
+    this.storeRun(mode, run);
+    app.render();
+    app.toast(L('ui.03a6e4f3d446'), 'success');
   },
 
   makeBattleRules(extra) {
@@ -214,7 +323,7 @@ const ModesUI = {
         title: L('ui.d62c40c0ef12'),
         text: L('ui.a66129acd398'),
         choices: [
-          { text: L('ui.78c21b5807ac'), hint: L('ui.af653628fa7e'), effect: 'gold', value: 30 },
+          { text: L('ui.78c21b5807ac'), hint: L('ui.af653628fa7e'), effect: 'gold', value: 10 },
           { text: L('ui.c513456762ba'), hint: L('ui.2f403fb269c0'), effect: 'unit' }
         ]
       };
@@ -236,7 +345,7 @@ const ModesUI = {
       text: L('ui.b49720a70b8f'),
       choices: [
         { text: L('ui.0ab637532216'), hint: L('ui.be6a8cec050d'), effect: 'rewrite-shop' },
-        { text: L('ui.3742a2d9c72e'), hint: L('ui.f06cd6b80396'), effect: 'gold', value: 40 }
+        { text: L('ui.3742a2d9c72e'), hint: L('ui.f06cd6b80396'), effect: 'gold', value: 15 }
       ]
     };
   },
@@ -261,11 +370,6 @@ const ModesUI = {
       const reward = { kind: 'rune', id: rune.id, title: rune.name, desc: L('ui.864bdea5847e') + (modSummary(rune.mods, true) || '') };
       rewards.push(reward);
       guaranteedGear.push(reward);
-    }
-    const positiveEffects = Store.index.effects.filter(effect => effect.type === 'positive');
-    if (positiveEffects.length && (!run.upgrades || !run.upgrades.startEffects || run.upgrades.startEffects.length < 3)) {
-      const effect = modeRandom(positiveEffects);
-      rewards.push({ kind: 'effect', id: effect.id, title: L('ui.4a688a75762a') + effect.name, desc: L('ui.68b7f3139fb4') + effect.name + L('ui.9e97acf1c2c2') });
     }
     rewards.push({ kind: 'upgradeHp', title: L('ui.09a189a8bdcf'), desc: L('ui.d7e00031b670') });
     rewards.push({ kind: 'upgradeDmg', title: L('ui.4bc3136c40e6'), desc: L('ui.e0dc3db4d789') });
@@ -313,10 +417,9 @@ const ModesUI = {
       if (!run.activeRunes.includes(reward.id) && run.activeRunes.length < 3) run.activeRunes.push(reward.id);
       app.toast(L('ui.e9efb0ced6c6'), 'success');
     }
-    else if (reward.kind === 'effect') { run.upgrades.startEffects = run.upgrades.startEffects || []; run.upgrades.startEffects.push({ effectId: reward.id, stacks: 2 }); app.toast(L('ui.d972ce84852b'), 'success'); }
     else if (reward.kind === 'upgradeHp') { run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + 2; app.toast(L('ui.f7545f74aa97'), 'success'); }
     else if (reward.kind === 'upgradeDmg') { run.upgrades.dmgFlat = modeNumber(run.upgrades.dmgFlat) + 1; app.toast(L('ui.d85e0f0048eb'), 'success'); }
-    else if (reward.kind === 'gold') { run.gold = modeNumber(run.gold) + 35; app.toast(L('ui.bcfa71000a12'), 'success'); }
+    else if (reward.kind === 'gold') { run.gold = modeNumber(run.gold) + 10; app.toast(L('ui.bcfa71000a12'), 'success'); }
   },
 
   openPendingReward(app, mode) {
@@ -408,28 +511,18 @@ const ModesUI = {
   },
 
   renderRogueLanding(app, previous) {
-    const draft = this.ensureRogueDraft();
-    const selectedUnits = draft.units.map(id => Store.index.maps.units.get(id)).filter(Boolean);
-    const counted = selectedUnits.filter(unit => unit.counted !== false).length;
-    const error = !selectedUnits.length ? L('ui.563310cf1837') : !counted ? L('ui.7cf719f84fe4') : '';
-    const cardButton = (type, card, selected) => '<button class="choice-card' + (selected ? ' selected' : '') + '" type="button" data-action="mode-rogue-draft" data-type="' + type + '" data-id="' + attr(card.id) + '"><span class="choice-mark">' + (selected ? L('ui.471c7b464c0a') : '+') + '</span><span class="choice-main"><strong>' + esc(card.name) + '</strong><small>' + qualityBadge(card.quality) + ' ' + (type === 'unit' ? L('ui.11d4fcf2be9c') + card.hp + ' · ' + ((RESISTANCE_TYPES[card.resistance.type] || { label: L('ui.aa8457052a32') }).label) + ' ' + card.resistance.value + ' · ' + (card.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) : (modSummary(card.mods, true) || L('ui.d9f936d25fe4'))) + '</small></span></button>';
-    const unitPool = Store.index.units.slice();
-    const gearPool = Store.index.equipment.slice();
-    const runePool = Store.index.runes.slice();
-    const lastSummary = previous && !previous.active ? L('ui.75d1aaa20fe0') + (previous.completed ? L('ui.08f5a7c8ca7c') : L('ui.3726e5905da9')) + '</div></div><span class="chip">' + (previous.completed ? L('ui.fae07039a5dc') : L('ui.3e3c8068bb0e')) + L('ui.8fba690aa1a9') + (modeNumber(previous.currentLayer) + 1) + L('ui.9578a71936bd') + modeNumber(previous.wins) + L('ui.40536a8c1ddb') + modeNumber(previous.gold) + '</b></div></div></section>' : '';
+    const previousBlock = previous && !previous.active ? L('ui.74e29c9ae6b6') + (previous.completed ? L('ui.ddeabb8144ea') : L('ui.01c89d9334cd')) + L('ui.59d6ee9326f8') + (modeNumber(previous.currentLayer) + 1) + L('ui.a63dc2ffbd0f') + modeNumber(previous.wins) + L('ui.3502e786d1e1') : '';
     return '' +
       '<div class="page-wrap mode-page">' +
-        L('ui.288f438232a2') +
-        L('ui.a4ac8ef62c3b') +
-        (lastSummary ? '<div class="mt-3">' + lastSummary + '</div>' : '') +
-        L('ui.6b004c51a27b') +
-          '<div class="rogue-start-grid">' +
-            L('ui.a5d47dcff916') + selectedUnits.length + ' / 4</div></div></div><div class="panel-body"><div class="choice-list">' + unitPool.map(unit => cardButton('unit', unit, draft.units.includes(unit.id))).join('') + '</div></div></section>' +
-            L('ui.524e1afd96a6') + draft.equipment.length + ' / 2</div></div></div><div class="panel-body"><div class="choice-list">' + (gearPool.length ? gearPool.map(gear => cardButton('equipment', gear, draft.equipment.includes(gear.id))).join('') : L('ui.2177237ee46e')) + '</div></div></section>' +
-            L('ui.34261358dd20') + draft.runes.length + ' / 3</div></div></div><div class="panel-body"><div class="choice-list">' + (runePool.length ? runePool.map(rune => cardButton('rune', rune, draft.runes.includes(rune.id))).join('') : L('ui.a349678d618d')) + '</div></div></section>' +
-          '</div>' +
-          '<div class="panel mt-2"><div class="panel-body"><div class="row between wrap"><div><div class="row wrap"><span class="chip ' + (counted ? 'green' : 'red') + L('ui.3721873ec5d5') + counted + L('ui.17cc746a891f') + selectedUnits.length + L('ui.a3c2cec40651') + draft.equipment.length + L('ui.81a0b705a228') + draft.runes.length + L('ui.aa22f2486ba7') + (error ? ' disabled' : '') + L('ui.79b0349a7667') + (error ? '<div class="notice danger mt-2">' + esc(error) + '</div>' : '') + '</div></div>' +
-        '</div>' +
+        L('ui.6f19a204d495') +
+        '<section class="panel mt-2"><div class="panel-body"><div class="stack gap-sm">' +
+          L('ui.afd5c8d71257') +
+          L('ui.369a362145da') +
+          L('ui.e06dde58a134') +
+          L('ui.82fa11e0d98b') +
+          previousBlock +
+          L('ui.0cb480b0d26b') +
+        '</div></div></section>' +
       '</div>';
   },
 
@@ -452,7 +545,6 @@ const ModesUI = {
     }).join('');
     const deckCards = this.deckPreview(run.deck);
     const upgrades = run.upgrades || {};
-    const startEffects = upgrades.startEffects || [];
     return '' +
       '<div class="page-wrap mode-page">' +
         L('ui.6d9238893180') + (run.currentLayer + 1) + L('ui.5adccffcacc0') +
@@ -466,10 +558,11 @@ const ModesUI = {
               L('ui.d21ce632e202') + modeNumber(run.wins) + '</b></div>' +
               L('ui.2f28fcd3704d') + modeNumber(upgrades.hpFlat) + '</b></div>' +
               L('ui.0278a547fffe') + modeNumber(upgrades.dmgFlat) + '</b></div>' +
-              L('ui.cc7a659b28cb') + (startEffects.length ? startEffects.map(item => '<span class="chip violet">' + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('') : L('ui.ddedd16c5c79')) + '</div>' +
+              '</div>' +
             '</div></section>' +
             L('ui.9033b2bd3bc2') + deckCards.units.length + L('ui.5fa026d18910') + (run.activeEquipment || []).length + L('ui.5804d65c8bf5') + (run.activeRunes || []).length + L('ui.c203c5fd39ee') + deckCards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + L('ui.37e626936ee7') +
             L('ui.8e045c395393') +
+            this.renderCharacterShop(app, run, 'rogue') +
           '</aside>' +
         '</div>' +
       '</div>';
@@ -488,11 +581,6 @@ const ModesUI = {
 
   startRogue(app) {
     this._shop = null;
-    const draft = this.ensureRogueDraft();
-    const units = draft.units.slice();
-    if (!units.length) { app.toast(L('ui.563310cf1837'), 'error'); return; }
-    const counted = units.map(id => Store.index.maps.units.get(id)).filter(Boolean).filter(unit => unit.counted !== false);
-    if (!counted.length) { app.toast(L('ui.7cf719f84fe4'), 'error'); return; }
     const run = {
       active: true,
       completed: false,
@@ -500,19 +588,22 @@ const ModesUI = {
       map: { layers: this.createRogueMap() },
       currentLayer: 0,
       currentNodeId: null,
-      deck: { units, equipment: draft.equipment.slice(), runes: draft.runes.slice() },
-      activeEquipment: draft.equipment.slice(),
-      activeRunes: draft.runes.slice(0, 3),
-      gold: 60,
+      deck: { units: [], equipment: [], runes: [] },
+      activeEquipment: [],
+      activeRunes: [],
+      activeUnits: [],
+      characterShop: [],
+      gold: 30,
       wins: 0,
       upgrades: { hpFlat: 0, dmgFlat: 0, startEffects: [] },
       awaitingReward: false,
       pendingRewards: [],
       startedAt: Date.now()
     };
+    this.generateCharacterShop(run);
     this.storeRun('rogue', run);
     app.render();
-    app.toast(L('ui.b5c77f9583cc'), 'success');
+    app.toast(L('ui.b43a237b76c4'), 'success');
   },
 
   enterRogueNode(app, nodeId) {
@@ -532,7 +623,16 @@ const ModesUI = {
     else if (node.type === 'rest') this.openRestModal(app, run, node);
   },
 
+  requireLineup(app, mode) {
+    const run = Store.state.runs[mode];
+    if (run && this.lineupValid(run)) return true;
+    app.toast(L('ui.d36f0cb2eb4c'), 'error');
+    this.openLoadoutModal(app, mode);
+    return false;
+  },
+
   startRogueBattle(app, run, node, source) {
+    if (!this.requireLineup(app, 'rogue')) return;
     const enemy = this.buildEnemy(node.layer, node.type === 'boss' ? 'boss' : node.type === 'elite' ? 'elite' : 'battle');
     app.startBattle({
       loadouts: {
@@ -589,7 +689,7 @@ const ModesUI = {
         run.deck.units.push(pick.id);
         app.toast('「' + pick.name + L('ui.d1f5c3fd312c'), 'success');
       } else {
-        run.gold = modeNumber(run.gold) + 40;
+        run.gold = modeNumber(run.gold) + 10;
         app.toast(L('ui.2a34fd215c37'), 'success');
       }
       this.advanceNode(app, node);
@@ -623,19 +723,19 @@ const ModesUI = {
     const candidates = Store.index.units.filter(unit => !owned.has(unit.id));
     if (candidates.length) {
       const unit = modeRandom(candidates);
-      optional.push({ kind: 'unit', id: unit.id, title: unit.name, desc: L('ui.3fa6e6baec47') + unit.hp, price: 35, sold: false });
+      optional.push({ kind: 'unit', id: unit.id, title: unit.name, desc: L('ui.3fa6e6baec47') + unit.hp, price: this.characterPrice(unit.quality) + 3, sold: false });
     }
     if (Store.index.equipment.length && (run.deck.equipment || []).length < 6) {
       const gear = modeRandom(Store.index.equipment);
-      required.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: L('ui.56bd2bba6de9') + (modSummary(gear.mods, true) || L('ui.455d56230713')), price: 25, sold: false });
+      required.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: L('ui.56bd2bba6de9') + (modSummary(gear.mods, true) || L('ui.455d56230713')), price: this.characterPrice(gear.quality) + 3, sold: false });
     }
     if (Store.index.runes.length && (run.deck.runes || []).length < 6) {
       const rune = modeRandom(Store.index.runes);
-      required.push({ kind: 'rune', id: rune.id, title: rune.name, desc: L('ui.644e0790b977') + (modSummary(rune.mods, true) || L('ui.455d56230713')), price: 25, sold: false });
+      required.push({ kind: 'rune', id: rune.id, title: rune.name, desc: L('ui.644e0790b977') + (modSummary(rune.mods, true) || L('ui.455d56230713')), price: this.characterPrice(rune.quality) + 3, sold: false });
     }
-    optional.push({ kind: 'upgradeHp', title: L('ui.09a189a8bdcf'), desc: L('ui.100f07370663'), price: 30, sold: false });
-    optional.push({ kind: 'upgradeDmg', title: L('ui.4bc3136c40e6'), desc: L('ui.96b27500cc62'), price: 30, sold: false });
-    if ((run.deck.units || []).length > 1) optional.push({ kind: 'removeUnit', title: L('ui.78b88aacca2f'), desc: L('ui.68289ce53a44'), price: 20, sold: false });
+    optional.push({ kind: 'upgradeHp', title: L('ui.09a189a8bdcf'), desc: L('ui.100f07370663'), price: 20, sold: false });
+    optional.push({ kind: 'upgradeDmg', title: L('ui.4bc3136c40e6'), desc: L('ui.96b27500cc62'), price: 20, sold: false });
+    if ((run.deck.units || []).length > 1) optional.push({ kind: 'removeUnit', title: L('ui.78b88aacca2f'), desc: L('ui.68289ce53a44'), price: 10, sold: false });
     return required.concat(modeShuffle(optional).slice(0, Math.max(2, 4 - required.length)));
   },
 
@@ -718,7 +818,7 @@ const ModesUI = {
         this.ensureRunLoadout(run);
         if (!run.activeEquipment.includes(gear.id)) run.activeEquipment.push(gear.id);
         app.toast(L('ui.2667c8ca1853') + gear.name + '」。', 'success');
-      } else { run.gold = modeNumber(run.gold) + 25; app.toast(L('ui.d6353723cb4a'), 'success'); }
+      } else { run.gold = modeNumber(run.gold) + 10; app.toast(L('ui.d6353723cb4a'), 'success'); }
     } else if (choice === 'rune') {
       const owned = new Set(run.deck.runes || []);
       const candidates = Store.index.runes.filter(item => !owned.has(item.id));
@@ -728,8 +828,8 @@ const ModesUI = {
         this.ensureRunLoadout(run);
         if (run.activeRunes.length < 3) run.activeRunes.push(rune.id);
         app.toast(L('ui.146c79ec28b5') + rune.name + '」。', 'success');
-      } else { run.gold = modeNumber(run.gold) + 25; app.toast(L('ui.c85a704238b6'), 'success'); }
-    } else { run.gold = modeNumber(run.gold) + 30; app.toast(L('ui.af653628fa7e'), 'success'); }
+      } else { run.gold = modeNumber(run.gold) + 10; app.toast(L('ui.c85a704238b6'), 'success'); }
+    } else { run.gold = modeNumber(run.gold) + 10; app.toast(L('ui.af653628fa7e'), 'success'); }
     this.storeRun('rogue', run);
     this.advanceNode(app, node);
   },
@@ -784,8 +884,10 @@ const ModesUI = {
     const run = Store.state.runs[mode];
     if (!run || !run.active) return;
     this.ensureRunLoadout(run);
+    this.ensureRunLineup(run);
     this._loadoutDraft = {
       mode,
+      units: run.activeUnits.slice(),
       equipment: run.activeEquipment.slice(),
       runes: run.activeRunes.slice(0, 3)
     };
@@ -796,6 +898,13 @@ const ModesUI = {
     const run = Store.state.runs[this._loadoutDraft.mode];
     if (!run) return;
     const draft = this._loadoutDraft;
+    const unitPool = [...new Set((run.deck.units || []))].map(id => Store.index.maps.units.get(id)).filter(Boolean);
+    const desiredUnits = this.lineupDesired(run);
+    const unitRows = unitPool.length ? unitPool.map(unit => {
+      const selected = draft.units.includes(unit.id);
+      return '<button class="loadout-item unit' + (selected ? ' selected' : '') + '" type="button" data-action="mode-loadout-toggle-unit" data-id="' + attr(unit.id) + '"><span class="loadout-check">' + (selected ? L('ui.f24ddc2bef8f') : L('ui.e42bf97d82df')) + '</span><span class="loadout-main"><strong>' + esc(unit.name) + L('ui.8e2355a4acc3') + unit.hp + ' · ' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + ' · ' + esc((unit.skills || []).length) + L('ui.e8809b7880d4') + qualityBadge(unit.quality) + '</button>';
+    }).join('') : L('ui.11812e8bb557');
+    const unitSection = L('ui.bdf7a6f5ebda') + draft.units.length + ' / 3' + L('ui.86fca01cb883') + L('ui.94194f705dd9') + unitRows + '</div></section>';
     const equipmentPool = [...new Set((run.deck.equipment || []))].map(id => Store.index.maps.equipment.get(id)).filter(Boolean);
     const runePool = [...new Set((run.deck.runes || []))].map(id => Store.index.maps.runes.get(id)).filter(Boolean);
     const equipmentRows = equipmentPool.length ? equipmentPool.map(item => {
@@ -808,11 +917,25 @@ const ModesUI = {
     }).join('') : L('ui.2a18dd90f485');
     app.openModal({
       title: L('ui.57993eef61b4') + (this._loadoutDraft.mode === 'rogue' ? L('ui.85646631c0e1') : L('ui.fb68101a77f8')),
-      subtitle: L('ui.231ad523fcfa'),
+      subtitle: L('ui.0239daab3cc8'),
       size: 'large',
-      body: L('ui.4ec17c260ddb') + draft.equipment.length + L('ui.55d8318eec45') + equipmentRows + L('ui.6641680ff3d1') + draft.runes.length + L('ui.8cb9a693fdb2') + runeRows + '</div></section></div>',
+      body: unitSection + L('ui.4ec17c260ddb') + draft.equipment.length + L('ui.55d8318eec45') + equipmentRows + L('ui.6641680ff3d1') + draft.runes.length + L('ui.8cb9a693fdb2') + runeRows + '</div></section></div>',
       foot: L('ui.266af4a7778f') + (run.deck.units || []).length + L('ui.d65a0a66148c') + equipmentPool.length + L('ui.b604c4619b70') + runePool.length + L('ui.fbb852a2594a')
     });
+  },
+
+  toggleLoadoutUnit(app, id) {
+    if (!this._loadoutDraft) return;
+    const run = Store.state.runs[this._loadoutDraft.mode];
+    if (!run) return;
+    const owned = new Set(run.deck.units || []);
+    if (!owned.has(id)) return;
+    const list = this._loadoutDraft.units;
+    const index = list.indexOf(id);
+    if (index >= 0) list.splice(index, 1);
+    else if (list.length >= 3) { app.toast(L('ui.0eb1a86c59ae'), 'error'); return; }
+    else list.push(id);
+    this.renderLoadoutModal(app);
   },
 
   toggleLoadoutEquipment(app, id) {
@@ -853,8 +976,23 @@ const ModesUI = {
     if (!draft) return;
     const run = Store.state.runs[draft.mode];
     if (!run) return;
+    const ownedUnits = [...new Set(run.deck.units || [])].filter(id => Store.index.maps.units.has(id));
+    const desiredUnits = Math.min(3, ownedUnits.length);
+    const units = [...new Set(draft.units || [])].filter(id => ownedUnits.includes(id));
+    if (units.length !== desiredUnits) {
+      app.toast(L('ui.064c9b5da568') + desiredUnits + L('ui.c8132d86ef92'), 'error');
+      return;
+    }
+    if (!units.some(id => {
+      const unit = Store.index.maps.units.get(id);
+      return unit && unit.counted !== false;
+    })) {
+      app.toast(L('ui.eb31e052982e'), 'error');
+      return;
+    }
     const ownedEquipment = new Set(run.deck.equipment || []);
     const ownedRunes = new Set(run.deck.runes || []);
+    run.activeUnits = units;
     run.activeEquipment = draft.equipment.filter(id => ownedEquipment.has(id));
     run.activeRunes = draft.runes.filter(id => ownedRunes.has(id)).slice(0, 3);
     this.storeRun(draft.mode, run);
@@ -873,7 +1011,7 @@ const ModesUI = {
       return [{ label: L('ui.88d165fb89ab'), action: 'mode-rogue-defeat', kind: 'danger' }];
     }
     if (context.mode === 'challenge') {
-      const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === context.challengeId);
+      const challenge = this.getChallenge(context.challengeId);
       const isLast = challenge && context.stageIndex >= challenge.stages.length - 1;
       if (playerWin) return [{ label: isLast ? L('ui.e35e668dd7ec') : L('ui.8673d59b4cba'), action: isLast ? 'mode-challenge-complete' : 'mode-challenge-next', kind: 'primary' }];
       return [{ label: L('ui.14638b5f0f96'), action: 'mode-challenge-defeat', kind: 'danger' }];
@@ -899,7 +1037,7 @@ const ModesUI = {
     const node = context.nodeId ? run.map.layers.flat().find(item => item.id === context.nodeId) : null;
     if (node) { node.done = true; node.current = false; }
     run.wins = modeNumber(run.wins) + 1;
-    run.gold = modeNumber(run.gold) + (node && node.type === 'boss' ? 60 : node && node.type === 'elite' ? 35 : 25);
+    run.gold = modeNumber(run.gold) + (node && node.type === 'boss' ? 20 : node && node.type === 'elite' ? 12 : 8);
     run.currentNodeId = node ? node.id : run.currentNodeId;
     run.pendingCompletion = !!(node && node.type === 'boss');
     this.generateRewards(run);
@@ -932,7 +1070,7 @@ const ModesUI = {
     context.battleResolved = true;
     run.wins = modeNumber(run.wins) + 1;
     run.layer = modeNumber(run.layer, 1) + 1;
-    run.gold = modeNumber(run.gold) + 20;
+    run.gold = modeNumber(run.gold) + 8;
     this.generateRewards(run);
     this.storeRun('endless', run);
     app.exitBattleTo('endless');
@@ -962,7 +1100,7 @@ const ModesUI = {
     const cards = this.deckPreview(stored.deck);
     const counts = cards.units.filter(unit => unit.counted !== false).length;
     const runBanner = activeRun ? (() => {
-      const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === activeRun.challengeId);
+      const challenge = this.getChallenge(activeRun.challengeId);
       const stage = challenge && challenge.stages[activeRun.stageIndex];
       return L('ui.91ce5653de6e') + esc(challenge ? challenge.name : L('ui.9294c931e171')) + L('ui.11f8fe25c36e') + (activeRun.stageIndex + 1) + ' / ' + (challenge ? challenge.stages.length : '?') + L('ui.1a033f436ed8') + esc(stage ? stage.name : '') + L('ui.d96201dcece1') + (activeRun.stageIndex + 1) + L('ui.0ed208779b09');
     })() : '';
@@ -974,16 +1112,102 @@ const ModesUI = {
         (stored.repaired ? L('ui.f0b8788fde7b') : '') +
         (runBanner ? '<div class="mt-2">' + runBanner + '</div>' : '') + failedRun +
         L('ui.f2660a038f4c') + cards.units.length + L('ui.2ef5f8c5c834') + counts + L('ui.39c472040790') + cards.equipment.length + L('ui.03befcf868ca') + cards.runes.length + L('ui.27205cbe2719') +
-          CHALLENGE_DEFINITIONS.map((challenge, index) => {
-            const artUnit = challenge.id === 'challenge_curse' ? 'yonava' : challenge.id === 'challenge_endless' ? 'catgirl_jk' : 'philia093';
+          L('ui.1fa1dd178d12') +
+          this.challengeList().map((challenge, index) => {
+            const customUnit = challenge.custom && challenge.stages && challenge.stages[0] && challenge.stages[0].opponent && challenge.stages[0].opponent.units && challenge.stages[0].opponent.units[0];
+            const artUnit = customUnit || (challenge.id === 'challenge_curse' ? 'yonava' : challenge.id === 'challenge_endless' ? 'catgirl_jk' : 'philia093');
             const art = (Store.index.maps.units.get(artUnit) || {}).art || 'assets/pictures/unit-philia.svg';
             const isActive = activeRun && activeRun.challengeId === challenge.id;
             const blockedByOther = activeRun && !isActive;
-            return '<article class="panel challenge-card"><div class="challenge-art"><img src="' + attr(art) + '" alt=""><span class="ch-tag">' + esc(challenge.tag) + '</span><span class="ch-name">' + esc(challenge.name) + '</span></div><div class="challenge-body"><p>' + esc(challenge.description) + '</p><div class="challenge-stages">' + challenge.stages.map((stage, stageIndex) => '<div class="challenge-stage-row"><span class="stage-no">' + (stageIndex + 1) + '</span><span>' + esc(stage.name) + '</span><small>' + esc(stage.rule && stage.rule.modifier ? stage.rule.modifier : L('ui.68e99292d125')) + '</small></div>').join('') + '</div><button class="btn ' + (isActive ? 'btn-primary' : '') + '" type="button" data-action="' + (isActive ? 'mode-challenge-fight' : 'mode-challenge-start') + '" data-id="' + attr(challenge.id) + '"' + (blockedByOther ? ' disabled' : '') + '>' + (isActive ? L('ui.ea0a3697e479') : blockedByOther ? L('ui.eb5e9fb40d37') : L('ui.b77dfdad2269')) + '</button></div></article>';
+            return '<article class="panel challenge-card"><div class="challenge-art"><img src="' + attr(art) + '" alt=""><span class="ch-tag">' + esc(challenge.tag) + '</span><span class="ch-name">' + esc(challenge.name) + '</span></div><div class="challenge-body"><p>' + esc(challenge.description) + '</p><div class="challenge-stages">' + challenge.stages.map((stage, stageIndex) => '<div class="challenge-stage-row"><span class="stage-no">' + (stageIndex + 1) + '</span><span>' + esc(stage.name) + '</span><small>' + esc(stage.rule && stage.rule.modifier ? stage.rule.modifier : L('ui.68e99292d125')) + '</small></div>').join('') + '</div><button class="btn ' + (isActive ? 'btn-primary' : '') + '" type="button" data-action="' + (isActive ? 'mode-challenge-fight' : 'mode-challenge-start') + '" data-id="' + attr(challenge.id) + '"' + (blockedByOther ? ' disabled' : '') + '>' + (isActive ? L('ui.ea0a3697e479') : blockedByOther ? L('ui.eb5e9fb40d37') : L('ui.b77dfdad2269')) + '</button>' + (challenge.custom ? '<div class="btn-row mt-2"><button class="btn btn-sm" type="button" data-action="mode-challenge-edit" data-id="' + attr(challenge.id) + L('ui.b2e3834e8a00') + attr(challenge.id) + L('ui.b6c779e66651') : '') + '</div></article>';
           }).join('') +
         '</div></div>' +
         L('ui.7575dea8793b') + cards.units.map(unit => '<span class="chip">' + esc(unit.name) + '</span>').join('') + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></div>' +
       '</div>';
+  },
+
+  openChallengeDesigner(app, challengeId) {
+    const editing = challengeId ? this.getChallenge(challengeId) : null;
+    if (editing && !editing.custom) return;
+    const units = Store.index.units;
+    const stageRows = [0, 1, 2].map(index => {
+      const stage = editing && editing.stages[index] ? editing.stages[index] : {};
+      const opponent = stage.opponent || {};
+      const selected = new Set(opponent.units || []);
+      return L('ui.b7b61798329a') + (index + 1) + L('ui.b070151a4ad5') +
+        L('ui.79f261454fe5') + index + '" value="' + attr(stage.name || '') + L('ui.b7179a9344e5') +
+        L('ui.0a88405ead38') + index + '" value="' + attr((stage.rule && stage.rule.modifier) || '') + L('ui.bb96a38ab2f6') +
+        L('ui.91208ac21d1a') + index + '" value="' + attr((stage.rule && stage.rule.enemyHp) || 0) + '"></div>' +
+        L('ui.6da2ad41cd5e') + index + '" value="' + attr((stage.rule && stage.rule.enemyDmg) || 0) + '"></div></div>' +
+        L('ui.dc5bef10b85b') +
+        units.map(unit => '<label class="form-check-inline"><input type="checkbox" data-stage-unit="' + index + '" value="' + attr(unit.id) + '"' + (selected.has(unit.id) ? ' checked' : '') + '> ' + esc(unit.name) + '</label>').join('') +
+        '</div></div>';
+    }).join('');
+    app.openModal({
+      title: editing ? L('ui.14df9f49d57a') : L('ui.32c05b5c0d3b'),
+      subtitle: L('ui.7fe39afedc72'),
+      size: 'large',
+      body: L('ui.7605aafd3d73') + attr(editing ? editing.name : '') + L('ui.6ed956a88ae9') + esc(editing ? editing.description : '') + '</textarea></div></div>' +
+        L('ui.6492ffc07686') +
+        stageRows + '</div>',
+      foot: L('ui.0aa62fb98897') + (editing ? ' data-id="' + attr(editing.id) + '"' : '') + L('ui.04124a8cf9e8')
+    });
+  },
+
+  saveChallengeDesign(app) {
+    const nameInput = document.getElementById('challenge-design-name');
+    const name = nameInput ? nameInput.value.trim() : '';
+    if (!name) { app.toast(L('ui.fb3a893b9c5e'), 'error'); return; }
+    const description = (document.getElementById('challenge-design-desc') || {}).value || '';
+    const stages = [];
+    for (let index = 0; index < 3; index += 1) {
+      const stageName = (document.querySelector('[data-stage-name="' + index + '"]') || {}).value || '';
+      const ruleText = (document.querySelector('[data-stage-rule="' + index + '"]') || {}).value || '';
+      const units = [...document.querySelectorAll('[data-stage-unit="' + index + '"]:checked')].map(input => input.value);
+      if (!stageName.trim() && !units.length) continue;
+      if (!units.length) { app.toast(L('ui.f495347d6acf') + (index + 1) + L('ui.d3f767b41140'), 'error'); return; }
+      if (units.length > 5) { app.toast(L('ui.ea9f2ea1e4ed'), 'error'); return; }
+      const counted = units.some(id => {
+        const unit = Store.index.maps.units.get(id);
+        return unit && unit.counted !== false;
+      });
+      if (!counted) { app.toast(L('ui.f495347d6acf') + (index + 1) + L('ui.fc0796bc6813'), 'error'); return; }
+      stages.push({
+        name: stageName.trim() || (L('ui.f495347d6acf') + (index + 1) + L('ui.99aedc1c46d6')),
+        opponent: { units, equipment: [], runes: [] },
+        rule: {
+          modifier: ruleText.trim() || L('ui.cc3c32099a74'),
+          enemyHp: Math.max(0, Number((document.querySelector('[data-stage-hp="' + index + '"]') || {}).value) || 0),
+          enemyDmg: Math.max(0, Number((document.querySelector('[data-stage-dmg="' + index + '"]') || {}).value) || 0)
+        }
+      });
+    }
+    if (!stages.length) { app.toast(L('ui.35716345b723'), 'error'); return; }
+    const custom = Array.isArray(Store.state.customChallenges) ? Store.state.customChallenges : [];
+    const existingId = document.querySelector('[data-action="mode-challenge-design-save"]').dataset.id;
+    const existing = existingId ? custom.find(item => item.id === existingId) : null;
+    const challenge = existing || { id: 'custom_challenge_' + Date.now().toString(36), custom: true, tag: L('ui.c493338e8c33') };
+    challenge.name = name;
+    challenge.description = description.trim() || L('ui.66816132b0e4');
+    challenge.stages = stages;
+    if (!existing) custom.push(challenge);
+    Store.state.customChallenges = custom;
+    Store.save();
+    app.closeModal(true);
+    app.render();
+    app.toast(existing ? L('ui.26aea9f2cb0e') : L('ui.da4569cacd52'), 'success');
+  },
+
+  deleteCustomChallenge(app, challengeId) {
+    const custom = Array.isArray(Store.state.customChallenges) ? Store.state.customChallenges : [];
+    const target = custom.find(item => item.id === challengeId);
+    if (!target) return;
+    app.confirm({ title: L('ui.947c7896d3e4'), message: L('ui.3a61f7a24630') + target.name + L('ui.9c8d4e9c33e8'), confirmLabel: L('ui.3755f56f2f83'), danger: true, onConfirm: () => {
+      Store.state.customChallenges = custom.filter(item => item.id !== challengeId);
+      Store.save();
+      app.render();
+      app.toast(L('ui.d4c3dd13661c'), 'success');
+    } });
   },
 
   startChallenge(app, challengeId) {
@@ -992,7 +1216,7 @@ const ModesUI = {
       app.toast(L('ui.ee8ae2d00079'), 'error');
       return;
     }
-    const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === challengeId);
+    const challenge = this.getChallenge(challengeId);
     if (!challenge) return;
     const stored = this.storedDeck(app);
     if (stored.repaired) {
@@ -1027,7 +1251,7 @@ const ModesUI = {
   startChallengeStage(app) {
     const run = Store.state.runs.challenge;
     if (!run || !run.active) return;
-    const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId);
+    const challenge = this.getChallenge(run.challengeId);
     if (!challenge) return;
     const stage = challenge.stages[run.stageIndex];
     if (!stage) return;
@@ -1051,7 +1275,7 @@ const ModesUI = {
     if (!run || !run.active) return;
     if (context.battleResolved) return;
     context.battleResolved = true;
-    const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId);
+    const challenge = this.getChallenge(run.challengeId);
     if (!challenge) return;
     if (run.stageIndex < challenge.stages.length - 1) {
       run.stageIndex += 1;
@@ -1070,7 +1294,7 @@ const ModesUI = {
     run.completed = true;
     run.failed = false;
     Store.recordRun('challenge', run);
-    const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId);
+    const challenge = this.getChallenge(run.challengeId);
     Store.archiveRun({ mode: 'challenge', result: L('ui.fae07039a5dc'), detail: challenge ? challenge.name : run.challengeId, stage: run.stageIndex + 1 });
     app.exitBattleTo('challenge');
     app.toast(L('ui.76dc0d0ecade'), 'success');
@@ -1083,7 +1307,7 @@ const ModesUI = {
     run.failed = true;
     run.completed = false;
     Store.recordRun('challenge', run);
-    Store.archiveRun({ mode: 'challenge', result: L('ui.3e3c8068bb0e'), detail: (CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId) || {}).name || '', stage: run.stageIndex + 1 });
+    Store.archiveRun({ mode: 'challenge', result: L('ui.3e3c8068bb0e'), detail: (this.getChallenge(run.challengeId) || {}).name || '', stage: run.stageIndex + 1 });
     app.exitBattleTo('challenge');
   },
 
@@ -1107,57 +1331,56 @@ const ModesUI = {
 
   renderEndless(app) {
     const run = Store.state.runs.endless;
-    const active = run && run.active;
-    const stored = this.storedDeck(app);
     const best = this.bestEndlessLayer();
     const historyCount = (Store.state.history || []).filter(entry => entry.mode === 'endless').length;
-    if (active) {
-      this.ensureRunLoadout(run);
-      const cards = this.deckPreview(run.deck);
-      const upgrades = run.upgrades || {};
-      const startEffects = upgrades.startEffects || [];
+    if (!run || !run.active) {
       return '' +
         '<div class="page-wrap mode-page">' +
-          '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ENDLESS ASCENT / LAYER ' + run.layer + L('ui.64d1e1555d01') + run.layer + L('ui.b377b6973e62') + Math.max(best, run.layer) + L('ui.9caf006993cb') +
-          (run.awaitingReward ? L('ui.8627adcf1292') + run.layer + L('ui.53384de97965') : '') +
-          '<div class="endless-layout mt-2">' +
-            '<div class="stack">' +
-              L('ui.873bc77973c5') +
-                '<div class="result-stats" style="margin-top:0"><div class="result-stat"><b>' + run.layer + L('ui.83199be44d01') + modeNumber(run.wins) + L('ui.f86658598113') + modeNumber(run.gold) + L('ui.838d617575a2') +
-                L('ui.80828744e39f') + modeNumber(upgrades.hpFlat) + L('ui.f209adea79c8') + modeNumber(upgrades.dmgFlat) + '</span>' + (startEffects.map(item => L('ui.e1b32b38e61a') + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('')) + '</div>' +
-                '<div class="progress-track mt-2"><span style="width:' + Math.min(100, 8 + run.layer * 7) + L('ui.5f70f2f622c8') +
-                '<div class="btn-row mt-2"><button class="btn btn-primary btn-lg" type="button" data-action="mode-endless-battle"' + (run.awaitingReward ? ' disabled' : '') + L('ui.cff0e1cdf1fe') + run.layer + L('ui.c57aad91eb14') +
-              '</div></section>' +
-              L('ui.baf7f1926075') + [1, 2, 3, 4].map(offset => { const layer = run.layer + offset; return '<div class="layer-row"><span class="layer-no">' + layer + L('ui.921c3e0df8ad') + layer + L('ui.ccfd77d07e56') + (layer % 5 === 0 ? L('ui.afdbca0747b2') : L('ui.974c9d35dfb4')) + '</small></div><span class="layer-reward">' + (layer % 3 === 0 ? L('ui.c17a54a1745f') : L('ui.34b4e7dab975')) + '</span></div>'; }).join('') + '</div></div></section>' +
-            '</div>' +
-            '<aside class="stack">' +
-              L('ui.b807bab8993c') + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + L('ui.a80c9b739e83') +
-              L('ui.ffa81b921d31') + Math.max(best, run.layer) + L('ui.7d613eb63063') + historyCount + L('ui.35c9279f6877') +
-            '</aside>' +
-          '</div>' +
+          L('ui.8854413b0ec0') +
+          '<section class="panel mt-2"><div class="panel-body"><div class="stack gap-sm">' +
+            L('ui.afd5c8d71257') +
+            L('ui.369a362145da') +
+            L('ui.d98792e3c2dc') + best + L('ui.83e4f0bdf862') +
+            L('ui.3abcc2437c1f') +
+            L('ui.f2360b965fe8') +
+          '</div></div></section>' +
         '</div>';
     }
+    this.ensureRunLoadout(run);
+    this.ensureRunLineup(run);
+    const cards = this.deckPreview(run.deck);
+    const lineup = (run.activeUnits || []).map(id => Store.index.maps.units.get(id)).filter(Boolean);
+    const upgrades = run.upgrades || {};
     return '' +
       '<div class="page-wrap mode-page">' +
-        L('ui.cee2dbec0d15') + best + L('ui.e6b193c5845a') + historyCount + L('ui.50bf7a3f6f43') +
-        L('ui.b1c457a82027') +
-        L('ui.0b9fcb747abc') + (stored.repaired ? L('ui.67e9ecfc7982') : L('ui.9be43bd19e4d')) + '</div></div></div><div class="panel-body"><div class="row wrap">' + this.deckPreview(stored.deck).units.map(unit => '<span class="chip">' + esc(unit.name) + '</span>').join('') + this.deckPreview(stored.deck).equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + this.deckPreview(stored.deck).runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></section>' +
-          L('ui.e6758d976422') + [1, 2, 3, 4, 5].map(layer => '<div class="layer-row"><span class="layer-no">' + layer + L('ui.921c3e0df8ad') + layer + L('ui.ccfd77d07e56') + (layer === 1 ? L('ui.aca99448861b') : layer >= 4 ? L('ui.cecafef99d3b') : L('ui.701c724e51be')) + '</small></div><span class="layer-reward">' + (layer === 1 ? L('ui.8a03f08a77b3') : L('ui.9e8a2fc208f5')) + '</span></div>').join('') + '</div></div></section></div>' +
-          L('ui.15715b98de84') +
+        '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ENDLESS ASCENT / LAYER ' + run.layer + L('ui.64d1e1555d01') + run.layer + L('ui.4ae9c6e4a26e') + Math.max(best, run.layer) + L('ui.69a846a6ebe6') + modeNumber(run.gold) + L('ui.852b858d8c23') + modeNumber(run.wins) + L('ui.50cb892f7534') + (run.awaitingReward ? ' disabled' : '') + L('ui.cff0e1cdf1fe') + run.layer + L('ui.8b5ec58b9bba') +
+        (run.awaitingReward ? L('ui.f44a87b2049d') : '') +
+        '<div class="endless-layout mt-2"><div class="stack">' +
+          L('ui.454c8b2f994d') +
+            '<div class="result-stat"><b>' + modeNumber(run.gold) + L('ui.76583e400b50') +
+            '<div class="result-stat"><b>' + modeNumber(run.wins) + L('ui.ddbec77e26d6') +
+            '<div class="result-stat"><b>+' + modeNumber(upgrades.hpFlat) + ' / +' + modeNumber(upgrades.dmgFlat) + L('ui.73a7c266a49d') +
+          L('ui.cd9cb9719782') + (lineup.length ? lineup.map(unit => esc(unit.name)).join('、') : L('ui.22c7d7d787f4')) + '</div></div></section>' +
+          L('ui.0cceb3af10c5') + cards.units.length + L('ui.29481633d3cc') + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></section>' +
+          this.renderCharacterShop(app, run, 'endless') +
+        '</div><aside class="stack">' +
+          L('ui.ffa81b921d31') + best + L('ui.7d613eb63063') + historyCount + L('ui.4cc78a6fe8e3') +
+          L('ui.20484c5c6177') +
+        '</aside></div>' +
       '</div>';
   },
 
   startEndless(app) {
-    const stored = this.storedDeck(app);
-    if (stored.repaired) { app.toast(L('ui.ebb9b18bb0b0'), 'error'); return; }
     const run = {
       active: true,
       layer: 1,
       wins: 0,
       gold: 30,
-      deck: stored.deck,
-      activeEquipment: (stored.deck.equipment || []).slice(),
-      activeRunes: [...new Set(stored.deck.runes || [])].slice(0, 3),
+      deck: { units: [], equipment: [], runes: [] },
+      activeEquipment: [],
+      activeRunes: [],
+      activeUnits: [],
+      characterShop: [],
       upgrades: { hpFlat: 0, dmgFlat: 0, startEffects: [] },
       awaitingReward: false,
       pendingRewards: [],
@@ -1165,14 +1388,18 @@ const ModesUI = {
       completed: false,
       failed: false
     };
+    this.generateCharacterShop(run);
     this.storeRun('endless', run);
-    this.startEndlessBattle(app);
+    app.render();
+    this.openLoadoutModal(app, 'endless');
+    app.toast(L('ui.8ea0423bbf55'), 'success');
   },
 
   startEndlessBattle(app) {
     const run = Store.state.runs.endless;
     if (!run || !run.active) return;
     if (run.awaitingReward) { this.openPendingReward(app, 'endless'); return; }
+    if (!this.requireLineup(app, 'endless')) return;
     const layer = modeNumber(run.layer, 1);
     const kind = layer % 5 === 0 ? 'boss' : layer % 3 === 0 ? 'elite' : 'battle';
     const enemy = this.buildEnemy(layer, kind);
@@ -1263,6 +1490,9 @@ const ModesUI = {
       case 'mode-loadout-open':
         this.openLoadoutModal(app, data.mode);
         return true;
+      case 'mode-loadout-toggle-unit':
+        this.toggleLoadoutUnit(app, data.id);
+        return true;
       case 'mode-loadout-toggle-equipment':
         this.toggleLoadoutEquipment(app, data.id);
         return true;
@@ -1274,6 +1504,24 @@ const ModesUI = {
         return true;
       case 'mode-loadout-save':
         this.saveLoadout(app);
+        return true;
+      case 'mode-character-shop-buy':
+        this.buyCharacterFromShop(app, data.mode, Number(data.index));
+        return true;
+      case 'mode-character-shop-refresh':
+        this.refreshCharacterShop(app, data.mode);
+        return true;
+      case 'mode-challenge-designer':
+        this.openChallengeDesigner(app);
+        return true;
+      case 'mode-challenge-edit':
+        this.openChallengeDesigner(app, data.id);
+        return true;
+      case 'mode-challenge-design-save':
+        this.saveChallengeDesign(app);
+        return true;
+      case 'mode-challenge-delete':
+        this.deleteCustomChallenge(app, data.id);
         return true;
       case 'mode-challenge-start':
         this.startChallenge(app, data.id);

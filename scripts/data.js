@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.4.1';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -119,6 +119,19 @@ const VARIABLE_PALETTE = [
   { token: '$lastHitCount', label: L('ui.fcd9aa7f6568'), hint: L('ui.9222edcb9382') },
   { token: '$multiplier', label: L('ui.7fd7f5dcb8e6'), hint: L('ui.db2c43d5d869') },
   { token: '$targetCount', label: L('ui.41162519d223'), hint: L('ui.84ba22780f49') },
+  { token: '$target.hp', label: L('ui.64f3491b3ab6'), hint: L('ui.a8ab4fb9c7d4') },
+  { token: '$target.hpMax', label: L('ui.df11866f9c88'), hint: L('ui.14437e721521') },
+  { token: '$target.missingHp', label: L('ui.f74648f58960'), hint: L('ui.e59ffd75eda3') },
+  { token: '$target.hpPct', label: L('ui.c9e606451a67'), hint: L('ui.2582d65fc810') },
+  { token: '$target.hpRatio', label: L('ui.4aa634f299e0'), hint: L('ui.c58b0f4bc069') },
+  { token: '$target.atk', label: L('ui.bba2579c4626'), hint: L('ui.1a265f05efe9') },
+  { token: '$target.resist', label: L('ui.c125392c5a18'), hint: L('ui.7264bab0f00c') },
+  { token: '$target.counted', label: L('ui.4d4e169737dc'), hint: L('ui.99b0fb54eec9') },
+  { token: '$target.effectCount', label: L('ui.ee1238ecc804'), hint: L('ui.311d92b9d1ec') },
+  { token: '$target.count.ha', label: L('ui.9a9ba4644ccb'), hint: L('ui.4b2d35601b18') },
+  { token: '$target.sideCount.ha', label: L('ui.173d77a09106'), hint: L('ui.4b2d35601b18') },
+  { token: '$target.effect.poem', label: L('ui.bea1991040b9'), hint: L('ui.9b0b5a94ebdc') },
+  { token: '$source.effect.poem', label: L('ui.03e5749fe708'), hint: L('ui.171d42cf5255') },
   { token: '$count.ha', label: L('ui.b224097e8d8a'), hint: L('ui.4b2d35601b18') },
   { token: '$sideCount.ha', label: L('ui.9d45b0283058'), hint: L('ui.4b2d35601b18') },
   { token: '$globalCount.ha', label: L('ui.5cff0a15833d'), hint: L('ui.4b2d35601b18') },

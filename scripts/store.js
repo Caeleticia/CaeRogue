@@ -22,6 +22,8 @@ const DEFAULT_STATE = {
     B: deepClone(DEFAULT_LOADOUT_B)
   },
   editorPack: null,
+  coreOverride: null,
+  customChallenges: [],
   tutorialCompleted: false,
   runs: { rogue: null, challenge: null, endless: null },
   history: []
@@ -293,6 +295,10 @@ const Store = {
       console.warn(L('ui.1bccc342da64'), error);
     }
     this.state = mergeState(DEFAULT_STATE, saved);
+    if (this.state.coreOverride && this.state.coreOverride.content) {
+      CORE_PACK.content = deepClone(this.state.coreOverride.content);
+      if (this.state.coreOverride.countDefs) CORE_PACK.countDefs = deepClone(this.state.coreOverride.countDefs);
+    }
     if (!Array.isArray(this.state.packs)) this.state.packs = [];
     if (!Array.isArray(this.state.enabledPacks)) this.state.enabledPacks = [CORE_PACK_ID];
     if (!this.state.enabledPacks.includes(CORE_PACK_ID)) this.state.enabledPacks.unshift(CORE_PACK_ID);
@@ -316,8 +322,28 @@ const Store = {
   },
 
   rebuild() {
-    this.index = buildIndex(this.state.packs, this.state.enabledPacks);
+    const packs = this.state.packs.slice();
+    const draft = this.state.editorPack;
+    if (draft && draft.content && ['units','skills','effects','equipment','runes'].some(key => (draft.content[key] || []).length) && !packs.some(pack => pack.id === draft.id)) {
+      packs.push(draft);
+    }
+    const enabled = this.state.enabledPacks.slice();
+    if (draft && packs.includes(draft) && !enabled.includes(draft.id)) enabled.push(draft.id);
+    this.index = buildIndex(packs, enabled);
     return this.index;
+  },
+
+  clearEditorDraft() {
+    const draft = this.state.editorPack;
+    if (!draft) return;
+    for (const category of ['units','skills','effects','equipment','runes']) {
+      draft.content[category] = [];
+    }
+    draft.id = 'draft.' + Date.now().toString(36);
+    draft.name = L('ui.927d996998e7');
+    draft.description = L('ui.7711be7d78d6');
+    this.save();
+    this.rebuild();
   },
 
   content() {
@@ -327,6 +353,7 @@ const Store = {
 
   getPack(id) {
     if (id === CORE_PACK_ID) return CORE_PACK;
+    if (this.state.editorPack && this.state.editorPack.id === id) return this.state.editorPack;
     return this.state.packs.find(p => p.id === id) || null;
   },
 
@@ -499,6 +526,25 @@ const Store = {
     }
   },
 
+  saveCoreOverride() {
+    this.state.coreOverride = {
+      content: deepClone(CORE_PACK.content),
+      countDefs: deepClone(CORE_PACK.countDefs || {})
+    };
+    this.save();
+    this.rebuild();
+  },
+
+  saveLocalPack(pack) {
+    if (!pack || !pack.id) return false;
+    const index = this.state.packs.findIndex(item => item.id === pack.id);
+    if (index < 0) return false;
+    this.state.packs[index] = pack;
+    this.save();
+    this.rebuild();
+    return true;
+  },
+
   saveDeck(side, deck) {
     this.state.decks[side] = deepClone(deck);
     this.save();
@@ -517,6 +563,10 @@ const Store = {
 
   resetAll() {
     this.state = deepClone(DEFAULT_STATE);
+    if (window.CORE_PACK_BASE) {
+      CORE_PACK.content = deepClone(window.CORE_PACK_BASE.content);
+      CORE_PACK.countDefs = deepClone(window.CORE_PACK_BASE.countDefs || {});
+    }
     this.save();
     this.rebuild();
   },
