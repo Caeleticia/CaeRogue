@@ -10,7 +10,8 @@ const DEFAULT_STATE = {
     compactLog: false,
     confirmAction: true,
     aiDelay: 650,
-    showFormula: true
+    showFormula: true,
+    locale: 'zh_cn'
   },
   packs: [],
   enabledPacks: [CORE_PACK_ID],
@@ -21,6 +22,7 @@ const DEFAULT_STATE = {
     B: deepClone(DEFAULT_LOADOUT_B)
   },
   editorPack: null,
+  tutorialCompleted: false,
   runs: { rogue: null, challenge: null, endless: null },
   history: []
 };
@@ -42,16 +44,16 @@ function mergeState(base, saved) {
 }
 
 function normalizePack(raw) {
-  if (!raw || typeof raw !== 'object') throw new Error('扩展包必须是 JSON 对象。');
+  if (!raw || typeof raw !== 'object') throw new Error(L('ui.d69ebf02573d'));
   if (raw.format && raw.format !== 'caerogue.expansion') {
-    throw new Error('不是 CaeRogue 扩展包：format 字段不匹配。');
+    throw new Error(L('ui.0d9b1fa40159'));
   }
   const pack = deepClone(raw);
   pack.format = 'caerogue.expansion';
   pack.id = String(pack.id || '').trim();
   pack.name = String(pack.name || '').trim();
   pack.version = String(pack.version || '0.1.0');
-  pack.author = String(pack.author || '未知作者');
+  pack.author = String(pack.author || L('ui.9c5bde2a9e6b'));
   pack.description = String(pack.description || '');
   pack.dependencies = Array.isArray(pack.dependencies) ? pack.dependencies.map(String) : [];
   pack.countDefs = pack.countDefs && typeof pack.countDefs === 'object' ? pack.countDefs : {};
@@ -63,9 +65,9 @@ function normalizePack(raw) {
     equipment: Array.isArray(source.equipment) ? source.equipment : [],
     runes: Array.isArray(source.runes) ? source.runes : []
   };
-  if (!pack.id) throw new Error('扩展包缺少 id。');
-  if (!pack.name) throw new Error('扩展包缺少 name。');
-  if (pack.id === CORE_PACK_ID) throw new Error('core 是内置命名空间，不能被覆盖。');
+  if (!pack.id) throw new Error(L('ui.6d127937d7c9'));
+  if (!pack.name) throw new Error(L('ui.17a847915e0c'));
+  if (pack.id === CORE_PACK_ID) throw new Error(L('ui.d32537a7cfc2'));
   return pack;
 }
 
@@ -82,27 +84,27 @@ function validatePackShape(pack, packs) {
   const allowedCategories = ['units', 'skills', 'effects', 'equipment', 'runes'];
   for (const category of Object.keys(pack.content)) {
     if (!allowedCategories.includes(category)) {
-      errors.push('未知的内容分类：' + category);
+      errors.push(L('ui.1a207d574866') + category);
     }
   }
   for (const { category, item } of packContentEntries(pack)) {
-    if (!item || typeof item !== 'object') { errors.push(category + ' 中存在空条目。'); continue; }
-    if (!item.id || typeof item.id !== 'string') { errors.push(category + ' 中存在缺少 id 的条目。'); continue; }
+    if (!item || typeof item !== 'object') { errors.push(category + L('ui.63e5b9af78a2')); continue; }
+    if (!item.id || typeof item.id !== 'string') { errors.push(category + L('ui.b3525a7c5370')); continue; }
     if (seen.has(item.id)) {
-      errors.push('ID 冲突：' + item.id + ' 同时出现在 ' + seen.get(item.id) + ' 与 ' + category + '。');
+      errors.push(L('ui.2496c2e19261') + item.id + L('ui.4b0bbcc0b17d') + seen.get(item.id) + L('ui.fd9fb52cb04d') + category + '。');
     } else {
       seen.set(item.id, category);
     }
     if (!item.packId) item.packId = pack.id;
     if (item.packId !== pack.id) {
-      warnings.push(item.id + ' 的 packId 与扩展包 id 不一致，已修正。');
+      warnings.push(item.id + L('ui.d602932fcade'));
       item.packId = pack.id;
     }
     if (!item.name && category !== 'skills' && category !== 'effects') {
-      errors.push(item.id + ' 缺少 name。');
+      errors.push(item.id + L('ui.896531bfcd14'));
     }
     if (!item.id.includes('.') && !item.id.startsWith(pack.id)) {
-      warnings.push(item.id + ' 未使用包命名空间前缀，建议改为 ' + pack.id + '.' + item.id);
+      warnings.push(item.id + L('ui.9b7c84f27d8b') + pack.id + '.' + item.id);
     }
   }
   const enabledIds = new Set([CORE_PACK_ID].concat((packs || []).filter(p => p.enabled !== false).map(p => p.id)));
@@ -111,7 +113,7 @@ function validatePackShape(pack, packs) {
     if (seen.has(core.item.id)) duplicatesAgainstCore.push(core.item.id);
   }
   if (duplicatesAgainstCore.length) {
-    errors.push('与内置内容 ID 冲突：' + duplicatesAgainstCore.join('、'));
+    errors.push(L('ui.0f9f4251bb16') + duplicatesAgainstCore.join('、'));
   }
   return { errors, warnings };
 }
@@ -134,11 +136,11 @@ function validateReferences(pack, external, packs) {
     }
   }
   const ref = (category, id, where) => {
-    if (id && !all[category].has(id)) errors.push(where + ' 引用了不存在的 ' + category + ' ID：' + id);
+    if (id && !all[category].has(id)) errors.push(where + L('ui.1e53a6f27849') + category + ' ID：' + id);
   };
   const inspectSteps = (steps, where) => {
     for (const step of steps || []) {
-      if (!step || !step.kind) { errors.push(where + ' 存在无 kind 的步骤。'); continue; }
+      if (!step || !step.kind) { errors.push(where + L('ui.d600afebbe1e')); continue; }
       if (step.kind === 'addEffect') ref('effects', step.effectId, where);
       if (step.kind === 'castSkill') ref('skills', step.skillId, where);
       if (step.kind === 'summon') ref('units', step.unitId, where);
@@ -150,18 +152,18 @@ function validateReferences(pack, external, packs) {
     }
   };
   for (const unit of pack.content.units) {
-    for (const id of unit.skills || []) ref('skills', id, '单位 ' + unit.id);
-    for (const id of unit.equip || []) ref('equipment', id, '单位 ' + unit.id);
+    for (const id of unit.skills || []) ref('skills', id, L('ui.2daebba27c4b') + unit.id);
+    for (const id of unit.equip || []) ref('equipment', id, L('ui.2daebba27c4b') + unit.id);
   }
   for (const skill of pack.content.skills) {
-    inspectSteps(skill.steps, '技能 ' + skill.id);
+    inspectSteps(skill.steps, L('ui.ee24c1596501') + skill.id);
     for (const req of skill.requirements || []) {
-      if (!req.countId) warnings.push('技能 ' + skill.id + ' 的释放条件缺少计数 ID。');
+      if (!req.countId) warnings.push(L('ui.ee24c1596501') + skill.id + L('ui.6fa83a8d9078'));
     }
   }
   for (const effect of pack.content.effects) {
-    inspectSteps(effect.steps, '效果 ' + effect.id);
-    for (const id of effect.grantedSkills || []) ref('skills', id, '效果 ' + effect.id);
+    inspectSteps(effect.steps, L('ui.5db68ca5b9e1') + effect.id);
+    for (const id of effect.grantedSkills || []) ref('skills', id, L('ui.5db68ca5b9e1') + effect.id);
   }
   for (const category of ['equipment', 'runes']) {
     for (const item of pack.content[category]) {
@@ -171,10 +173,10 @@ function validateReferences(pack, external, packs) {
   const deps = pack.dependencies || [];
   const known = new Set([CORE_PACK_ID].concat((packs || []).map(p => p.id)));
   for (const dep of deps) {
-    if (!known.has(dep)) errors.push('缺少依赖扩展包：' + dep);
+    if (!known.has(dep)) errors.push(L('ui.7e87033cc519') + dep);
     else if (dep !== CORE_PACK_ID) {
       const target = (packs || []).find(p => p.id === dep);
-      if (target && target.enabled === false) warnings.push('依赖扩展包 ' + dep + ' 当前处于禁用状态。');
+      if (target && target.enabled === false) warnings.push(L('ui.7ace1b38cf99') + dep + L('ui.b518b00a8750'));
     }
   }
   return { errors, warnings };
@@ -191,7 +193,7 @@ function buildIndex(packs, enabledIds) {
   const orderErrors = [];
   const visit = (pack) => {
     if (!pack || visited.has(pack.id)) return;
-    if (visiting.has(pack.id)) { orderErrors.push('扩展包依赖存在循环：' + pack.id); return; }
+    if (visiting.has(pack.id)) { orderErrors.push(L('ui.d5bb0291456b') + pack.id); return; }
     visiting.add(pack.id);
     for (const dep of pack.dependencies || []) {
       const target = packMap.get(dep);
@@ -220,7 +222,7 @@ function buildIndex(packs, enabledIds) {
     for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
       for (const item of (pack.content && pack.content[category]) || []) {
         if (globalIds.has(item.id)) {
-          index.errors.push('全局 ID 冲突：' + item.id + '（' + globalIds.get(item.id) + ' / ' + pack.id + '）');
+          index.errors.push(L('ui.b1bb158b9516') + item.id + '（' + globalIds.get(item.id) + ' / ' + pack.id + '）');
           continue;
         }
         globalIds.set(item.id, pack.id);
@@ -273,6 +275,14 @@ const Store = {
     return this;
   },
 
+  setDefaultDecks(decks) {
+    if (!decks) return;
+    DEFAULT_STATE.decks = {
+      A: deepClone(decks.A || { units: [], equipment: [], runes: [] }),
+      B: deepClone(decks.B || { units: [], equipment: [], runes: [] })
+    };
+  },
+
   load() {
     let saved = null;
     try {
@@ -280,7 +290,7 @@ const Store = {
       if (raw) saved = JSON.parse(raw);
     } catch (error) {
       this.storageAvailable = false;
-      console.warn('无法读取本地存储，改用会话内存。', error);
+      console.warn(L('ui.1bccc342da64'), error);
     }
     this.state = mergeState(DEFAULT_STATE, saved);
     if (!Array.isArray(this.state.packs)) this.state.packs = [];
@@ -300,7 +310,7 @@ const Store = {
       return true;
     } catch (error) {
       this.storageAvailable = false;
-      console.warn('本地存储写入失败。', error);
+      console.warn(L('ui.9f3f362e3e89'), error);
       return false;
     }
   },
@@ -329,16 +339,16 @@ const Store = {
   },
 
   setEnabled(id, enabled) {
-    if (id === CORE_PACK_ID) return { ok: false, error: '内置基础牌组不可禁用。' };
+    if (id === CORE_PACK_ID) return { ok: false, error: L('ui.cfdaf0d50d9e') };
     const pack = this.getPack(id);
-    if (!pack) return { ok: false, error: '扩展包不存在。' };
+    if (!pack) return { ok: false, error: L('ui.97fc67a2516d') };
     if (enabled) {
       const missing = (pack.dependencies || []).filter(dep => dep !== CORE_PACK_ID && !this.state.enabledPacks.includes(dep));
-      if (missing.length) return { ok: false, error: '需要先启用依赖：' + missing.join('、') };
+      if (missing.length) return { ok: false, error: L('ui.3300cff25b58') + missing.join('、') };
       if (!this.state.enabledPacks.includes(id)) this.state.enabledPacks.push(id);
     } else {
       const dependents = this.state.packs.filter(p => p.enabled !== false && this.state.enabledPacks.includes(p.id) && (p.dependencies || []).includes(id));
-      if (dependents.length) return { ok: false, error: '仍有扩展包依赖它：' + dependents.map(p => p.name).join('、') };
+      if (dependents.length) return { ok: false, error: L('ui.08fc02344a0a') + dependents.map(p => p.name).join('、') };
       this.state.enabledPacks = this.state.enabledPacks.filter(p => p !== id);
     }
     this.save();
@@ -357,7 +367,7 @@ const Store = {
     const warnings = [];
     const existing = this.state.packs.find(p => p.id === pack.id);
     if (existing && !(options && options.replace)) {
-      errors.push('本地已存在同 ID 扩展包：' + pack.id);
+      errors.push(L('ui.82895873b489') + pack.id);
     }
     const shape = validatePackShape(pack, this.state.packs);
     errors.push(...shape.errors);
@@ -372,7 +382,7 @@ const Store = {
     }
     for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
       for (const item of pack.content[category]) {
-        if (existingIds.has(item.id)) errors.push('ID 与其他本地扩展冲突：' + item.id);
+        if (existingIds.has(item.id)) errors.push(L('ui.7c7770ad73d4') + item.id);
         if (!item.packId) item.packId = pack.id;
       }
     }
@@ -386,12 +396,12 @@ const Store = {
     const visiting = new Set();
     const visited = new Set();
     const visit = (id) => {
-      if (visiting.has(id)) { errors.push('依赖关系存在循环：' + id); return; }
+      if (visiting.has(id)) { errors.push(L('ui.eab82623234d') + id); return; }
       if (visited.has(id)) return;
       visiting.add(id);
       for (const dep of graph.get(id) || []) {
         if (dep === CORE_PACK_ID) continue;
-        if (!graph.has(dep)) { errors.push('缺少依赖扩展包：' + dep); continue; }
+        if (!graph.has(dep)) { errors.push(L('ui.7e87033cc519') + dep); continue; }
         visit(dep);
       }
       visiting.delete(id);
@@ -443,9 +453,9 @@ const Store = {
   },
 
   removePack(id) {
-    if (id === CORE_PACK_ID) return { ok: false, error: '内置基础牌组不可删除。' };
+    if (id === CORE_PACK_ID) return { ok: false, error: L('ui.bdfd8f6d7236') };
     const dependents = this.state.packs.filter(p => (p.dependencies || []).includes(id));
-    if (dependents.length) return { ok: false, error: '无法删除：' + dependents.map(p => p.name).join('、') + ' 依赖它。' };
+    if (dependents.length) return { ok: false, error: L('ui.f68aad2478e4') + dependents.map(p => p.name).join('、') + L('ui.fa185c59f50f') };
     this.state.packs = this.state.packs.filter(p => p.id !== id);
     this.state.enabledPacks = this.state.enabledPacks.filter(p => p !== id);
     delete this.state.notes[id];
@@ -470,9 +480,9 @@ const Store = {
 
   getEditorPack() {
     if (!this.state.editorPack) {
-      this.state.editorPack = emptyPack('我的设计草稿', '本地作者');
+      this.state.editorPack = emptyPack(L('ui.927d996998e7'), L('ui.21a877f585cc'));
       this.state.editorPack.id = 'draft.local';
-      this.state.editorPack.description = '由技能与效果编辑器生成的本地内容草稿。';
+      this.state.editorPack.description = L('ui.7711be7d78d6');
       this.save();
     }
     return this.state.editorPack;
@@ -480,8 +490,10 @@ const Store = {
 
   saveEditorPack() {
     if (this.state.editorPack) {
-      this.state.editorPack.content.skills.forEach(item => { item.packId = this.state.editorPack.id; });
-      this.state.editorPack.content.effects.forEach(item => { item.packId = this.state.editorPack.id; });
+      for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+        (this.state.editorPack.content[category] || []).forEach(item => { item.packId = this.state.editorPack.id; });
+      }
+      this.state.editorPack.description = L('ui.5bc7baa80a5f');
       this.save();
       this.rebuild();
     }
@@ -526,13 +538,13 @@ function encodeShareCode(pack) {
 
 function decodeShareCode(code) {
   const clean = String(code || '').trim().replace(/^CAE1\./, '').replace(/\s+/g, '');
-  if (!clean) throw new Error('分享码为空。');
+  if (!clean) throw new Error(L('ui.2c423ba5c502'));
   const normalized = clean.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - clean.length % 4) % 4);
   let binary;
-  try { binary = atob(normalized); } catch (error) { throw new Error('分享码格式无效。'); }
+  try { binary = atob(normalized); } catch (error) { throw new Error(L('ui.18c918efdd0d')); }
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
   let parsed;
-  try { parsed = JSON.parse(new TextDecoder().decode(bytes)); } catch (error) { throw new Error('分享码中的 JSON 无法解析。'); }
+  try { parsed = JSON.parse(new TextDecoder().decode(bytes)); } catch (error) { throw new Error(L('ui.351fcba48c74')); }
   return parsed;
 }

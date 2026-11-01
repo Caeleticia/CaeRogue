@@ -2,12 +2,12 @@
 'use strict';
 
 const MODE_NODE_META = {
-  battle: { label: '普通战', short: '战', name: '普通战' },
-  elite: { label: '精英战', short: '精', name: '精英战' },
-  boss: { label: '首领战', short: '首', name: '首领战' },
-  event: { label: '事件', short: '事', name: '事件' },
-  shop: { label: '商店', short: '商', name: '商店' },
-  rest: { label: '休整', short: '憩', name: '休整' }
+  battle: { label: L('ui.c03bfd0e129a'), short: L('ui.08238a2be2be'), name: L('ui.c03bfd0e129a') },
+  elite: { label: L('ui.12ff86b1bfa3'), short: L('ui.fcb83b62bc0a'), name: L('ui.12ff86b1bfa3') },
+  boss: { label: L('ui.9c0b4cd4df70'), short: L('ui.fe7df3634ec6'), name: L('ui.9c0b4cd4df70') },
+  event: { label: L('ui.550e3280629d'), short: L('ui.aae488416289'), name: L('ui.550e3280629d') },
+  shop: { label: L('ui.83eff41a2e6c'), short: L('ui.2ce413903b80'), name: L('ui.83eff41a2e6c') },
+  rest: { label: L('ui.bee455dc2726'), short: L('ui.d0f183d07fcb'), name: L('ui.bee455dc2726') }
 };
 
 function modeRandom(list) { return list[Math.floor(Math.random() * list.length)]; }
@@ -62,7 +62,7 @@ const ModesUI = {
     if (route === 'rogue') return this.renderRogue(app);
     if (route === 'challenge') return this.renderChallenge(app);
     if (route === 'endless') return this.renderEndless(app);
-    return '<div class="page-wrap"><div class="empty-state"><h3>未知模式</h3></div></div>';
+    return L('ui.eedf526fb64e');
   },
 
   /* ---------- Shared helpers ---------- */
@@ -188,18 +188,18 @@ const ModesUI = {
       ['boss']
     ];
     const names = {
-      battle: ['裂谷回廊', '纸灯庭院', '无声的回声'],
-      elite: ['持诗者', '黏液王座'],
-      boss: ['不死之终', '诗与诅咒'],
-      event: ['折叠书页', '无主遗物'],
-      shop: ['行脚商队', '灰烬摊位'],
-      rest: ['篝火残页', '安静的房间']
+      battle: [L('ui.7de4ae8ca95c'), L('ui.94205b700f71'), L('ui.32fa9eb19529')],
+      elite: [L('ui.440ff5165598'), L('ui.ddb5a34d7a39')],
+      boss: [L('ui.310625d7a83c'), L('ui.030cf845fe88')],
+      event: [L('ui.392438324d35'), L('ui.072462aa15c6')],
+      shop: [L('ui.e923af92e606'), L('ui.c0d497147ed0')],
+      rest: [L('ui.b4b9e32db3a2'), L('ui.2c72cc104cd9')]
     };
     return layerTypes.map((types, layerIndex) => types.map((type, index) => ({
       id: 'r' + (layerIndex + 1) + (index === 0 ? 'a' : 'b'),
       layer: layerIndex,
       type,
-      title: modeRandom(names[type] || ['未知节点']),
+      title: modeRandom(names[type] || [L('ui.e27f1d70eab1')]),
       done: false,
       current: false,
       event: type === 'event' ? this.createEvent(layerIndex) : null
@@ -211,66 +211,77 @@ const ModesUI = {
     if (roll === 0) {
       return {
         kind: 'poem',
-        title: '拾起一页诗',
-        text: '纸页从空中落下，上面的字迹在你触碰时改变了排列。你可以收下它，也可以让某个尚未成形的人进入队伍。',
+        title: L('ui.d62c40c0ef12'),
+        text: L('ui.a66129acd398'),
         choices: [
-          { text: '收下残页', hint: '获得 30 金币。', effect: 'gold', value: 30 },
-          { text: '让诗篇入队', hint: '随机获得一名当前牌组中没有的计数角色。', effect: 'unit' }
+          { text: L('ui.78c21b5807ac'), hint: L('ui.af653628fa7e'), effect: 'gold', value: 30 },
+          { text: L('ui.c513456762ba'), hint: L('ui.2f403fb269c0'), effect: 'unit' }
         ]
       };
     }
     if (roll === 1) {
       return {
         kind: 'trial',
-        title: '无主试炼',
-        text: '折断的兵器围成一圈，中央留出了一块干净的场地。这里仍然认得战斗。',
+        title: L('ui.edb37e8dcd93'),
+        text: L('ui.b3576680c296'),
         choices: [
-          { text: '接受试炼', hint: '立即进入一场普通战斗，胜利后继续前进。', effect: 'battle' },
-          { text: '拒绝并整理装备', hint: '本局生命上限 +1。', effect: 'hp', value: 1 }
+          { text: L('ui.c7c3227063cc'), hint: L('ui.22ab306ded15'), effect: 'battle' },
+          { text: L('ui.f780b7699371'), hint: L('ui.6cc180275b2a'), effect: 'hp', value: 1 }
         ]
       };
     }
     return {
       kind: 'rewrite',
-      title: '改写路标',
-      text: '路标上写着尚未发生的下一层。墨迹仍然湿润，你可以在它干透前重写。',
+      title: L('ui.a67caad34c88'),
+      text: L('ui.b49720a70b8f'),
       choices: [
-        { text: '改道商队', hint: '将下一层的节点改为商店。', effect: 'rewrite-shop' },
-        { text: '带走补给', hint: '获得 40 金币。', effect: 'gold', value: 40 }
+        { text: L('ui.0ab637532216'), hint: L('ui.be6a8cec050d'), effect: 'rewrite-shop' },
+        { text: L('ui.3742a2d9c72e'), hint: L('ui.f06cd6b80396'), effect: 'gold', value: 40 }
       ]
     };
   },
 
   rewardPool(run) {
     const rewards = [];
+    const guaranteedGear = [];
     const ownedUnits = new Set(run.deck.units || []);
     const availableUnits = Store.index.units.filter(unit => !ownedUnits.has(unit.id));
     if (availableUnits.length) {
       const unit = modeRandom(availableUnits);
-      rewards.push({ kind: 'unit', id: unit.id, title: unit.name, desc: '角色加入本局牌组。生命 ' + unit.hp + '，' + (unit.counted === false ? '不计数' : '计数') + '。' });
+      rewards.push({ kind: 'unit', id: unit.id, title: unit.name, desc: L('ui.21a4cc465cf8') + unit.hp + '，' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '。' });
     }
     if ((run.deck.equipment || []).length < 6 && Store.index.equipment.length) {
       const gear = modeRandom(Store.index.equipment);
-      rewards.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: '装备加入本局整备区。' + (modSummary(gear.mods, true) || '') });
+      const reward = { kind: 'equipment', id: gear.id, title: gear.name, desc: L('ui.ed99f51a9c3b') + (modSummary(gear.mods, true) || '') };
+      rewards.push(reward);
+      guaranteedGear.push(reward);
     }
     if ((run.deck.runes || []).length < 6 && Store.index.runes.length) {
       const rune = modeRandom(Store.index.runes);
-      rewards.push({ kind: 'rune', id: rune.id, title: rune.name, desc: '符文对阵营全体生效。' + (modSummary(rune.mods, true) || '') });
+      const reward = { kind: 'rune', id: rune.id, title: rune.name, desc: L('ui.864bdea5847e') + (modSummary(rune.mods, true) || '') };
+      rewards.push(reward);
+      guaranteedGear.push(reward);
     }
     const positiveEffects = Store.index.effects.filter(effect => effect.type === 'positive');
     if (positiveEffects.length && (!run.upgrades || !run.upgrades.startEffects || run.upgrades.startEffects.length < 3)) {
       const effect = modeRandom(positiveEffects);
-      rewards.push({ kind: 'effect', id: effect.id, title: '祝福 · ' + effect.name, desc: '本局所有角色入场时获得 ' + effect.name + ' 2 层。' });
+      rewards.push({ kind: 'effect', id: effect.id, title: L('ui.4a688a75762a') + effect.name, desc: L('ui.68b7f3139fb4') + effect.name + L('ui.9e97acf1c2c2') });
     }
-    rewards.push({ kind: 'upgradeHp', title: '生命强化', desc: '本局所有角色生命上限 +2。' });
-    rewards.push({ kind: 'upgradeDmg', title: '伤害强化', desc: '本局所有角色伤害提升值 +1。' });
-    rewards.push({ kind: 'gold', title: '战利品兑换', desc: '获得 35 金币。' });
+    rewards.push({ kind: 'upgradeHp', title: L('ui.09a189a8bdcf'), desc: L('ui.d7e00031b670') });
+    rewards.push({ kind: 'upgradeDmg', title: L('ui.4bc3136c40e6'), desc: L('ui.e0dc3db4d789') });
+    rewards.push({ kind: 'gold', title: L('ui.a345c8d0df9a'), desc: L('ui.bcfa71000a12') });
     const shuffled = modeShuffle(rewards);
     const result = [];
     const kinds = new Set();
+    if (guaranteedGear.length) {
+      const guaranteed = modeRandom(guaranteedGear);
+      result.push(guaranteed);
+      kinds.add(guaranteed.kind);
+    }
     for (const reward of shuffled) {
       if (result.length >= 3) break;
-      if (kinds.has(reward.kind) && result.length < 2) continue;
+      if (result.includes(reward)) continue;
+      if (kinds.has(reward.kind)) continue;
       kinds.add(reward.kind);
       result.push(reward);
     }
@@ -289,23 +300,23 @@ const ModesUI = {
 
   applyReward(app, run, reward) {
     if (!reward) return;
-    if (reward.kind === 'unit') { run.deck.units.push(reward.id); app.toast('角色「' + reward.title + '」加入牌组。', 'success'); }
+    if (reward.kind === 'unit') { run.deck.units.push(reward.id); app.toast(L('ui.9c9caa9a2a06') + reward.title + L('ui.3f0443ece9d6'), 'success'); }
     else if (reward.kind === 'equipment') {
       run.deck.equipment.push(reward.id);
       this.ensureRunLoadout(run);
       if (!run.activeEquipment.includes(reward.id)) run.activeEquipment.push(reward.id);
-      app.toast('装备已加入整备区，可在战前整备中调整携行。', 'success');
+      app.toast(L('ui.aa958bd27769'), 'success');
     }
     else if (reward.kind === 'rune') {
       run.deck.runes.push(reward.id);
       this.ensureRunLoadout(run);
       if (!run.activeRunes.includes(reward.id) && run.activeRunes.length < 3) run.activeRunes.push(reward.id);
-      app.toast('符文已加入本局，可在战前整备中调整启用。', 'success');
+      app.toast(L('ui.e9efb0ced6c6'), 'success');
     }
-    else if (reward.kind === 'effect') { run.upgrades.startEffects = run.upgrades.startEffects || []; run.upgrades.startEffects.push({ effectId: reward.id, stacks: 2 }); app.toast('祝福已记录，下一场战斗生效。', 'success'); }
-    else if (reward.kind === 'upgradeHp') { run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + 2; app.toast('本局角色生命上限 +2。', 'success'); }
-    else if (reward.kind === 'upgradeDmg') { run.upgrades.dmgFlat = modeNumber(run.upgrades.dmgFlat) + 1; app.toast('本局伤害提升值 +1。', 'success'); }
-    else if (reward.kind === 'gold') { run.gold = modeNumber(run.gold) + 35; app.toast('获得 35 金币。', 'success'); }
+    else if (reward.kind === 'effect') { run.upgrades.startEffects = run.upgrades.startEffects || []; run.upgrades.startEffects.push({ effectId: reward.id, stacks: 2 }); app.toast(L('ui.d972ce84852b'), 'success'); }
+    else if (reward.kind === 'upgradeHp') { run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + 2; app.toast(L('ui.f7545f74aa97'), 'success'); }
+    else if (reward.kind === 'upgradeDmg') { run.upgrades.dmgFlat = modeNumber(run.upgrades.dmgFlat) + 1; app.toast(L('ui.d85e0f0048eb'), 'success'); }
+    else if (reward.kind === 'gold') { run.gold = modeNumber(run.gold) + 35; app.toast(L('ui.bcfa71000a12'), 'success'); }
   },
 
   openPendingReward(app, mode) {
@@ -313,10 +324,10 @@ const ModesUI = {
     if (!run || !run.active || !run.awaitingReward) return;
     if (!Array.isArray(run.pendingRewards) || !run.pendingRewards.length) this.generateRewards(run);
     const rewards = run.pendingRewards || [];
-    const body = '<p class="modal-copy">从本场战斗的发现中选择一项。选择后，本层结算完成；未选择的物品不会保留。</p><div class="reward-grid mt-2">' +
+    const body = L('ui.b54a8c6791bc') +
       rewards.map((reward, index) => '<button class="reward-card" type="button" data-action="mode-reward-take" data-mode="' + mode + '" data-index="' + index + '"><strong>' + esc(reward.title) + '</strong><small>' + esc(reward.desc) + '</small></button>').join('') +
-    '</div><div class="notice mt-2">当前金币：' + modeNumber(run.gold) + ' · ' + (mode === 'rogue' ? '选择后将推进到下一层。' : '选择后可继续进入下一层。') + '</div>';
-    app.openModal({ title: '选择战利品', subtitle: mode === 'rogue' ? '第 ' + (run.currentLayer + 1) + ' 层结束' : '无尽第 ' + (run.wins || 1) + ' 层', closable: false, body, foot: '<span class="left">战利品三选一 · 单链式结算已完成</span>' });
+    L('ui.dd3d8aa380af') + modeNumber(run.gold) + ' · ' + (mode === 'rogue' ? L('ui.a95bd4d8b78b') : L('ui.9b2d0bb7c8d0')) + '</div>';
+    app.openModal({ title: L('ui.fc50d0b122ba'), subtitle: mode === 'rogue' ? L('ui.f495347d6acf') + (run.currentLayer + 1) + L('ui.e15e25b92a0f') : L('ui.a94e884b071c') + (run.wins || 1) + L('ui.74b983070a79'), closable: false, body, foot: L('ui.20faa3e1f9bc') });
   },
 
   openRogueReward(app) {
@@ -354,8 +365,8 @@ const ModesUI = {
     this.storeRun('rogue', run);
     Store.archiveRun({
       mode: 'rogue',
-      result: completed ? '通关' : '失败',
-      detail: completed ? '抵达终点并完成首领战' : '队伍在途中失去全部计数单位',
+      result: completed ? L('ui.fae07039a5dc') : L('ui.3e3c8068bb0e'),
+      detail: completed ? L('ui.2871f6de8fea') : L('ui.4e6e06106073'),
       layer: run.currentLayer + 1,
       wins: run.wins || 0
     });
@@ -400,24 +411,24 @@ const ModesUI = {
     const draft = this.ensureRogueDraft();
     const selectedUnits = draft.units.map(id => Store.index.maps.units.get(id)).filter(Boolean);
     const counted = selectedUnits.filter(unit => unit.counted !== false).length;
-    const error = !selectedUnits.length ? '至少选择一名角色。' : !counted ? '起始队伍至少需要一名计数角色。' : '';
-    const cardButton = (type, card, selected) => '<button class="choice-card' + (selected ? ' selected' : '') + '" type="button" data-action="mode-rogue-draft" data-type="' + type + '" data-id="' + attr(card.id) + '"><span class="choice-mark">' + (selected ? '选' : '+') + '</span><span class="choice-main"><strong>' + esc(card.name) + '</strong><small>' + qualityBadge(card.quality) + ' ' + (type === 'unit' ? '生命 ' + card.hp + ' · ' + ((RESISTANCE_TYPES[card.resistance.type] || { label: '抗性' }).label) + ' ' + card.resistance.value + ' · ' + (card.counted === false ? '不计数' : '计数') : (modSummary(card.mods, true) || '无数值')) + '</small></span></button>';
+    const error = !selectedUnits.length ? L('ui.563310cf1837') : !counted ? L('ui.7cf719f84fe4') : '';
+    const cardButton = (type, card, selected) => '<button class="choice-card' + (selected ? ' selected' : '') + '" type="button" data-action="mode-rogue-draft" data-type="' + type + '" data-id="' + attr(card.id) + '"><span class="choice-mark">' + (selected ? L('ui.471c7b464c0a') : '+') + '</span><span class="choice-main"><strong>' + esc(card.name) + '</strong><small>' + qualityBadge(card.quality) + ' ' + (type === 'unit' ? L('ui.11d4fcf2be9c') + card.hp + ' · ' + ((RESISTANCE_TYPES[card.resistance.type] || { label: L('ui.aa8457052a32') }).label) + ' ' + card.resistance.value + ' · ' + (card.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) : (modSummary(card.mods, true) || L('ui.d9f936d25fe4'))) + '</small></span></button>';
     const unitPool = Store.index.units.slice();
     const gearPool = Store.index.equipment.slice();
     const runePool = Store.index.runes.slice();
-    const lastSummary = previous && !previous.active ? '<section class="panel"><div class="panel-head"><div><h3>上一次探索</h3><div class="panel-sub">' + (previous.completed ? '已抵达终点' : '未能抵达终点') + '</div></div><span class="chip">' + (previous.completed ? '通关' : '失败') + '</span></div><div class="panel-body"><div class="run-stat-row"><span>抵达层数</span><b>' + (modeNumber(previous.currentLayer) + 1) + ' / 7</b></div><div class="run-stat-row"><span>战斗胜利</span><b>' + modeNumber(previous.wins) + '</b></div><div class="run-stat-row"><span>获得金币</span><b>' + modeNumber(previous.gold) + '</b></div></div></section>' : '';
+    const lastSummary = previous && !previous.active ? L('ui.75d1aaa20fe0') + (previous.completed ? L('ui.08f5a7c8ca7c') : L('ui.3726e5905da9')) + '</div></div><span class="chip">' + (previous.completed ? L('ui.fae07039a5dc') : L('ui.3e3c8068bb0e')) + L('ui.8fba690aa1a9') + (modeNumber(previous.currentLayer) + 1) + L('ui.9578a71936bd') + modeNumber(previous.wins) + L('ui.40536a8c1ddb') + modeNumber(previous.gold) + '</b></div></div></section>' : '';
     return '' +
       '<div class="page-wrap mode-page">' +
-        '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ROGUELIKE EXPEDITION / NODE MAP</div><h1>肉鸽</h1><p>从初始角色与少量装备、符文中选择起点，沿节点地图推进。队伍与资源跨节点保留，失败则本局结束。</p></div><div class="page-head-side"><span class="chip">7 层节点</span><span class="chip">资源保留</span></div></div>' +
-        '<section class="mode-hero"><img class="mode-hero-icon" src="assets/icons/rogue.svg" alt=""><div class="mh-main"><h2>纸页之外的路线</h2><p>普通战、精英战、事件、商店、休整与首领节点交替出现。战斗胜利后可从角色、装备、符文、高级效果与强化中选择奖励。</p><div class="mh-actions"><span class="chip">起始编队自选</span><span class="chip">战斗失败即结束</span><span class="chip">首领节点通关</span></div></div><span class="mode-stamp">ROGUE / EXPEDITION</span></section>' +
+        L('ui.288f438232a2') +
+        L('ui.a4ac8ef62c3b') +
         (lastSummary ? '<div class="mt-3">' + lastSummary + '</div>' : '') +
-        '<div class="mt-3"><div class="section-heading"><div><h2>起始编队</h2><p>角色最多 4 名，装备最多 2 件，符文最多 3 张。至少包含一名计数角色。</p></div><button class="btn btn-sm" type="button" data-action="mode-rogue-recommended">使用推荐起始</button></div>' +
+        L('ui.6b004c51a27b') +
           '<div class="rogue-start-grid">' +
-            '<section class="panel"><div class="panel-head"><div><h3>角色</h3><div class="panel-sub">已选 ' + selectedUnits.length + ' / 4</div></div></div><div class="panel-body"><div class="choice-list">' + unitPool.map(unit => cardButton('unit', unit, draft.units.includes(unit.id))).join('') + '</div></div></section>' +
-            '<section class="panel"><div class="panel-head"><div><h3>装备</h3><div class="panel-sub">已选 ' + draft.equipment.length + ' / 2</div></div></div><div class="panel-body"><div class="choice-list">' + (gearPool.length ? gearPool.map(gear => cardButton('equipment', gear, draft.equipment.includes(gear.id))).join('') : '<div class="empty-state" style="min-height:80px"><p>没有可用装备。</p></div>') + '</div></div></section>' +
-            '<section class="panel"><div class="panel-head"><div><h3>符文</h3><div class="panel-sub">已选 ' + draft.runes.length + ' / 3</div></div></div><div class="panel-body"><div class="choice-list">' + (runePool.length ? runePool.map(rune => cardButton('rune', rune, draft.runes.includes(rune.id))).join('') : '<div class="empty-state" style="min-height:80px"><p>没有可用符文。</p></div>') + '</div></div></section>' +
+            L('ui.a5d47dcff916') + selectedUnits.length + ' / 4</div></div></div><div class="panel-body"><div class="choice-list">' + unitPool.map(unit => cardButton('unit', unit, draft.units.includes(unit.id))).join('') + '</div></div></section>' +
+            L('ui.524e1afd96a6') + draft.equipment.length + ' / 2</div></div></div><div class="panel-body"><div class="choice-list">' + (gearPool.length ? gearPool.map(gear => cardButton('equipment', gear, draft.equipment.includes(gear.id))).join('') : L('ui.2177237ee46e')) + '</div></div></section>' +
+            L('ui.34261358dd20') + draft.runes.length + ' / 3</div></div></div><div class="panel-body"><div class="choice-list">' + (runePool.length ? runePool.map(rune => cardButton('rune', rune, draft.runes.includes(rune.id))).join('') : L('ui.a349678d618d')) + '</div></div></section>' +
           '</div>' +
-          '<div class="panel mt-2"><div class="panel-body"><div class="row between wrap"><div><div class="row wrap"><span class="chip ' + (counted ? 'green' : 'red') + '">计数角色 ' + counted + '</span><span class="chip">角色 ' + selectedUnits.length + '</span><span class="chip gold">装备 ' + draft.equipment.length + '</span><span class="chip violet">符文 ' + draft.runes.length + '</span></div><p class="field-hint mt-1">起始金币 60。关卡中的强化会作用于整局队伍。</p></div><div class="row"><button class="btn btn-lg btn-primary" type="button" data-action="mode-rogue-start"' + (error ? ' disabled' : '') + '>开始探索</button></div></div>' + (error ? '<div class="notice danger mt-2">' + esc(error) + '</div>' : '') + '</div></div>' +
+          '<div class="panel mt-2"><div class="panel-body"><div class="row between wrap"><div><div class="row wrap"><span class="chip ' + (counted ? 'green' : 'red') + L('ui.3721873ec5d5') + counted + L('ui.17cc746a891f') + selectedUnits.length + L('ui.a3c2cec40651') + draft.equipment.length + L('ui.81a0b705a228') + draft.runes.length + L('ui.aa22f2486ba7') + (error ? ' disabled' : '') + L('ui.79b0349a7667') + (error ? '<div class="notice danger mt-2">' + esc(error) + '</div>' : '') + '</div></div>' +
         '</div>' +
       '</div>';
   },
@@ -428,7 +439,7 @@ const ModesUI = {
     if (!run.map) { run.map = map; this.storeRun('rogue', run); }
     const layersHtml = map.layers.map((nodes, layerIndex) => {
       const isCurrentLayer = layerIndex === run.currentLayer;
-      return '<div class="map-layer"><div class="map-layer-label">第 ' + (layerIndex + 1) + ' 层</div>' + nodes.map(node => {
+      return L('ui.33fe5ef54ae2') + (layerIndex + 1) + L('ui.26c389b9fb64') + nodes.map(node => {
         const meta = MODE_NODE_META[node.type] || MODE_NODE_META.battle;
         const available = isCurrentLayer && !node.done && !run.awaitingReward;
         const cls = ['map-node'];
@@ -444,21 +455,21 @@ const ModesUI = {
     const startEffects = upgrades.startEffects || [];
     return '' +
       '<div class="page-wrap mode-page">' +
-        '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ROGUELIKE EXPEDITION / ACTIVE</div><h1>探索路线</h1><p>选择当前层的可用节点。战斗、事件与商店结果会在单链式状态中提交；队伍与资源在节点之间保留。</p></div><div class="page-head-side"><span class="chip">第 ' + (run.currentLayer + 1) + ' / 7 层</span><button class="btn btn-sm btn-danger" type="button" data-action="mode-rogue-abandon">放弃本局</button></div></div>' +
-        (run.awaitingReward ? '<div class="run-banner"><img src="assets/icons/rogue.svg" alt=""><div class="grow"><strong>战利品等待选择</strong><p>本层已结束，请先处理战利品，再继续地图。</p></div><div class="banner-actions"><button class="btn btn-sm btn-gold" type="button" data-action="mode-rogue-open-reward">选择战利品</button></div></div>' : '') +
+        L('ui.6d9238893180') + (run.currentLayer + 1) + L('ui.5adccffcacc0') +
+        (run.awaitingReward ? L('ui.51b56ab59882') : '') +
         '<div class="run-layout mt-2">' +
-          '<section class="panel map-panel"><div class="panel-head"><div><h3>节点地图</h3><div class="panel-sub">完成节点后推进到下一层；未选择的路线会关闭。</div></div><span class="map-progress">' + (run.completed ? '完成' : '推进 ' + (run.currentLayer + 1) + ' / 7') + '</span></div><div class="rogue-map">' + layersHtml + '</div><div class="map-legend"><span class="available">可进入</span><span class="done">已完成</span><span class="locked">未开放 / 已关闭</span></div></section>' +
+          L('ui.5d2dc4123314') + (run.completed ? L('ui.33246f6a5e5b') : L('ui.1d171c7b3ca1') + (run.currentLayer + 1) + ' / 7') + '</span></div><div class="rogue-map">' + layersHtml + L('ui.031b23a812d1') +
           '<aside class="run-sidebar">' +
-            '<section class="panel"><div class="panel-head"><div><h3>探索状态</h3><div class="panel-sub">资源与强化跨节点保留</div></div></div><div class="panel-body">' +
-              '<div class="run-stat-row"><span>当前层</span><b>' + (run.currentLayer + 1) + ' / 7</b></div>' +
-              '<div class="run-stat-row"><span>金币</span><b>' + modeNumber(run.gold) + '</b></div>' +
-              '<div class="run-stat-row"><span>战斗胜利</span><b>' + modeNumber(run.wins) + '</b></div>' +
-              '<div class="run-stat-row"><span>生命强化</span><b>+' + modeNumber(upgrades.hpFlat) + '</b></div>' +
-              '<div class="run-stat-row"><span>伤害强化</span><b>+' + modeNumber(upgrades.dmgFlat) + '</b></div>' +
-              '<div class="detail-section-title">整局祝福<span class="line"></span></div><div class="run-relic-list">' + (startEffects.length ? startEffects.map(item => '<span class="chip violet">' + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('') : '<span class="faint tiny">尚无祝福</span>') + '</div>' +
+            L('ui.6e88098750d8') +
+              L('ui.1ef80580c140') + (run.currentLayer + 1) + ' / 7</b></div>' +
+              L('ui.b379b3ec53b6') + modeNumber(run.gold) + '</b></div>' +
+              L('ui.d21ce632e202') + modeNumber(run.wins) + '</b></div>' +
+              L('ui.2f28fcd3704d') + modeNumber(upgrades.hpFlat) + '</b></div>' +
+              L('ui.0278a547fffe') + modeNumber(upgrades.dmgFlat) + '</b></div>' +
+              L('ui.cc7a659b28cb') + (startEffects.length ? startEffects.map(item => '<span class="chip violet">' + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('') : L('ui.ddedd16c5c79')) + '</div>' +
             '</div></section>' +
-            '<section class="panel"><div class="panel-head"><div><h3>当前牌组</h3><div class="panel-sub">' + deckCards.units.length + ' 角色 · ' + (run.activeEquipment || []).length + ' 携行装备 · ' + (run.activeRunes || []).length + ' 启用符文</div></div><button class="btn btn-sm" type="button" data-action="mode-loadout-open" data-mode="rogue">战前整备</button></div><div class="panel-body"><div class="run-deck-list">' + deckCards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div><p class="field-hint mt-1">装备默认不穿戴，战斗行动时可选择穿戴或销毁。符文随时可配置。</p></div></section>' +
-            '<section class="panel"><div class="panel-head"><h3>节点规则</h3></div><div class="panel-body"><p class="field-hint">普通战与精英战使用当前牌组，战斗结束后生命与状态重置。首领战胜利即通关。事件可以触发额外战斗、改变后续节点或提供资源。</p></div></section>' +
+            L('ui.9033b2bd3bc2') + deckCards.units.length + L('ui.5fa026d18910') + (run.activeEquipment || []).length + L('ui.5804d65c8bf5') + (run.activeRunes || []).length + L('ui.c203c5fd39ee') + deckCards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + L('ui.37e626936ee7') +
+            L('ui.8e045c395393') +
           '</aside>' +
         '</div>' +
       '</div>';
@@ -471,7 +482,7 @@ const ModesUI = {
     const max = type === 'unit' ? 4 : type === 'equipment' ? 2 : 3;
     if (draft[key].includes(id)) draft[key] = draft[key].filter(item => item !== id);
     else if (draft[key].length < max) draft[key].push(id);
-    else { app.toast('该区域最多选择 ' + max + ' 项。', 'error'); return; }
+    else { app.toast(L('ui.04b17ac0e431') + max + L('ui.95de7c05ec60'), 'error'); return; }
     app.render();
   },
 
@@ -479,9 +490,9 @@ const ModesUI = {
     this._shop = null;
     const draft = this.ensureRogueDraft();
     const units = draft.units.slice();
-    if (!units.length) { app.toast('至少选择一名角色。', 'error'); return; }
+    if (!units.length) { app.toast(L('ui.563310cf1837'), 'error'); return; }
     const counted = units.map(id => Store.index.maps.units.get(id)).filter(Boolean).filter(unit => unit.counted !== false);
-    if (!counted.length) { app.toast('起始队伍至少需要一名计数角色。', 'error'); return; }
+    if (!counted.length) { app.toast(L('ui.7cf719f84fe4'), 'error'); return; }
     const run = {
       active: true,
       completed: false,
@@ -501,13 +512,13 @@ const ModesUI = {
     };
     this.storeRun('rogue', run);
     app.render();
-    app.toast('探索开始。请选择一个节点。', 'success');
+    app.toast(L('ui.b5c77f9583cc'), 'success');
   },
 
   enterRogueNode(app, nodeId) {
     const run = Store.state.runs.rogue;
     if (!run || !run.active) return;
-    if (run.awaitingReward) { app.toast('请先选择战利品。', 'error'); this.openPendingReward(app, 'rogue'); return; }
+    if (run.awaitingReward) { app.toast(L('ui.61a240ffaa10'), 'error'); this.openPendingReward(app, 'rogue'); return; }
     const node = run.map.layers.flat().find(item => item.id === nodeId);
     if (!node || node.done || node.layer !== run.currentLayer) return;
     run.currentNodeId = node.id;
@@ -548,7 +559,7 @@ const ModesUI = {
     const event = node.event || this.createEvent(node.layer);
     node.event = event;
     const body = '<div class="modal-copy">' + esc(event.text) + '</div><div class="choice-list mt-2">' + event.choices.map((choice, index) => '<button class="choice-card" type="button" data-action="mode-rogue-event-choice" data-index="' + index + '"><span class="choice-mark">' + (index + 1) + '</span><span class="choice-main"><strong>' + esc(choice.text) + '</strong><small>' + esc(choice.hint) + '</small></span></button>').join('') + '</div>';
-    app.openModal({ title: event.title, subtitle: '事件节点 · 第 ' + (node.layer + 1) + ' 层', size: 'small', body });
+    app.openModal({ title: event.title, subtitle: L('ui.d6597568ec62') + (node.layer + 1) + L('ui.74b983070a79'), size: 'small', body });
   },
 
   handleEventChoice(app, index) {
@@ -560,13 +571,13 @@ const ModesUI = {
     if (!choice) return;
     if (choice.effect === 'gold') {
       run.gold = modeNumber(run.gold) + modeNumber(choice.value);
-      app.toast('获得 ' + choice.value + ' 金币。', 'success');
+      app.toast(L('ui.1f5565c15f9b') + choice.value + L('ui.135132e08b2c'), 'success');
       this.advanceNode(app, node);
       return;
     }
     if (choice.effect === 'hp') {
       run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + modeNumber(choice.value);
-      app.toast('本局生命上限提升。', 'success');
+      app.toast(L('ui.079b12747387'), 'success');
       this.advanceNode(app, node);
       return;
     }
@@ -576,10 +587,10 @@ const ModesUI = {
       const pick = candidates.length ? modeRandom(candidates) : null;
       if (pick) {
         run.deck.units.push(pick.id);
-        app.toast('「' + pick.name + '」加入了牌组。', 'success');
+        app.toast('「' + pick.name + L('ui.d1f5c3fd312c'), 'success');
       } else {
         run.gold = modeNumber(run.gold) + 40;
-        app.toast('没有可用新角色，改为获得 40 金币。', 'success');
+        app.toast(L('ui.2a34fd215c37'), 'success');
       }
       this.advanceNode(app, node);
       return;
@@ -589,11 +600,11 @@ const ModesUI = {
       if (run.map.layers[nextLayer]) {
         run.map.layers[nextLayer].forEach((item, idx) => {
           item.type = 'shop';
-          item.title = idx === 0 ? '改写后的行商' : '墨迹未干的摊位';
+          item.title = idx === 0 ? L('ui.6259338b008d') : L('ui.b186b64e8f2d');
           item.event = null;
         });
       }
-      app.toast('下一层节点已改写为商店。', 'success');
+      app.toast(L('ui.bae464a54988'), 'success');
       this.advanceNode(app, node);
       return;
     }
@@ -606,32 +617,33 @@ const ModesUI = {
   },
 
   shopOffers(run) {
-    const offers = [];
+    const required = [];
+    const optional = [];
     const owned = new Set(run.deck.units);
     const candidates = Store.index.units.filter(unit => !owned.has(unit.id));
     if (candidates.length) {
       const unit = modeRandom(candidates);
-      offers.push({ kind: 'unit', id: unit.id, title: unit.name, desc: '角色 · 生命 ' + unit.hp, price: 35, sold: false });
+      optional.push({ kind: 'unit', id: unit.id, title: unit.name, desc: L('ui.3fa6e6baec47') + unit.hp, price: 35, sold: false });
     }
     if (Store.index.equipment.length && (run.deck.equipment || []).length < 6) {
       const gear = modeRandom(Store.index.equipment);
-      offers.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: '装备 · ' + (modSummary(gear.mods, true) || '特效'), price: 25, sold: false });
+      required.push({ kind: 'equipment', id: gear.id, title: gear.name, desc: L('ui.56bd2bba6de9') + (modSummary(gear.mods, true) || L('ui.455d56230713')), price: 25, sold: false });
     }
     if (Store.index.runes.length && (run.deck.runes || []).length < 6) {
       const rune = modeRandom(Store.index.runes);
-      offers.push({ kind: 'rune', id: rune.id, title: rune.name, desc: '符文 · ' + (modSummary(rune.mods, true) || '特效'), price: 25, sold: false });
+      required.push({ kind: 'rune', id: rune.id, title: rune.name, desc: L('ui.644e0790b977') + (modSummary(rune.mods, true) || L('ui.455d56230713')), price: 25, sold: false });
     }
-    offers.push({ kind: 'upgradeHp', title: '生命强化', desc: '本局生命上限 +2', price: 30, sold: false });
-    offers.push({ kind: 'upgradeDmg', title: '伤害强化', desc: '本局伤害提升值 +1', price: 30, sold: false });
-    if ((run.deck.units || []).length > 1) offers.push({ kind: 'removeUnit', title: '移除服务', desc: '从本局牌组移除一名角色，至少保留一名计数角色。', price: 20, sold: false });
-    return modeShuffle(offers).slice(0, 4);
+    optional.push({ kind: 'upgradeHp', title: L('ui.09a189a8bdcf'), desc: L('ui.100f07370663'), price: 30, sold: false });
+    optional.push({ kind: 'upgradeDmg', title: L('ui.4bc3136c40e6'), desc: L('ui.96b27500cc62'), price: 30, sold: false });
+    if ((run.deck.units || []).length > 1) optional.push({ kind: 'removeUnit', title: L('ui.78b88aacca2f'), desc: L('ui.68289ce53a44'), price: 20, sold: false });
+    return required.concat(modeShuffle(optional).slice(0, Math.max(2, 4 - required.length)));
   },
 
   openShopModal(app, run, node) {
     if (!this._shop || this._shop.nodeId !== node.id) this._shop = { nodeId: node.id, offers: this.shopOffers(run) };
     const offers = this._shop.offers;
-    const body = '<div class="row between mb-2"><span class="chip gold">金币 ' + modeNumber(run.gold) + '</span><span class="field-hint">选中物品后立即扣除金币。</span></div><div class="shop-grid">' + offers.map((offer, index) => '<div class="shop-item' + (offer.sold ? ' sold' : '') + '"><img src="' + (offer.kind === 'unit' ? attr(cardArt(Store.index.maps.units.get(offer.id) || {})) : offer.kind === 'rune' ? 'assets/pictures/rune-art.svg' : 'assets/pictures/equipment-soap.svg') + '" alt=""><div class="grow"><strong>' + esc(offer.title) + '</strong><small>' + esc(offer.desc) + '</small><div class="price">' + (offer.sold ? '已售出' : offer.price + ' 金币') + '</div></div>' + (offer.sold ? '' : '<button class="btn btn-sm" type="button" data-action="mode-shop-buy" data-index="' + index + '"' + (run.gold < offer.price ? ' disabled' : '') + '>购买</button>') + '</div>').join('') + '</div><div class="notice mt-2">购买后可以继续挑选。离开商店会完成本节点并推进地图。</div>';
-    app.openModal({ title: '行脚商队', subtitle: '第 ' + (node.layer + 1) + ' 层 · 商店节点', body, foot: '<span class="left">金币 ' + modeNumber(run.gold) + '</span><button class="btn btn-primary" type="button" data-action="mode-shop-leave">离开商店</button>' });
+    const body = L('ui.21df8512dba5') + modeNumber(run.gold) + L('ui.49beee3e4a54') + offers.map((offer, index) => '<div class="shop-item' + (offer.sold ? ' sold' : '') + '"><img src="' + (offer.kind === 'unit' ? attr(cardArt(Store.index.maps.units.get(offer.id) || {})) : offer.kind === 'rune' ? 'assets/pictures/rune-art.svg' : 'assets/pictures/equipment-soap.svg') + '" alt=""><div class="grow"><strong>' + esc(offer.title) + '</strong><small>' + esc(offer.desc) + '</small><div class="price">' + (offer.sold ? L('ui.c9d7f9ccccc9') : offer.price + L('ui.18780ade69b4')) + '</div></div>' + (offer.sold ? '' : '<button class="btn btn-sm" type="button" data-action="mode-shop-buy" data-index="' + index + '"' + (run.gold < offer.price ? ' disabled' : '') + L('ui.228724ff13d4')) + '</div>').join('') + L('ui.06414a5ebe45');
+    app.openModal({ title: L('ui.e923af92e606'), subtitle: L('ui.f495347d6acf') + (node.layer + 1) + L('ui.002daf7ba36d'), body, foot: L('ui.fe4e1ca70d14') + modeNumber(run.gold) + L('ui.efcd594890e9') });
   },
 
   buyShop(app, index) {
@@ -639,7 +651,7 @@ const ModesUI = {
     if (!run || !this._shop) return;
     const offer = this._shop.offers[index];
     if (!offer || offer.sold) return;
-    if (modeNumber(run.gold) < offer.price) { app.toast('金币不足。', 'error'); return; }
+    if (modeNumber(run.gold) < offer.price) { app.toast(L('ui.9ffa872e8a9e'), 'error'); return; }
     if (offer.kind === 'removeUnit') { this.openRemoveUnitModal(app, run, offer, index); return; }
     run.gold -= offer.price;
     offer.sold = true;
@@ -650,14 +662,14 @@ const ModesUI = {
   },
 
   openRemoveUnitModal(app, run, offer, index) {
-    const body = '<p class="modal-copy">选择一张角色牌移出本局牌组。费用 ' + offer.price + ' 金币，确认移除后立即扣除。</p><div class="choice-list mt-2">' +
+    const body = L('ui.7b1dec0016bd') + offer.price + L('ui.43525c9e0c23') +
       (run.deck.units || []).map((unitId, unitIndex) => {
         const unit = Store.index.maps.units.get(unitId);
         if (!unit) return '';
-        return '<button class="choice-card" type="button" data-action="mode-shop-remove-unit" data-index="' + index + '" data-unit-index="' + unitIndex + '"><span class="choice-mark">' + (unit.counted === false ? '非' : '计') + '</span><span class="choice-main"><strong>' + esc(unit.name) + '</strong><small>生命 ' + unit.hp + ' · ' + (unit.counted === false ? '不计数' : '计数角色') + ' · 重选后仍须保留至少一名计数角色。</small></span></button>';
+        return '<button class="choice-card" type="button" data-action="mode-shop-remove-unit" data-index="' + index + '" data-unit-index="' + unitIndex + '"><span class="choice-mark">' + (unit.counted === false ? L('ui.748eed1c9629') : L('ui.94da9e6f36bd')) + '</span><span class="choice-main"><strong>' + esc(unit.name) + L('ui.8e2355a4acc3') + unit.hp + ' · ' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.64e904249960')) + L('ui.05699521d07b');
       }).join('') +
-    '</div><div class="notice danger mt-2">移除后不会返还已投入的其他资源。</div>';
-    app.openModal({ title: '移除角色', subtitle: '商店移除服务', body, foot: '<button class="btn" type="button" data-action="mode-shop-close-remove">返回商店</button>' });
+    L('ui.2e2353095172');
+    app.openModal({ title: L('ui.787c4122ef22'), subtitle: L('ui.3d7bd26bbce7'), body, foot: L('ui.adf574d35d28') });
   },
 
   removeUnitFromRun(app, index, unitIndex) {
@@ -666,26 +678,28 @@ const ModesUI = {
     const offer = this._shop.offers[index];
     const unitId = (run.deck.units || [])[unitIndex];
     if (!offer || offer.sold || !unitId) return;
-    if (modeNumber(run.gold) < offer.price) { app.toast('金币不足。', 'error'); return; }
+    if (modeNumber(run.gold) < offer.price) { app.toast(L('ui.9ffa872e8a9e'), 'error'); return; }
     const remaining = run.deck.units.filter((id, idx) => idx !== unitIndex);
     const counted = remaining.map(id => Store.index.maps.units.get(id)).filter(unit => unit && unit.counted !== false);
-    if (!counted.length) { app.toast('至少需要保留一名计数角色。', 'error'); return; }
+    if (!counted.length) { app.toast(L('ui.b325803275b1'), 'error'); return; }
     run.gold -= offer.price;
     offer.sold = true;
     run.deck.units.splice(unitIndex, 1);
     this.storeRun('rogue', run);
-    app.toast('已移除角色，支付 ' + offer.price + ' 金币。', 'success');
+    app.toast(L('ui.b2d94a0163f9') + offer.price + L('ui.135132e08b2c'), 'success');
     const node = run.map.layers.flat().find(item => item.id === this._shop.nodeId);
     if (node) this.openShopModal(app, run, node);
   },
 
   openRestModal(app, run, node) {
-    const body = '<div class="modal-copy">篝火只够照亮很小的范围。选择一项有限恢复或强化；本局剩余节点共享这些加成。</div><div class="choice-list mt-2">' +
-      '<button class="choice-card" type="button" data-action="mode-rest-choice" data-choice="hp"><span class="choice-mark">1</span><span class="choice-main"><strong>照料队伍</strong><small>本局所有角色生命上限 +2。整局保留。</small></span></button>' +
-      '<button class="choice-card" type="button" data-action="mode-rest-choice" data-choice="dmg"><span class="choice-mark">2</span><span class="choice-main"><strong>磨砺武器</strong><small>本局所有角色伤害提升值 +1。整局保留。</small></span></button>' +
-      '<button class="choice-card" type="button" data-action="mode-rest-choice" data-choice="gold"><span class="choice-mark">3</span><span class="choice-main"><strong>整理行囊</strong><small>获得 30 金币。</small></span></button>' +
+    const body = L('ui.473ab5a2fb1b') +
+      L('ui.a8480dd56c3e') +
+      L('ui.7a956ffbfe46') +
+      L('ui.98c79c52ffa1') +
+      L('ui.9d7a627e2bb9') +
+      L('ui.76e20149ca53') +
     '</div>';
-    app.openModal({ title: '休整', subtitle: '第 ' + (node.layer + 1) + ' 层 · 休整节点', size: 'small', body });
+    app.openModal({ title: L('ui.bee455dc2726'), subtitle: L('ui.f495347d6acf') + (node.layer + 1) + L('ui.65be5404de39'), size: 'small', body });
   },
 
   handleRestChoice(app, choice) {
@@ -693,21 +707,42 @@ const ModesUI = {
     if (!run || !run.currentNodeId) return;
     const node = run.map.layers.flat().find(item => item.id === run.currentNodeId);
     if (!node) return;
-    if (choice === 'hp') { run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + 2; app.toast('生命上限 +2。', 'success'); }
-    else if (choice === 'dmg') { run.upgrades.dmgFlat = modeNumber(run.upgrades.dmgFlat) + 1; app.toast('伤害强化 +1。', 'success'); }
-    else { run.gold = modeNumber(run.gold) + 30; app.toast('获得 30 金币。', 'success'); }
+    if (choice === 'hp') { run.upgrades.hpFlat = modeNumber(run.upgrades.hpFlat) + 2; app.toast(L('ui.575a1133ed69'), 'success'); }
+    else if (choice === 'dmg') { run.upgrades.dmgFlat = modeNumber(run.upgrades.dmgFlat) + 1; app.toast(L('ui.52c1ca71b836'), 'success'); }
+    else if (choice === 'gear') {
+      const owned = new Set(run.deck.equipment || []);
+      const candidates = Store.index.equipment.filter(item => !owned.has(item.id));
+      const gear = candidates.length ? modeRandom(candidates) : null;
+      if (gear) {
+        run.deck.equipment.push(gear.id);
+        this.ensureRunLoadout(run);
+        if (!run.activeEquipment.includes(gear.id)) run.activeEquipment.push(gear.id);
+        app.toast(L('ui.2667c8ca1853') + gear.name + '」。', 'success');
+      } else { run.gold = modeNumber(run.gold) + 25; app.toast(L('ui.d6353723cb4a'), 'success'); }
+    } else if (choice === 'rune') {
+      const owned = new Set(run.deck.runes || []);
+      const candidates = Store.index.runes.filter(item => !owned.has(item.id));
+      const rune = candidates.length ? modeRandom(candidates) : null;
+      if (rune) {
+        run.deck.runes.push(rune.id);
+        this.ensureRunLoadout(run);
+        if (run.activeRunes.length < 3) run.activeRunes.push(rune.id);
+        app.toast(L('ui.146c79ec28b5') + rune.name + '」。', 'success');
+      } else { run.gold = modeNumber(run.gold) + 25; app.toast(L('ui.c85a704238b6'), 'success'); }
+    } else { run.gold = modeNumber(run.gold) + 30; app.toast(L('ui.af653628fa7e'), 'success'); }
+    this.storeRun('rogue', run);
     this.advanceNode(app, node);
   },
 
   abandonRogue(app) {
     const run = Store.state.runs.rogue;
     if (!run) return;
-    app.confirm({ title: '放弃本局探索', message: '当前队伍、资源与地图进度将结束，并记录为一次失败探索。', confirmLabel: '放弃本局', danger: true, onConfirm: () => {
+    app.confirm({ title: L('ui.e0ef7b226cc6'), message: L('ui.1e5686f8f90c'), confirmLabel: L('ui.f9e1958b12fd'), danger: true, onConfirm: () => {
       run.active = false;
       run.failed = true;
       run.completed = false;
       this.storeRun('rogue', run);
-      Store.archiveRun({ mode: 'rogue', result: '放弃', detail: '玩家主动结束探索', layer: run.currentLayer + 1, wins: run.wins || 0 });
+      Store.archiveRun({ mode: 'rogue', result: L('ui.b8a81b7a9cf8'), detail: L('ui.7695e8766410'), layer: run.currentLayer + 1, wins: run.wins || 0 });
       app.render();
     } });
   },
@@ -765,18 +800,18 @@ const ModesUI = {
     const runePool = [...new Set((run.deck.runes || []))].map(id => Store.index.maps.runes.get(id)).filter(Boolean);
     const equipmentRows = equipmentPool.length ? equipmentPool.map(item => {
       const selected = draft.equipment.includes(item.id);
-      return '<div class="loadout-item' + (selected ? ' selected' : '') + '"><button class="loadout-toggle" type="button" data-action="mode-loadout-toggle-equipment" data-id="' + attr(item.id) + '"><span class="loadout-check">' + (selected ? '携行' : '收纳') + '</span><span class="loadout-main"><strong>' + esc(item.name) + '</strong><small>' + esc((item.slot === 'weapon' ? '武器' : '饰品') + ' · ' + (modSummary(item.mods, true) || '特效')) + '</small></span>' + qualityBadge(item.quality) + '</button><button class="loadout-destroy" type="button" data-action="mode-loadout-destroy-equipment" data-id="' + attr(item.id) + '" title="从本局资源中销毁">销毁</button></div>';
-    }).join('') : '<div class="empty-state"><p>当前没有装备。可在奖励或商店中获得。</p></div>';
+      return '<div class="loadout-item' + (selected ? ' selected' : '') + '"><button class="loadout-toggle" type="button" data-action="mode-loadout-toggle-equipment" data-id="' + attr(item.id) + '"><span class="loadout-check">' + (selected ? L('ui.83f9b608c710') : L('ui.670bd9f23871')) + '</span><span class="loadout-main"><strong>' + esc(item.name) + '</strong><small>' + esc((item.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + ' · ' + (modSummary(item.mods, true) || L('ui.455d56230713'))) + '</small></span>' + qualityBadge(item.quality) + '</button><button class="loadout-destroy" type="button" data-action="mode-loadout-destroy-equipment" data-id="' + attr(item.id) + L('ui.1de54ec6b05b');
+    }).join('') : L('ui.aa70ac40be6f');
     const runeRows = runePool.length ? runePool.map(item => {
       const selected = draft.runes.includes(item.id);
-      return '<button class="loadout-item rune' + (selected ? ' selected' : '') + '" type="button" data-action="mode-loadout-toggle-rune" data-id="' + attr(item.id) + '"><span class="loadout-check">' + (selected ? '启用' : '待命') + '</span><span class="loadout-main"><strong>' + esc(item.name) + '</strong><small>' + esc(modSummary(item.mods, true) || '特效') + '</small></span>' + qualityBadge(item.quality) + '</button>';
-    }).join('') : '<div class="empty-state"><p>当前没有符文。</p></div>';
+      return '<button class="loadout-item rune' + (selected ? ' selected' : '') + '" type="button" data-action="mode-loadout-toggle-rune" data-id="' + attr(item.id) + '"><span class="loadout-check">' + (selected ? L('ui.d4e9ca3dd494') : L('ui.1a0db8dc434c')) + '</span><span class="loadout-main"><strong>' + esc(item.name) + '</strong><small>' + esc(modSummary(item.mods, true) || L('ui.455d56230713')) + '</small></span>' + qualityBadge(item.quality) + '</button>';
+    }).join('') : L('ui.2a18dd90f485');
     app.openModal({
-      title: '战前整备 · ' + (this._loadoutDraft.mode === 'rogue' ? '肉鸽' : '无尽'),
-      subtitle: '自由配置携行装备与启用符文，设置会保留到后续战斗。',
+      title: L('ui.57993eef61b4') + (this._loadoutDraft.mode === 'rogue' ? L('ui.85646631c0e1') : L('ui.fb68101a77f8')),
+      subtitle: L('ui.231ad523fcfa'),
       size: 'large',
-      body: '<div class="loadout-columns"><section><div class="detail-section-title">装备卡 · ' + draft.equipment.length + ' 携行<span class="line"></span></div><p class="field-hint mb-1">装备默认不穿戴。携行后会进入战斗中的装备卡栏目，可在行动时穿戴或销毁。</p><div class="loadout-list">' + equipmentRows + '</div></section><section><div class="detail-section-title">符文 · ' + draft.runes.length + ' / 3 启用<span class="line"></span></div><p class="field-hint mb-1">符文配置会应用到下一场战斗；战斗中也可以随时调整。</p><div class="loadout-list">' + runeRows + '</div></section></div>',
-      foot: '<span class="left">角色 ' + (run.deck.units || []).length + ' · 装备 ' + equipmentPool.length + ' · 符文 ' + runePool.length + '</span><button class="btn" type="button" data-action="modal-close">取消</button><button class="btn btn-primary" type="button" data-action="mode-loadout-save">保存配置</button>'
+      body: L('ui.4ec17c260ddb') + draft.equipment.length + L('ui.55d8318eec45') + equipmentRows + L('ui.6641680ff3d1') + draft.runes.length + L('ui.8cb9a693fdb2') + runeRows + '</div></section></div>',
+      foot: L('ui.266af4a7778f') + (run.deck.units || []).length + L('ui.d65a0a66148c') + equipmentPool.length + L('ui.b604c4619b70') + runePool.length + L('ui.fbb852a2594a')
     });
   },
 
@@ -794,7 +829,7 @@ const ModesUI = {
     const list = this._loadoutDraft.runes;
     const index = list.indexOf(id);
     if (index >= 0) list.splice(index, 1);
-    else if (list.length >= 3) { app.toast('每阵营最多启用三张符文。', 'error'); return; }
+    else if (list.length >= 3) { app.toast(L('ui.a24a5da5855e'), 'error'); return; }
     else list.push(id);
     this.renderLoadoutModal(app);
   },
@@ -810,7 +845,7 @@ const ModesUI = {
     this._loadoutDraft.equipment = this._loadoutDraft.equipment.filter(item => item !== id);
     this.storeRun(mode, run);
     this.renderLoadoutModal(app);
-    app.toast('装备已从本局资源中销毁。', 'success');
+    app.toast(L('ui.3274fc353b45'), 'success');
   },
 
   saveLoadout(app) {
@@ -826,7 +861,7 @@ const ModesUI = {
     this._loadoutDraft = null;
     app.closeModal(true);
     app.render();
-    app.toast('战前整备已保存。', 'success');
+    app.toast(L('ui.1797a38e63cf'), 'success');
   },
 
   /* ---------- Battle outcomes ---------- */
@@ -834,18 +869,18 @@ const ModesUI = {
     context = context || {};
     const playerWin = battle.winner === 'A';
     if (context.mode === 'rogue') {
-      if (playerWin) return [{ label: context.nodeType === 'boss' ? '完成探索并选择战利品' : '收取战利品', action: 'mode-rogue-victory', kind: 'primary' }];
-      return [{ label: '结束本局', action: 'mode-rogue-defeat', kind: 'danger' }];
+      if (playerWin) return [{ label: context.nodeType === 'boss' ? L('ui.8abb78cb1b85') : L('ui.d5d5e379b626'), action: 'mode-rogue-victory', kind: 'primary' }];
+      return [{ label: L('ui.88d165fb89ab'), action: 'mode-rogue-defeat', kind: 'danger' }];
     }
     if (context.mode === 'challenge') {
       const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === context.challengeId);
       const isLast = challenge && context.stageIndex >= challenge.stages.length - 1;
-      if (playerWin) return [{ label: isLast ? '完成挑战' : '进入下一幕', action: isLast ? 'mode-challenge-complete' : 'mode-challenge-next', kind: 'primary' }];
-      return [{ label: '返回挑战', action: 'mode-challenge-defeat', kind: 'danger' }];
+      if (playerWin) return [{ label: isLast ? L('ui.e35e668dd7ec') : L('ui.8673d59b4cba'), action: isLast ? 'mode-challenge-complete' : 'mode-challenge-next', kind: 'primary' }];
+      return [{ label: L('ui.14638b5f0f96'), action: 'mode-challenge-defeat', kind: 'danger' }];
     }
     if (context.mode === 'endless') {
-      if (playerWin) return [{ label: '处理战利品', action: 'mode-endless-victory', kind: 'primary' }];
-      return [{ label: '结束无尽', action: 'mode-endless-defeat', kind: 'danger' }];
+      if (playerWin) return [{ label: L('ui.de31c16755a5'), action: 'mode-endless-victory', kind: 'primary' }];
+      return [{ label: L('ui.25ac0aa27500'), action: 'mode-endless-defeat', kind: 'danger' }];
     }
     return null;
   },
@@ -885,7 +920,7 @@ const ModesUI = {
     run.awaitingReward = false;
     run.pendingRewards = [];
     this.storeRun('rogue', run);
-    Store.archiveRun({ mode: 'rogue', result: '失败', detail: '队伍在节点战斗中失去全部计数单位', layer: run.currentLayer + 1, wins: run.wins || 0 });
+    Store.archiveRun({ mode: 'rogue', result: L('ui.3e3c8068bb0e'), detail: L('ui.2991edb61257'), layer: run.currentLayer + 1, wins: run.wins || 0 });
     app.exitBattleTo('rogue');
   },
 
@@ -915,7 +950,7 @@ const ModesUI = {
     run.awaitingReward = false;
     run.pendingRewards = [];
     this.storeRun('endless', run);
-    Store.archiveRun({ mode: 'endless', result: '失败', detail: '无尽层数结算', layer: run.layer, wins: modeNumber(run.wins) });
+    Store.archiveRun({ mode: 'endless', result: L('ui.3e3c8068bb0e'), detail: L('ui.6de0c27e1b7a'), layer: run.layer, wins: modeNumber(run.wins) });
     app.exitBattleTo('endless');
   },
 
@@ -929,39 +964,39 @@ const ModesUI = {
     const runBanner = activeRun ? (() => {
       const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === activeRun.challengeId);
       const stage = challenge && challenge.stages[activeRun.stageIndex];
-      return '<div class="run-banner"><img src="assets/icons/challenge.svg" alt=""><div class="grow"><strong>进行中：' + esc(challenge ? challenge.name : '挑战') + '</strong><p>第 ' + (activeRun.stageIndex + 1) + ' / ' + (challenge ? challenge.stages.length : '?') + ' 幕 · ' + esc(stage ? stage.name : '') + '。挑战预设使用当前通关状态。</p></div><div class="banner-actions"><button class="btn btn-sm btn-primary" type="button" data-action="mode-challenge-fight">进入第 ' + (activeRun.stageIndex + 1) + ' 幕</button><button class="btn btn-sm" type="button" data-action="mode-challenge-abandon">放弃</button></div></div>';
+      return L('ui.91ce5653de6e') + esc(challenge ? challenge.name : L('ui.9294c931e171')) + L('ui.11f8fe25c36e') + (activeRun.stageIndex + 1) + ' / ' + (challenge ? challenge.stages.length : '?') + L('ui.1a033f436ed8') + esc(stage ? stage.name : '') + L('ui.d96201dcece1') + (activeRun.stageIndex + 1) + L('ui.0ed208779b09');
     })() : '';
-    const failedRun = run && !run.active ? '<div class="notice mt-2"><div class="row between wrap"><span>上一次挑战：' + (run.completed ? '已完成' : '未完成') + '。' + (run.completed ? '可以重新挑战更高效率的路线。' : '失败后可重新挑战。') + '</span>' + (!run.completed && run.challengeId ? '<button class="btn btn-sm" type="button" data-action="mode-challenge-retry">重新挑战</button>' : '') + '</div></div>' : '';
+    const failedRun = run && !run.active ? L('ui.7b7db09e0279') + (run.completed ? L('ui.e99b48a29bdf') : L('ui.b61b08aec3a9')) + '。' + (run.completed ? L('ui.4b11d45a4aff') : L('ui.1a3ef1f1a4f7')) + '</span>' + (!run.completed && run.challengeId ? L('ui.e2fc96c3d7aa') : '') + '</div></div>' : '';
     return '' +
       '<div class="page-wrap mode-page">' +
-        '<div class="page-head"><div class="page-head-main"><div class="page-kicker">CHALLENGE TRIALS / PRESET GAUNTLET</div><h1>挑战</h1><p>使用我方存档牌组挑战预设的连续战斗。每场战斗的敌方配置、规则修正与阶段目标由挑战定义；完成全部阶段即通关。</p></div><div class="page-head-side"><span class="chip ' + (stored.repaired ? 'red' : 'green') + '">' + (stored.repaired ? '牌组已回退至推荐' : '我方牌组已载入') + '</span><button class="btn" type="button" data-action="open-setup" data-mode="versus">调整牌组</button></div></div>' +
-        '<section class="mode-hero"><img class="mode-hero-icon" src="assets/icons/challenge.svg" alt=""><div class="mh-main"><h2>为已知结局准备不同的答案</h2><p>每项挑战包含若干连续战斗。当前实现的阶段间状态会重置，角色与资源重新入场；部分挑战会修正敌方生命、伤害或入场效果。</p><div class="mh-actions"><span class="chip">连续战斗</span><span class="chip">预设规则修正</span><span class="chip">失败可重试</span></div></div><span class="mode-stamp">TRIALS / 3</span></section>' +
-        (stored.repaired ? '<div class="notice danger mt-2">当前存档牌组不满足出战条件，已使用推荐构筑预览。请先在对战配置中修正我方牌组。</div>' : '') +
+        L('ui.2087685dc16a') + (stored.repaired ? 'red' : 'green') + '">' + (stored.repaired ? L('ui.cd7b9cd6e35d') : L('ui.de37b61d0f38')) + L('ui.8c8e0317b864') +
+        L('ui.f0e1cd058a68') +
+        (stored.repaired ? L('ui.f0b8788fde7b') : '') +
         (runBanner ? '<div class="mt-2">' + runBanner + '</div>' : '') + failedRun +
-        '<div class="mt-3"><div class="section-heading"><div><h2>预设挑战</h2><p>当前队伍：' + cards.units.length + ' 角色 / ' + counts + ' 计数 / ' + cards.equipment.length + ' 装备 / ' + cards.runes.length + ' 符文。</p></div><span class="chip">存档牌组</span></div><div class="challenge-grid">' +
+        L('ui.f2660a038f4c') + cards.units.length + L('ui.2ef5f8c5c834') + counts + L('ui.39c472040790') + cards.equipment.length + L('ui.03befcf868ca') + cards.runes.length + L('ui.27205cbe2719') +
           CHALLENGE_DEFINITIONS.map((challenge, index) => {
             const artUnit = challenge.id === 'challenge_curse' ? 'yonava' : challenge.id === 'challenge_endless' ? 'catgirl_jk' : 'philia093';
             const art = (Store.index.maps.units.get(artUnit) || {}).art || 'assets/pictures/unit-philia.svg';
             const isActive = activeRun && activeRun.challengeId === challenge.id;
             const blockedByOther = activeRun && !isActive;
-            return '<article class="panel challenge-card"><div class="challenge-art"><img src="' + attr(art) + '" alt=""><span class="ch-tag">' + esc(challenge.tag) + '</span><span class="ch-name">' + esc(challenge.name) + '</span></div><div class="challenge-body"><p>' + esc(challenge.description) + '</p><div class="challenge-stages">' + challenge.stages.map((stage, stageIndex) => '<div class="challenge-stage-row"><span class="stage-no">' + (stageIndex + 1) + '</span><span>' + esc(stage.name) + '</span><small>' + esc(stage.rule && stage.rule.modifier ? stage.rule.modifier : '标准战斗') + '</small></div>').join('') + '</div><button class="btn ' + (isActive ? 'btn-primary' : '') + '" type="button" data-action="' + (isActive ? 'mode-challenge-fight' : 'mode-challenge-start') + '" data-id="' + attr(challenge.id) + '"' + (blockedByOther ? ' disabled' : '') + '>' + (isActive ? '继续挑战' : blockedByOther ? '已有挑战进行中' : '开始挑战') + '</button></div></article>';
+            return '<article class="panel challenge-card"><div class="challenge-art"><img src="' + attr(art) + '" alt=""><span class="ch-tag">' + esc(challenge.tag) + '</span><span class="ch-name">' + esc(challenge.name) + '</span></div><div class="challenge-body"><p>' + esc(challenge.description) + '</p><div class="challenge-stages">' + challenge.stages.map((stage, stageIndex) => '<div class="challenge-stage-row"><span class="stage-no">' + (stageIndex + 1) + '</span><span>' + esc(stage.name) + '</span><small>' + esc(stage.rule && stage.rule.modifier ? stage.rule.modifier : L('ui.68e99292d125')) + '</small></div>').join('') + '</div><button class="btn ' + (isActive ? 'btn-primary' : '') + '" type="button" data-action="' + (isActive ? 'mode-challenge-fight' : 'mode-challenge-start') + '" data-id="' + attr(challenge.id) + '"' + (blockedByOther ? ' disabled' : '') + '>' + (isActive ? L('ui.ea0a3697e479') : blockedByOther ? L('ui.eb5e9fb40d37') : L('ui.b77dfdad2269')) + '</button></div></article>';
           }).join('') +
         '</div></div>' +
-        '<div class="panel mt-3"><div class="panel-head"><div><h3>当前牌组预览</h3><div class="panel-sub">可在面对面对战配置中修改后返回挑战。</div></div><button class="btn btn-sm" type="button" data-action="mode-challenge-view-deck">查看完整牌组</button></div><div class="panel-body"><div class="row wrap">' + cards.units.map(unit => '<span class="chip">' + esc(unit.name) + '</span>').join('') + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></div>' +
+        L('ui.7575dea8793b') + cards.units.map(unit => '<span class="chip">' + esc(unit.name) + '</span>').join('') + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></div>' +
       '</div>';
   },
 
   startChallenge(app, challengeId) {
     const existing = Store.state.runs.challenge;
     if (existing && existing.active) {
-      app.toast('已有挑战进行中，请先完成或放弃。', 'error');
+      app.toast(L('ui.ee8ae2d00079'), 'error');
       return;
     }
     const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === challengeId);
     if (!challenge) return;
     const stored = this.storedDeck(app);
     if (stored.repaired) {
-      app.toast('当前我方牌组无效，请先调整牌组。', 'error');
+      app.toast(L('ui.ebb9b18bb0b0'), 'error');
       return;
     }
     const run = {
@@ -1022,7 +1057,7 @@ const ModesUI = {
       run.stageIndex += 1;
       Store.recordRun('challenge', run);
       app.exitBattleTo('challenge');
-      app.toast('进入第 ' + (run.stageIndex + 1) + ' 幕。', 'success');
+      app.toast(L('ui.561845da102c') + (run.stageIndex + 1) + L('ui.b0d6337a66f0'), 'success');
     } else {
       this.completeChallenge(app);
     }
@@ -1036,9 +1071,9 @@ const ModesUI = {
     run.failed = false;
     Store.recordRun('challenge', run);
     const challenge = CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId);
-    Store.archiveRun({ mode: 'challenge', result: '通关', detail: challenge ? challenge.name : run.challengeId, stage: run.stageIndex + 1 });
+    Store.archiveRun({ mode: 'challenge', result: L('ui.fae07039a5dc'), detail: challenge ? challenge.name : run.challengeId, stage: run.stageIndex + 1 });
     app.exitBattleTo('challenge');
-    app.toast('挑战完成。', 'success');
+    app.toast(L('ui.76dc0d0ecade'), 'success');
   },
 
   challengeDefeat(app) {
@@ -1048,14 +1083,14 @@ const ModesUI = {
     run.failed = true;
     run.completed = false;
     Store.recordRun('challenge', run);
-    Store.archiveRun({ mode: 'challenge', result: '失败', detail: (CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId) || {}).name || '', stage: run.stageIndex + 1 });
+    Store.archiveRun({ mode: 'challenge', result: L('ui.3e3c8068bb0e'), detail: (CHALLENGE_DEFINITIONS.find(item => item.id === run.challengeId) || {}).name || '', stage: run.stageIndex + 1 });
     app.exitBattleTo('challenge');
   },
 
   abandonChallenge(app) {
     const run = Store.state.runs.challenge;
     if (!run) return;
-    app.confirm({ title: '放弃挑战', message: '当前挑战进度会被记录为放弃。可以之后重新开始。', confirmLabel: '放弃挑战', danger: true, onConfirm: () => {
+    app.confirm({ title: L('ui.0431d5ddd3c4'), message: L('ui.de7bafc6d7ed'), confirmLabel: L('ui.0431d5ddd3c4'), danger: true, onConfirm: () => {
       run.active = false;
       run.failed = true;
       this.storeRun('challenge', run);
@@ -1083,38 +1118,38 @@ const ModesUI = {
       const startEffects = upgrades.startEffects || [];
       return '' +
         '<div class="page-wrap mode-page">' +
-          '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ENDLESS ASCENT / LAYER ' + run.layer + '</div><h1>无尽 · 第 ' + run.layer + ' 层</h1><p>难度随层数上升。每层胜利后从三项奖励中选择一项，强化队伍并进入下一层。失败时结算到达层数。</p></div><div class="page-head-side"><span class="chip">最高到达 ' + Math.max(best, run.layer) + ' 层</span><button class="btn btn-sm btn-danger" type="button" data-action="mode-endless-abandon">结束本局</button></div></div>' +
-          (run.awaitingReward ? '<div class="run-banner"><img src="assets/icons/endless.svg" alt=""><div class="grow"><strong>战利品等待选择</strong><p>选择后即可进入第 ' + run.layer + ' 层。</p></div><div class="banner-actions"><button class="btn btn-sm btn-gold" type="button" data-action="mode-endless-open-reward">选择战利品</button></div></div>' : '') +
+          '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ENDLESS ASCENT / LAYER ' + run.layer + L('ui.64d1e1555d01') + run.layer + L('ui.b377b6973e62') + Math.max(best, run.layer) + L('ui.9caf006993cb') +
+          (run.awaitingReward ? L('ui.8627adcf1292') + run.layer + L('ui.53384de97965') : '') +
           '<div class="endless-layout mt-2">' +
             '<div class="stack">' +
-              '<section class="panel"><div class="panel-head"><div><h3>本局状态</h3><div class="panel-sub">资源与强化持续生效</div></div><span class="chip">无尽</span></div><div class="panel-body">' +
-                '<div class="result-stats" style="margin-top:0"><div class="result-stat"><b>' + run.layer + '</b><span>当前层</span></div><div class="result-stat"><b>' + modeNumber(run.wins) + '</b><span>已胜场</span></div><div class="result-stat"><b>' + modeNumber(run.gold) + '</b><span>金币</span></div></div>' +
-                '<div class="row wrap mt-2"><span class="chip">生命强化 +' + modeNumber(upgrades.hpFlat) + '</span><span class="chip">伤害强化 +' + modeNumber(upgrades.dmgFlat) + '</span>' + (startEffects.map(item => '<span class="chip violet">祝福 · ' + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('')) + '</div>' +
-                '<div class="progress-track mt-2"><span style="width:' + Math.min(100, 8 + run.layer * 7) + '%"></span></div><p class="field-hint mt-1">每层敌人数量、品质、属性与技能复杂度随层数提高，并获得额外规则修正。</p>' +
-                '<div class="btn-row mt-2"><button class="btn btn-primary btn-lg" type="button" data-action="mode-endless-battle"' + (run.awaitingReward ? ' disabled' : '') + '>进入第 ' + run.layer + ' 层</button><button class="btn" type="button" data-action="mode-endless-view-deck">查看牌组</button></div>' +
+              L('ui.873bc77973c5') +
+                '<div class="result-stats" style="margin-top:0"><div class="result-stat"><b>' + run.layer + L('ui.83199be44d01') + modeNumber(run.wins) + L('ui.f86658598113') + modeNumber(run.gold) + L('ui.838d617575a2') +
+                L('ui.80828744e39f') + modeNumber(upgrades.hpFlat) + L('ui.f209adea79c8') + modeNumber(upgrades.dmgFlat) + '</span>' + (startEffects.map(item => L('ui.e1b32b38e61a') + esc((Store.index.maps.effects.get(item.effectId) || { name: item.effectId }).name) + ' ×' + item.stacks + '</span>').join('')) + '</div>' +
+                '<div class="progress-track mt-2"><span style="width:' + Math.min(100, 8 + run.layer * 7) + L('ui.5f70f2f622c8') +
+                '<div class="btn-row mt-2"><button class="btn btn-primary btn-lg" type="button" data-action="mode-endless-battle"' + (run.awaitingReward ? ' disabled' : '') + L('ui.cff0e1cdf1fe') + run.layer + L('ui.c57aad91eb14') +
               '</div></section>' +
-              '<section class="panel"><div class="panel-head"><div><h3>下一层预览</h3><div class="panel-sub">难度按层数递增</div></div></div><div class="panel-body"><div class="layer-list">' + [1, 2, 3, 4].map(offset => { const layer = run.layer + offset; return '<div class="layer-row"><span class="layer-no">' + layer + '</span><div class="layer-main"><strong>第 ' + layer + ' 层</strong><small>' + (layer % 5 === 0 ? '精英轮换 · 额外符文' : '随机敌人 · 属性修正') + '</small></div><span class="layer-reward">' + (layer % 3 === 0 ? '强化奖励' : '战利品') + '</span></div>'; }).join('') + '</div></div></section>' +
+              L('ui.baf7f1926075') + [1, 2, 3, 4].map(offset => { const layer = run.layer + offset; return '<div class="layer-row"><span class="layer-no">' + layer + L('ui.921c3e0df8ad') + layer + L('ui.ccfd77d07e56') + (layer % 5 === 0 ? L('ui.afdbca0747b2') : L('ui.974c9d35dfb4')) + '</small></div><span class="layer-reward">' + (layer % 3 === 0 ? L('ui.c17a54a1745f') : L('ui.34b4e7dab975')) + '</span></div>'; }).join('') + '</div></div></section>' +
             '</div>' +
             '<aside class="stack">' +
-              '<section class="panel"><div class="panel-head"><h3>当前牌组</h3><button class="btn btn-sm" type="button" data-action="mode-loadout-open" data-mode="endless">战前整备</button></div><div class="panel-body"><div class="run-deck-list">' + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div><p class="field-hint mt-1">装备默认不穿戴；符文随时可配置，战斗前也可以调整携行与启用。</p></div></section>' +
-              '<section class="panel"><div class="panel-head"><h3>层数记录</h3></div><div class="panel-body"><div class="run-stat-row"><span>历史最高</span><b>' + Math.max(best, run.layer) + ' 层</b></div><div class="run-stat-row"><span>历史挑战</span><b>' + historyCount + ' 次</b></div><p class="field-hint mt-1">结束本局会记录当前层数。</p></div></section>' +
+              L('ui.b807bab8993c') + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>').join('') + '</div><div class="row wrap mt-2">' + (run.activeEquipment || []).map(id => Store.index.maps.equipment.get(id)).filter(Boolean).map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + (run.activeRunes || []).map(id => Store.index.maps.runes.get(id)).filter(Boolean).map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + L('ui.a80c9b739e83') +
+              L('ui.ffa81b921d31') + Math.max(best, run.layer) + L('ui.7d613eb63063') + historyCount + L('ui.35c9279f6877') +
             '</aside>' +
           '</div>' +
         '</div>';
     }
     return '' +
       '<div class="page-wrap mode-page">' +
-        '<div class="page-head"><div class="page-head-main"><div class="page-kicker">ENDLESS ASCENT / RANDOMIZED</div><h1>无尽</h1><p>随机生成敌人，难度随层数上升。每层胜利后从三项奖励中选择一项强化队伍，失败时结算到达层数。</p></div><div class="page-head-side"><span class="chip">历史最高 ' + best + ' 层</span><span class="chip">挑战 ' + historyCount + ' 次</span></div></div>' +
-        '<section class="mode-hero"><img class="mode-hero-icon" src="assets/icons/endless.svg" alt=""><div class="mh-main"><h2>没有终点，只有下一层</h2><p>使用我方存档牌组开始。每层敌人由随机角色、装备和符文组成，并随层数获得生命、伤害与入场效果修正。</p><div class="mh-actions"><button class="btn btn-primary" type="button" data-action="mode-endless-start">以此牌组开始</button><button class="btn" type="button" data-action="open-setup" data-mode="versus">调整我方牌组</button></div></div><span class="mode-stamp">ENDLESS / ASCENT</span></section>' +
-        '<div class="endless-layout mt-3"><div class="stack"><section class="panel"><div class="panel-head"><div><h3>我方牌组</h3><div class="panel-sub">' + (stored.repaired ? '存档牌组无效，将使用推荐构筑' : '来自对战配置的当前构筑') + '</div></div></div><div class="panel-body"><div class="row wrap">' + this.deckPreview(stored.deck).units.map(unit => '<span class="chip">' + esc(unit.name) + '</span>').join('') + this.deckPreview(stored.deck).equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + this.deckPreview(stored.deck).runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></section>' +
-          '<section class="panel"><div class="panel-head"><h3>难度曲线</h3></div><div class="panel-body"><div class="layer-list">' + [1, 2, 3, 4, 5].map(layer => '<div class="layer-row"><span class="layer-no">' + layer + '</span><div class="layer-main"><strong>第 ' + layer + ' 层</strong><small>' + (layer === 1 ? '三名随机敌人' : layer >= 4 ? '四人编队 / 额外符文' : '属性修正开始生效') + '</small></div><span class="layer-reward">' + (layer === 1 ? '起始' : '递增') + '</span></div>').join('') + '</div></div></section></div>' +
-          '<aside class="stack"><section class="panel"><div class="panel-head"><h3>规则</h3></div><div class="panel-body"><div class="rule-principles"><div class="rule-principle"><span class="no">1</span><span>每层胜利必须选择一项战利品。</span></div><div class="rule-principle"><span class="no">2</span><span>生命与伤害强化对整局牌组生效。</span></div><div class="rule-principle"><span class="no">3</span><span>失败时记录到达层数并结束本局。</span></div><div class="rule-principle"><span class="no">4</span><span>奖励池包括角色、装备、符文、高级效果、强化与金币。</span></div></div></div></section></aside></div>' +
+        L('ui.cee2dbec0d15') + best + L('ui.e6b193c5845a') + historyCount + L('ui.50bf7a3f6f43') +
+        L('ui.b1c457a82027') +
+        L('ui.0b9fcb747abc') + (stored.repaired ? L('ui.67e9ecfc7982') : L('ui.9be43bd19e4d')) + '</div></div></div><div class="panel-body"><div class="row wrap">' + this.deckPreview(stored.deck).units.map(unit => '<span class="chip">' + esc(unit.name) + '</span>').join('') + this.deckPreview(stored.deck).equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + this.deckPreview(stored.deck).runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div></div></section>' +
+          L('ui.e6758d976422') + [1, 2, 3, 4, 5].map(layer => '<div class="layer-row"><span class="layer-no">' + layer + L('ui.921c3e0df8ad') + layer + L('ui.ccfd77d07e56') + (layer === 1 ? L('ui.aca99448861b') : layer >= 4 ? L('ui.cecafef99d3b') : L('ui.701c724e51be')) + '</small></div><span class="layer-reward">' + (layer === 1 ? L('ui.8a03f08a77b3') : L('ui.9e8a2fc208f5')) + '</span></div>').join('') + '</div></div></section></div>' +
+          L('ui.15715b98de84') +
       '</div>';
   },
 
   startEndless(app) {
     const stored = this.storedDeck(app);
-    if (stored.repaired) { app.toast('当前我方牌组无效，请先调整牌组。', 'error'); return; }
+    if (stored.repaired) { app.toast(L('ui.ebb9b18bb0b0'), 'error'); return; }
     const run = {
       active: true,
       layer: 1,
@@ -1154,19 +1189,19 @@ const ModesUI = {
   endEndless(app) {
     const run = Store.state.runs.endless;
     if (!run) return;
-    app.confirm({ title: '结束无尽本局', message: '当前到达层数与强化会被结算，本局结束。', confirmLabel: '结束本局', danger: true, onConfirm: () => {
+    app.confirm({ title: L('ui.485d18206be7'), message: L('ui.f9427394f288'), confirmLabel: L('ui.88d165fb89ab'), danger: true, onConfirm: () => {
       run.active = false;
       run.failed = true;
       this.storeRun('endless', run);
-      Store.archiveRun({ mode: 'endless', result: '结束', detail: '玩家主动结束无尽', layer: run.layer, wins: modeNumber(run.wins) });
+      Store.archiveRun({ mode: 'endless', result: L('ui.76b9880829e0'), detail: L('ui.751948fa516c'), layer: run.layer, wins: modeNumber(run.wins) });
       app.render();
     } });
   },
 
   viewDeck(app, deck) {
     const cards = this.deckPreview(deck);
-    const body = '<div class="detail-section-title">角色<span class="line"></span></div><div class="stack gap-sm">' + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + '</span><small>生命 ' + unit.hp + ' · ' + (unit.counted === false ? '不计数' : '计数') + '</small></div>').join('') + '</div><div class="detail-section-title">装备与符文<span class="line"></span></div><div class="row wrap">' + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div>';
-    app.openModal({ title: '当前牌组', subtitle: '角色牌进入抽牌堆；装备与符文在整备时生效。', body });
+    const body = L('ui.7f95b811fa29') + cards.units.map(unit => '<div class="run-deck-item"><img src="' + attr(cardArt(unit)) + '" alt=""><span>' + esc(unit.name) + L('ui.1b23a91f2f11') + unit.hp + ' · ' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</small></div>').join('') + L('ui.116075afd1f9') + cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') + cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') + '</div>';
+    app.openModal({ title: L('ui.3279eff11b01'), subtitle: L('ui.893d5f44b9fa'), body });
   },
 
   /* ---------- Action dispatch ---------- */

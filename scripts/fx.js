@@ -9,10 +9,14 @@ const BattleFX = {
   raf: null,
   fallbackTimer: null,
   done: null,
+  onImpact: null,
   effects: [],
   pending: [],
+  pendingDamageHits: 0,
+  lastImpactAt: 0,
   startTime: 0,
   lastTimestamp: 0,
+  simElapsed: 0,
   width: 0,
   height: 0,
   dpr: 1,
@@ -25,7 +29,8 @@ const BattleFX = {
     gold: ['#E3BF69', '#B88A38', '#FFF0B8', '#F7D98D', '#8C6726', '#FFF8DF'],
     heal: ['#B7F4C0', '#7DDC9A', '#E3FFE7', '#4CAF76', '#CFF7D9', '#9FE8C7'],
     burn: ['#4E0707', '#771414', '#A3261D', '#C24A2E', '#2B0303', '#E07A4A'],
-    violet: ['#665170', '#8F7A9B', '#B9A8C8', '#4D3A58', '#E6DCEC', '#9980A8']
+    violet: ['#665170', '#8F7A9B', '#B9A8C8', '#4D3A58', '#E6DCEC', '#9980A8'],
+    slime: ['#5F8B62', '#8FBF86', '#B7D9A2', '#3E6E4B', '#D9EBCB', '#6DA36C']
   },
 
   color(type, index) {
@@ -69,86 +74,147 @@ const BattleFX = {
     return { x: this.width / 2, y: this.height / 2 };
   },
 
-  play(events, positions, done) {
+  projectileDuration(source, target, kind) {
+    const distance = Math.max(24, Math.hypot(target.x - source.x, target.y - source.y) - 12);
+    const speed = kind === 'support' ? 430 : 520;
+    const accel = kind === 'support' ? 520 : 760;
+    return (-speed + Math.sqrt(speed * speed + 2 * accel * distance)) / accel;
+  },
+
+  notifyImpact(event, target) {
+    if (event && event.kind === 'damage') {
+      this.pendingDamageHits = Math.max(0, this.pendingDamageHits - 1);
+    }
+    this.lastImpactAt = performance.now();
+    if (typeof this.onImpact === 'function') {
+      try { this.onImpact(event); } catch (error) { console.error(error); }
+    }
+    if (event && event.kind === 'damage' && event.defeated) this.spawnDefeatHalo(target);
+  },
+
+  scheduleDamage(event, at, positions, bonus) {
+    const target = this.posFor(event, 'target', positions);
+    const source = this.posFor(event, 'source', positions);
+    const type = event.type || 'true';
+    if (event.burn) {
+      this.pending.push({ at, run: () => { this.pendingDamageHits += 1; this.notifyImpact(event, target); this.spawnExplosion(target, 'burn', event.amount, event); } });
+      return at;
+    }
+    if (event.rider) {
+      this.pending.push({ at, run: () => { this.pendingDamageHits += 1; this.notifyImpact(event, target); this.spawnAura(target, 'gold'); this.spawnExplosion(target, 'true', event.amount, event, 9); } });
+      return at;
+    }
+    this.pending.push({
+      at,
+      run: () => {
+        this.pendingDamageHits += 1;
+        this.spawnProjectile(source, target, type, () => {
+          this.notifyImpact(event, target);
+          this.spawnExplosion(target, type, event.amount, event);
+        }, bonus ? 'bonus' : 'attack');
+      }
+    });
+    return at + this.projectileDuration(source, target, bonus ? 'bonus' : 'attack') * 1000;
+  },
+
+  play(events, positions, done, onImpact) {
     this.cancel();
     if (!events || !events.length) { if (done) done(); return; }
     if (!this.init()) { if (done) done(); return; }
     if (typeof Store !== 'undefined' && Store.state && Store.state.settings.reduceMotion) { if (done) done(); return; }
     this.running = true;
     this.done = done || null;
+    this.onImpact = typeof onImpact === 'function' ? onImpact : null;
     this.effects = [];
     this.pending = [];
+    this.pendingDamageHits = 0;
+    this.lastImpactAt = 0;
     this.startTime = performance.now();
     this.lastTimestamp = this.startTime;
+    this.simElapsed = 0;
     if (this.fallbackTimer) clearTimeout(this.fallbackTimer);
-    this.fallbackTimer = setTimeout(() => { if (this.running) this.finish(); }, 2800);
+    this.fallbackTimer = setTimeout(() => { if (this.running) this.finish(); }, 7500);
     positions = positions || {};
 
     this.floaterStacks = {};
     let offset = 0;
-    for (const event of events) {
+    let lastImpact = -1;
+    const gap = 140;
+    let cursor = 0;
+    while (cursor < events.length) {
+      const event = events[cursor];
       if (event.kind === 'damage') {
-        const target = this.posFor(event, 'target', positions);
-        const source = this.posFor(event, 'source', positions);
-        const type = event.type || 'true';
-        if (event.burn) {
-          this.pending.push({ at: 160 + offset, run: () => this.spawnExplosion(target, 'burn', event.amount, event) });
-          offset += 55;
-        } else if (event.rider) {
-          this.pending.push({ at: 220 + offset, run: () => { this.spawnAura(target, 'gold'); this.spawnExplosion(target, 'true', event.amount, event, 9); } });
-          offset += 55;
-        } else {
-          this.pending.push({
-            at: offset,
-            run: () => this.spawnProjectile(source, target, type, () => {
-              this.spawnExplosion(target, type, event.amount, event);
-            }, event.bonus ? 'bonus' : 'attack')
-          });
-          offset += event.bonus ? 90 : 55;
+        const key = (event.isAttack ? '1' : '0') + ':' + (event.bonus ? '1' : '0');
+        const group = [];
+        while (cursor < events.length) {
+          const next = events[cursor];
+          if (next.kind !== 'damage') break;
+          const nextKey = (next.isAttack ? '1' : '0') + ':' + (next.bonus ? '1' : '0');
+          if (nextKey !== key) break;
+          group.push(next);
+          cursor += 1;
         }
-      } else if (event.kind === 'heal') {
+        const at = Math.max(offset, lastImpact >= 0 ? lastImpact + gap : 0);
+        let latest = at;
+        for (const hit of group) {
+          latest = Math.max(latest, this.scheduleDamage(hit, at, positions, !!hit.bonus));
+        }
+        lastImpact = latest;
+        offset = Math.max(offset, at + 40);
+        continue;
+      }
+
+      const at = Math.max(offset, lastImpact >= 0 ? lastImpact + gap : 0);
+      if (event.kind === 'heal') {
         const target = this.posFor(event, 'target', positions);
         const source = this.posFor(event, 'source', positions);
         if (event.self) {
-          this.pending.push({ at: offset, run: () => { this.spawnAura(target, 'heal'); this.spawnFloater(target, event.amount, { type: 'heal', prefix: '+' }); } });
+          this.pending.push({ at, run: () => { this.notifyImpact(event, target); this.spawnAura(target, 'heal'); this.spawnFloater(target, event.amount, { type: 'heal', prefix: '+' }); } });
         } else {
           this.pending.push({
-            at: offset,
+            at,
             run: () => this.spawnProjectile(source, target, 'heal', () => {
+              this.notifyImpact(event, target);
               this.spawnAura(target, 'heal');
               this.spawnFloater(target, event.amount, { type: 'heal', prefix: '+' });
             }, 'support')
           });
         }
-        offset += 70;
+        offset = at + 120;
       } else if (event.kind === 'support') {
         const target = this.posFor(event, 'target', positions);
         const source = this.posFor(event, 'source', positions);
         if (event.self) {
-          this.pending.push({ at: offset, run: () => this.spawnAura(target, 'gold') });
+          this.pending.push({ at, run: () => this.spawnAura(target, 'gold') });
         } else {
           this.pending.push({
-            at: offset,
+            at,
             run: () => this.spawnProjectile(source, target, 'gold', () => this.spawnAura(target, 'gold'), 'support')
           });
         }
-        offset += 80;
+        offset = at + 120;
       } else if (event.kind === 'skill') {
         const source = this.posFor(event, 'source', positions);
         this.pending.push({
-          at: offset,
-          run: () => this.spawnCastPulse(source, this.castPalette(event), event.name || '技能', false)
+          at,
+          run: () => this.spawnCastPulse(source, this.castPalette(event), event.name || L('ui.53da139b6a5c'), false)
         });
-        offset += 80;
+        offset = at + 120;
       } else if (event.kind === 'effect') {
         const target = this.posFor(event, 'target', positions);
         this.pending.push({
-          at: offset,
-          run: () => this.spawnCastPulse(target, this.castPalette(event), event.name || '效果', event.action === 'remove')
+          at,
+          run: () => this.spawnCastPulse(target, this.castPalette(event), event.name || L('ui.151ddd4f1f9f'), event.action === 'remove')
         });
-        offset += 70;
+        offset = at + 110;
+      } else if (event.kind === 'summon') {
+        const source = this.posFor(event, 'source', positions);
+        this.pending.push({ at, run: () => this.spawnSummonBurst(source, event) });
+        offset = at + 90;
       }
+      cursor += 1;
     }
+
     this.pending.sort((a, b) => a.at - b.at);
     this.raf = requestAnimationFrame((ts) => this.frame(ts));
   },
@@ -161,8 +227,11 @@ const BattleFX = {
     const callback = this.done;
     this.running = false;
     this.done = null;
+    this.onImpact = null;
     this.effects = [];
     this.pending = [];
+    this.pendingDamageHits = 0;
+    this.lastImpactAt = 0;
     if (this.ctx) this.ctx.clearRect(0, 0, this.width, this.height);
     if (callback) callback();
   },
@@ -171,30 +240,44 @@ const BattleFX = {
     if (!this.running) return;
     const ctx = this.ctx;
     const elapsed = timestamp - this.startTime;
-    const dt = Math.min(0.05, Math.max(0.001, (timestamp - this.lastTimestamp) / 1000));
+    let remaining = Math.min(0.6, Math.max(0.001, (timestamp - this.lastTimestamp) / 1000));
     this.lastTimestamp = timestamp;
-    while (this.pending.length && this.pending[0].at <= elapsed) {
-      const item = this.pending.shift();
-      item.run();
+    let dispatchedGroup = false;
+    while (remaining > 0.000001) {
+      const step = Math.min(1 / 60, remaining);
+      remaining -= step;
+      this.simElapsed += step * 1000;
+      const afterImpact = !this.lastImpactAt || performance.now() >= this.lastImpactAt + 160;
+      if (!dispatchedGroup && afterImpact && this.pendingDamageHits === 0 && this.pending.length && this.pending[0].at <= this.simElapsed) {
+        const groupAt = this.pending[0].at;
+        while (this.pending.length && this.pending[0].at <= groupAt + 0.01) {
+          const item = this.pending.shift();
+          item.run();
+        }
+        // One scheduled group per rendered frame keeps damage, heals and bonus
+        // hits visually ordered even when frame timestamps jump under load.
+        // Later groups also wait until launched damage projectiles have landed.
+        dispatchedGroup = true;
+      }
+      const alive = [];
+      for (const effect of this.effects) {
+        try {
+          if (effect.update(step)) alive.push(effect);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      this.effects = alive;
     }
     ctx.clearRect(0, 0, this.width, this.height);
-    const alive = [];
     for (const effect of this.effects) {
-      try {
-        if (effect.update(dt)) {
-          effect.draw(ctx);
-          alive.push(effect);
-        }
-      } catch (error) {
-        console.error(error);
-      }
+      try { effect.draw(ctx); } catch (error) { console.error(error); }
     }
-    this.effects = alive;
     if (!this.pending.length && !this.effects.length) {
       this.finish();
       return;
     }
-    if (elapsed > 2800) {
+    if (elapsed > 7500) {
       this.finish();
       return;
     }
@@ -211,6 +294,7 @@ const BattleFX = {
     if (this.ctx) this.ctx.clearRect(0, 0, this.width, this.height);
     const callback = this.done;
     this.done = null;
+    this.onImpact = null;
     this.effects = [];
     this.pending = [];
     if (callback) callback();
@@ -508,11 +592,118 @@ const BattleFX = {
     });
   },
 
+  spawnDefeatHalo(position) {
+    const life = 1.05;
+    let age = 0;
+    this.effects.push({
+      update: (dt) => { age += dt; return age < life; },
+      draw: (ctx) => {
+        const progress = Math.min(1, age / life);
+        const fade = Math.max(0, 1 - progress);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const glow = ctx.createRadialGradient(position.x, position.y, 0, position.x, position.y, 54);
+        glow.addColorStop(0, 'rgba(190,30,24,.24)');
+        glow.addColorStop(1, 'rgba(120,10,8,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(position.x, position.y, 54, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = '#B3261E';
+        for (let ring = 0; ring < 2; ring += 1) {
+          const local = Math.max(0, progress - ring * 0.2);
+          ctx.globalAlpha = fade * (0.7 - ring * 0.22);
+          ctx.lineWidth = 2.2 - local * 1.2;
+          ctx.beginPath();
+          ctx.arc(position.x, position.y, 12 + local * (42 + ring * 15), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = fade * 0.8;
+        ctx.fillStyle = '#7D1712';
+        for (let i = 0; i < 12; i += 1) {
+          const angle = (i / 12) * Math.PI * 2 + progress * 0.8;
+          const radius = 16 + progress * (28 + (i % 4) * 5);
+          ctx.beginPath();
+          ctx.arc(position.x + Math.cos(angle) * radius, position.y + Math.sin(angle) * radius * 0.52, 1.8 + (i % 3) * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    });
+  },
+
+  spawnSummonBurst(position, event) {
+    const slime = /slime/i.test(String(event.unitId || ''));
+    const paletteName = slime ? 'slime' : 'gold';
+    const mainColor = this.color(paletteName, 0);
+    const softColor = this.color(paletteName, 2);
+    const count = Math.max(1, Number(event.summonCount) || 1);
+    const index = Math.max(0, Number(event.summonIndex) || 0);
+    const lateral = count > 1 ? (index - (count - 1) / 2) : 0;
+    const life = 0.92;
+    let age = 0;
+    this.effects.push({
+      update: (dt) => { age += dt; return age < life; },
+      draw: (ctx) => {
+        const progress = Math.min(1, age / life);
+        const fade = Math.max(0, 1 - progress);
+        const x = position.x + lateral * (8 + progress * 34);
+        const y = position.y - progress * 18;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, 44);
+        glow.addColorStop(0, softColor + '55');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, 44, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = fade * 0.82;
+        ctx.strokeStyle = mainColor;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(position.x, position.y, 9 + progress * 34, 0, Math.PI * 2);
+        ctx.stroke();
+        const radius = 9 + progress * 9;
+        ctx.globalAlpha = fade * 0.9;
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.ellipse(x, y, radius, radius * (0.82 + Math.sin(progress * 3 + index) * 0.08), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = softColor;
+        ctx.beginPath();
+        ctx.arc(x - radius * 0.28, y - radius * 0.24, radius * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = fade * 0.72;
+        for (let i = 0; i < 8; i += 1) {
+          const angle = (i / 8) * Math.PI * 2 + index * 0.8 + progress * 0.5;
+          const distance = 12 + progress * (20 + (i % 3) * 5);
+          ctx.fillStyle = this.color(paletteName, i);
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(angle) * distance, y + Math.sin(angle) * distance * 0.62, 1.2 + (i % 2) * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = Math.max(0, 1 - progress * 1.8);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '600 10px "PingFang SC", "Noto Sans CJK SC", sans-serif';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255,252,244,.94)';
+        ctx.strokeText(slime && event.fromDefeat ? L('ui.526a2a300d4b') : L('ui.bf5e0242befc'), position.x, position.y - 34 - progress * 12);
+        ctx.fillStyle = mainColor;
+        ctx.fillText(slime && event.fromDefeat ? L('ui.526a2a300d4b') : L('ui.bf5e0242befc'), position.x, position.y - 34 - progress * 12);
+        ctx.restore();
+      }
+    });
+  },
+
   spawnFloater(position, amount, options) {
     options = options || {};
     const color = options.type === 'heal' ? '#3C985F' : this.damageColor({ type: options.type });
     const prefix = options.prefix || '-';
-    const label = options.bonus ? '附加' : '';
+    const label = options.bonus ? L('ui.6f5160294870') : '';
     const life = 1.05;
     let age = 0;
     const stackKey = Math.round(position.x) + ':' + Math.round(position.y);

@@ -13,10 +13,10 @@ const ENGINE_LIMITS = {
 };
 
 const LOG_KIND_LABELS = {
-  system: '系统', round: '回合', turn: '行动', entry: '入场', skill: '技能',
-  passive: '被动', trigger: '触发', damage: '伤害', heal: '回复',
-  effect: '效果', count: '计数', defeat: '退场', retreat: '退场',
-  summon: '召唤', formula: '公式', victory: '结算', extra: '附加'
+  system: L('ui.1a1f6dff7826'), round: L('ui.52d27a21f811'), turn: L('ui.8af638bad2cb'), entry: L('ui.044f9d3198d2'), skill: L('ui.53da139b6a5c'),
+  passive: L('ui.7992277d1c97'), trigger: L('ui.27eccf97850b'), damage: L('ui.69ace645512d'), heal: L('ui.ffc7850925e7'),
+  effect: L('ui.151ddd4f1f9f'), count: L('ui.37802b1dfc26'), defeat: L('ui.165a6e98df84'), retreat: L('ui.165a6e98df84'),
+  summon: L('ui.bf5e0242befc'), formula: L('ui.3f27035af46b'), victory: L('ui.4c506e4ef106'), extra: L('ui.6f5160294870')
 };
 
 class FormulaError extends Error {}
@@ -31,7 +31,7 @@ function tokenizeFormula(source) {
     if (ch === '$') {
       let j = i + 1;
       while (j < text.length && /[A-Za-z0-9_.]/.test(text[j])) j += 1;
-      if (j === i + 1) throw new FormulaError('变量缺少名称');
+      if (j === i + 1) throw new FormulaError(L('ui.a317c5a6c035'));
       tokens.push({ type: 'var', value: text.slice(i, j) });
       i = j;
       continue;
@@ -58,7 +58,7 @@ function tokenizeFormula(source) {
       i = j;
       continue;
     }
-    throw new FormulaError('无法识别的字符：' + ch);
+    throw new FormulaError(L('ui.9e887c5700a2') + ch);
   }
   return tokens;
 }
@@ -79,12 +79,12 @@ class FormulaParser {
   }
   expect(value) {
     const token = this.take(value);
-    if (!token) throw new FormulaError('缺少符号 ' + value);
+    if (!token) throw new FormulaError(L('ui.8c4d60c048ed') + value);
     return token;
   }
   parse() {
     const value = this.parseComparison();
-    if (this.pos < this.tokens.length) throw new FormulaError('表达式存在多余内容');
+    if (this.pos < this.tokens.length) throw new FormulaError(L('ui.57976eb8f7ed'));
     return value;
   }
   parseComparison() {
@@ -126,7 +126,7 @@ class FormulaParser {
   }
   parsePrimary() {
     const token = this.peek();
-    if (!token) throw new FormulaError('表达式不完整');
+    if (!token) throw new FormulaError(L('ui.d2466c57b658'));
     if (token.type === 'number') { this.take(); return token.value; }
     if (token.type === 'var') { this.take(); return Number(this.resolver(token.value)) || 0; }
     if (token.type === 'name') {
@@ -144,7 +144,7 @@ class FormulaParser {
         this.expect(')');
         return Math[token.value](arg);
       }
-      throw new FormulaError('未知函数：' + token.value);
+      throw new FormulaError(L('ui.23571af050fb') + token.value);
     }
     if (token.value === '(') {
       this.take();
@@ -152,7 +152,7 @@ class FormulaParser {
       this.expect(')');
       return value;
     }
-    throw new FormulaError('无法解析的符号：' + token.value);
+    throw new FormulaError(L('ui.01e7606db3f5') + token.value);
   }
 }
 
@@ -206,7 +206,7 @@ class Battle {
     this.uidSeq = 0;
     this.endedAt = null;
     this.finishCallback = config.onEnd || null;
-    this.log('system', '战斗建立，正在抽取初始手牌与整备入场。');
+    this.log('system', L('ui.30a797dff2ea'));
     this.sides = {
       A: this.createSide('A', config.loadouts && config.loadouts.A),
       B: this.createSide('B', config.loadouts && config.loadouts.B)
@@ -216,7 +216,8 @@ class Battle {
 
   createSide(id, rawLoadout) {
     const loadout = rawLoadout || (id === 'A' ? DEFAULT_LOADOUT_A : DEFAULT_LOADOUT_B);
-    const name = id === 'A' ? '我方' : '敌方';
+    const bothHuman = this.controllers.A === 'human' && this.controllers.B === 'human';
+    const name = bothHuman ? (id === 'A' ? L('ui.13d56d03d73a') : L('ui.4bdaf46d2363')) : (id === 'A' ? L('ui.da12da253948') : L('ui.99d2b5e44698'));
     const side = {
       id, name,
       controller: this.controllers[id] || 'human',
@@ -275,7 +276,7 @@ class Battle {
       id: this.triggerFeed.length + 1,
       round: this.round,
       uid: unit ? unit.battleId : '',
-      owner: unit ? unit.name : '状态',
+      owner: unit ? unit.name : L('ui.62e951a692ff'),
       type: sourceType,
       name,
       event: getTriggerLabel(eventName)
@@ -515,7 +516,7 @@ class Battle {
       const tokens = tokenizeFormula(formula);
       return new FormulaParser(tokens, resolver).parse();
     } catch (error) {
-      this.log('system', '公式解析失败：' + formula + '（' + error.message + '）');
+      this.log('system', L('ui.be62c0656ae6') + formula + '（' + error.message + '）');
       return 0;
     }
   }
@@ -578,31 +579,31 @@ class Battle {
       if (!passed) {
         return {
           ok: false,
-          reason: '需要' + COUNT_SCOPES[req.scope || 'unit'].label + '「' + this.countLabel(req.countId) + '」' + (req.label ? req.label : '满足条件') + '（当前 ' + current + '）'
+          reason: L('ui.d6e5de1933b4') + COUNT_SCOPES[req.scope || 'unit'].label + '「' + this.countLabel(req.countId) + '」' + (req.label ? req.label : L('ui.1ff52df7741c')) + L('ui.c7b01cbc210c') + current + '）'
         };
       }
     }
     if (skill.trigger && skill.trigger.condition) {
       const val = this.evalFormula(skill.trigger.condition, { unit, source: unit, chosen: [] });
-      if (!val) return { ok: false, reason: '释放条件未满足' };
+      if (!val) return { ok: false, reason: L('ui.357cb11ee45a') };
     }
     return { ok: true, reason: '' };
   }
 
   getSkillState(unit, skill) {
-    if (!unit || !unit.alive || unit.pendingDefeat) return { usable: false, reason: '单位已退场', targets: [] };
-    if (!skill) return { usable: false, reason: '技能不存在', targets: [] };
-    if (this.status !== 'active') return { usable: false, reason: '战斗已结束', targets: [] };
-    if (unit.side !== this.currentSide) return { usable: false, reason: '只能在当前行动方使用', targets: [] };
-    if (skill.type === 'passive') return { usable: false, reason: '被动技自动触发', targets: [] };
-    if (skill.type === 'active' && (unit.acted || this.phase !== 'awaiting')) return { usable: false, reason: unit.acted ? '该单位本回合已行动' : '正在结算', targets: [] };
-    if (skill.type === 'extra' && this.phase !== 'awaiting') return { usable: false, reason: '正在结算', targets: [] };
+    if (!unit || !unit.alive || unit.pendingDefeat) return { usable: false, reason: L('ui.9bfdfd617653'), targets: [] };
+    if (!skill) return { usable: false, reason: L('ui.cf795b395428'), targets: [] };
+    if (this.status !== 'active') return { usable: false, reason: L('ui.d50a65e1aba3'), targets: [] };
+    if (unit.side !== this.currentSide) return { usable: false, reason: L('ui.1b6e6a13bc5b'), targets: [] };
+    if (skill.type === 'passive') return { usable: false, reason: L('ui.fb6841882b6a'), targets: [] };
+    if (skill.type === 'active' && (unit.acted || this.phase !== 'awaiting')) return { usable: false, reason: unit.acted ? L('ui.b2da28e7a8be') : L('ui.311618603a09'), targets: [] };
+    if (skill.type === 'extra' && this.phase !== 'awaiting') return { usable: false, reason: L('ui.311618603a09'), targets: [] };
     const req = this.requirementResult(unit, skill);
     if (!req.ok) return { usable: false, reason: req.reason, targets: [] };
     const targets = this.resolveTargetPreview(unit, skill);
     const mode = skill.targetMode || 'none';
-    if ((mode === 'enemy' || mode === 'ally') && !targets.length) return { usable: false, reason: '没有合法目标', targets: [] };
-    if (mode === 'allEnemies' && !this.getEnemies(unit).length) return { usable: false, reason: '没有敌方单位', targets: [] };
+    if ((mode === 'enemy' || mode === 'ally') && !targets.length) return { usable: false, reason: L('ui.d9d5d8495c8e'), targets: [] };
+    if (mode === 'allEnemies' && !this.getEnemies(unit).length) return { usable: false, reason: L('ui.81ddf5539357'), targets: [] };
     return { usable: true, reason: '', targets };
   }
 
@@ -643,7 +644,7 @@ class Battle {
     if (!unit.pendingDefeat) {
       unit.pendingDefeat = true;
       this.pendingDefeats.push(unit);
-      this.log('defeat', unit.name + ' 的生命归零，退场判定将在本次操作结算时执行。', { side: unit.side });
+      this.log('defeat', unit.name + L('ui.8502e4abdc5b'), { side: unit.side });
     }
   }
 
@@ -661,13 +662,13 @@ class Battle {
       }
       this.musterSide(sideId);
     }
-    this.log('round', '第 1 回合开始。', {});
+    this.log('round', L('ui.68af3e7446ba'), {});
     this.triggerEvent('roundStart', { round: this.round });
     this.endBatch();
     this.currentSide = this.firstSide;
     this.phase = this.status === 'active' ? 'awaiting' : 'ended';
     this.ensureActionable();
-    if (this.status === 'active') this.log('system', '当前行动方：' + this.sides[this.currentSide].name + '。');
+    if (this.status === 'active') this.log('system', L('ui.f47b4af92082') + this.sides[this.currentSide].name + '。');
   }
 
   drawCards(sideId, count, silent) {
@@ -679,7 +680,7 @@ class Battle {
       side.hand.push(side.deck.shift());
       drawn += 1;
     }
-    if (drawn && !silent) this.log('system', side.name + ' 抽了 ' + drawn + ' 张角色牌。', { side: sideId });
+    if (drawn && !silent) this.log('system', side.name + L('ui.fb5662e4fa98') + drawn + L('ui.8a5923356f1b'), { side: sideId });
     return drawn;
   }
 
@@ -766,7 +767,7 @@ class Battle {
       }
     }
     const gearNames = ['weapon', 'accessory'].map(slot => unit.equipment[slot]).filter(Boolean).map(item => item.name);
-    this.log('entry', side.name + ' 入场「' + card.name + '」' + (gearNames.length ? '，装备' + gearNames.join('、') : '') + '。', { side: sideId });
+    this.log('entry', side.name + L('ui.a9d0024d5701') + card.name + '」' + (gearNames.length ? L('ui.a4932f828552') + gearNames.join('、') : '') + '。', { side: sideId });
     this.triggerEvent('enterField', { unit }, { ownerOnly: true });
     return unit;
   }
@@ -800,15 +801,15 @@ class Battle {
         side.units = side.units.filter(unit => unit !== recalled);
         side.hand.push(recalled.cardId);
         this.returnEquipment(recalled);
-        this.log('retreat', '紧急轮换：' + recalled.name + ' 退回手牌，为计数单位腾出席位。', { side: sideId });
+        this.log('retreat', L('ui.06e152363ae2') + recalled.name + L('ui.acfcf84b82b4'), { side: sideId });
         continue;
       }
       const chosen = this.deckUnitCard(cardIds[0]);
-      this.log('system', side.name + ' 场上已无计数单位，紧急入场。', { side: sideId });
+      this.log('system', side.name + L('ui.cf71379c6d15'), { side: sideId });
       const entered = this.deployUnit(sideId, chosen.id, true);
       if (entered && this.phase !== 'muster' && this.phase !== 'setup') {
         entered.acted = true;
-        this.log('turn', entered.name + ' 为紧急替补，本回合不追加行动。', { side: sideId });
+        this.log('turn', entered.name + L('ui.e3c95c106266'), { side: sideId });
       }
       counted = side.units.filter(unit => unit.alive && unit.counted).length;
       if (counted > 0) break;
@@ -817,58 +818,78 @@ class Battle {
   }
 
   manualDeployCard(sideId, handIndex) {
-    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: '当前无法补牌。' };
+    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: L('ui.93b74f0abd4d') };
     const side = this.sides[sideId];
     const index = Number(handIndex);
-    if (!side || !Number.isInteger(index) || index < 0 || index >= side.hand.length) return { ok: false, error: '这张手牌已不在手牌区。' };
-    if (side.units.length >= this.rules.maxField) return { ok: false, error: '场上已经达到单位上限。' };
+    if (!side || !Number.isInteger(index) || index < 0 || index >= side.hand.length) return { ok: false, error: L('ui.a46924a9796e') };
+    if (side.units.length >= this.rules.maxField) return { ok: false, error: L('ui.61a07d811cd8') };
     const cardId = side.hand[index];
     this.beginBatch();
     const unit = this.deployUnit(sideId, cardId, true);
     this.endBatch();
-    if (!unit) return { ok: false, error: '补牌失败。' };
-    this.log('entry', side.name + ' 手动补入「' + unit.name + '」。', { side: sideId });
+    if (!unit) return { ok: false, error: L('ui.1b2a93da4f54') };
+    this.log('entry', side.name + L('ui.fc9c5a56d8e6') + unit.name + '」。', { side: sideId });
     return { ok: true, unit };
   }
 
   equipFromPool(sideId, unitUid, equipmentId) {
-    if (this.status !== 'active') return { ok: false, error: '战斗已结束。' };
+    if (this.status !== 'active') return { ok: false, error: L('ui.7e003f486821') };
+    if (this.phase !== 'awaiting' || this.currentSide !== sideId) return { ok: false, error: L('ui.ddfec482ade3') };
     const side = this.sides[sideId];
-    if (!side) return { ok: false, error: '阵营不存在。' };
+    if (!side) return { ok: false, error: L('ui.470cfed65424') };
     const index = side.equipmentPool.indexOf(equipmentId);
-    if (index < 0) return { ok: false, error: '装备已不在整备区。' };
+    if (index < 0) return { ok: false, error: L('ui.e0e1344587da') };
     const unit = this.getUnit(unitUid);
-    if (!unit || unit.side !== sideId || !unit.alive || !unit.onField) return { ok: false, error: '目标单位不在场。' };
+    if (!unit || unit.side !== sideId || !unit.alive || !unit.onField) return { ok: false, error: L('ui.036b5546ad8c') };
     const gear = this.maps.equipment.get(equipmentId);
-    if (!gear) return { ok: false, error: '装备不存在。' };
-    if (unit.equipment[gear.slot]) return { ok: false, error: '该单位的' + (gear.slot === 'weapon' ? '武器' : '饰品') + '栏已被占用。' };
+    if (!gear) return { ok: false, error: L('ui.702511181715') };
+    if (unit.equipment[gear.slot]) return { ok: false, error: L('ui.0d92e1a6a3b2') + (gear.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + L('ui.51a181a1f18f') };
     side.equipmentPool.splice(index, 1);
     unit.equipment[gear.slot] = gear;
     this.recalcUnit(unit);
-    this.log('effect', unit.name + ' 装备「' + gear.name + '」。此操作不占用行动。', { side: sideId });
+    this.log('effect', unit.name + L('ui.76124baa7f69') + gear.name + L('ui.a8f34e4831b8'), { side: sideId });
+    return { ok: true, unit, gear };
+  }
+
+  unequipFromUnit(sideId, unitUid, slot) {
+    if (this.status !== 'active') return { ok: false, error: L('ui.7e003f486821') };
+    if (this.phase !== 'awaiting' || this.currentSide !== sideId) return { ok: false, error: L('ui.028defe15dc9') };
+    const side = this.sides[sideId];
+    if (!side) return { ok: false, error: L('ui.470cfed65424') };
+    const unit = this.getUnit(unitUid);
+    if (!unit || unit.side !== sideId || !unit.alive || !unit.onField) return { ok: false, error: L('ui.036b5546ad8c') };
+    if (!['weapon', 'accessory'].includes(slot)) return { ok: false, error: L('ui.9fae33288867') };
+    const gear = unit.equipment[slot];
+    if (!gear) return { ok: false, error: L('ui.df0e2794bdb5') };
+    unit.equipment[slot] = null;
+    side.equipmentPool.push(gear.id);
+    this.recalcUnit(unit);
+    this.log('effect', unit.name + L('ui.e1f258864861') + gear.name + L('ui.4b2c5092fba2'), { side: sideId });
     return { ok: true, unit, gear };
   }
 
   destroyEquipmentFromPool(sideId, equipmentId) {
     const side = this.sides[sideId];
-    if (!side) return { ok: false, error: '阵营不存在。' };
+    if (!side) return { ok: false, error: L('ui.470cfed65424') };
+    if (this.status !== 'active' || this.phase !== 'awaiting' || this.currentSide !== sideId) return { ok: false, error: L('ui.ddfec482ade3') };
     const index = side.equipmentPool.indexOf(equipmentId);
-    if (index < 0) return { ok: false, error: '装备已不在整备区。' };
+    if (index < 0) return { ok: false, error: L('ui.e0e1344587da') };
     const gear = this.maps.equipment.get(equipmentId);
     side.equipmentPool.splice(index, 1);
-    this.log('effect', side.name + ' 销毁了「' + (gear ? gear.name : equipmentId) + '」。', { side: sideId });
+    this.log('effect', side.name + L('ui.e730db2a99ed') + (gear ? gear.name : equipmentId) + '」。', { side: sideId });
     return { ok: true };
   }
 
   setActiveRunes(sideId, runeIds) {
     const side = this.sides[sideId];
-    if (!side) return { ok: false, error: '阵营不存在。' };
+    if (!side) return { ok: false, error: L('ui.470cfed65424') };
+    if (this.status !== 'active' || this.phase !== 'awaiting' || this.currentSide !== sideId) return { ok: false, error: L('ui.ccc41ad407a6') };
     const allowed = new Set((side.runePool || []).map(rune => rune.id));
     const selected = [...new Set((runeIds || []).filter(id => allowed.has(id)))];
-    if (selected.length > 3) return { ok: false, error: '每个阵营最多启用三张符文。' };
+    if (selected.length > 3) return { ok: false, error: L('ui.98e100fd718b') };
     side.runes = selected.map(id => this.maps.runes.get(id)).filter(Boolean);
     for (const unit of side.units) this.recalcUnit(unit);
-    this.log('effect', side.name + ' 的符文配置更新为：' + (side.runes.map(rune => rune.name).join('、') || '无') + '。', { side: sideId });
+    this.log('effect', side.name + L('ui.632583ffd105') + (side.runes.map(rune => rune.name).join('、') || L('ui.72077749f794')) + '。', { side: sideId });
     return { ok: true };
   }
 
@@ -880,13 +901,13 @@ class Battle {
     const side = this.getSideOf(unit);
     side.units = side.units.filter(item => item !== unit);
     this.recalcSide(unit.side);
-    this.log('defeat', unit.name + (reason === 'retreat' ? ' 强制退场。' : ' 被击败，退场。'), { side: unit.side });
+    this.log('defeat', unit.name + (reason === 'retreat' ? L('ui.cd7e8d1e52bf') : L('ui.2bbd49a1eca3')), { side: unit.side });
     const equipmentSnapshot = { weapon: unit.equipment.weapon, accessory: unit.equipment.accessory };
     this.triggerDefeated(unit);
     this.returnEquipment(unit);
     if (this.rules.defeatedToDeck) {
       side.deck.push(unit.cardId);
-      this.log('system', unit.name + ' 返回可抽牌堆。', { side: unit.side });
+      this.log('system', unit.name + L('ui.b48411013123'), { side: unit.side });
     } else {
       side.retreat.push(unit.cardId);
     }
@@ -899,17 +920,35 @@ class Battle {
     try {
       const skills = this.getUnitSkills(unit).filter(skill => skill.type === 'passive' && skill.trigger && skill.trigger.event === 'defeated');
       for (const skill of skills) {
-        this.pushTrigger(unit, '技能', skill.name, 'defeated');
-        this.log('passive', unit.name + ' 触发被击败被动「' + skill.name + '」。', { side: unit.side });
-        const ctx = this.createContext(unit, skill, [], { eventData: { target: unit }, allowDeadSource: true });
+        this.pushTrigger(unit, L('ui.53da139b6a5c'), skill.name, 'defeated');
+        this.log('passive', unit.name + L('ui.9e6aa3762ddb') + skill.name + '」。', { side: unit.side });
+        const visualStart = this.visualSeq;
+        const ctx = this.createContext(unit, skill, [], { eventData: { target: unit }, allowDeadSource: true, eventName: 'defeated' });
         this.executeSteps(skill.steps || [], ctx);
+        if (this.visualSeq === visualStart) {
+          this.recordVisual({
+            kind: 'skill', sourceUid: unit.battleId, targetUid: unit.battleId,
+            sourceName: unit.name, targetName: unit.name, self: true,
+            name: skill.name, op: skill.op || 'special', skillType: 'passive',
+            sourceSide: unit.side, targetSide: unit.side
+          });
+        }
       }
       for (const inst of (unit.effects || []).slice()) {
         const def = this.maps.effects.get(inst.effectId);
         if (!def || !def.trigger || def.trigger.event !== 'defeated') continue;
-        this.pushTrigger(unit, '效果', def.name, 'defeated');
-        const ctx = this.createContext(unit, null, [], { eventData: { target: unit }, allowDeadSource: true, effectId: def.id });
+        this.pushTrigger(unit, L('ui.151ddd4f1f9f'), def.name, 'defeated');
+        const visualStart = this.visualSeq;
+        const ctx = this.createContext(unit, null, [], { eventData: { target: unit }, allowDeadSource: true, effectId: def.id, eventName: 'defeated' });
         this.executeSteps(def.steps || [], ctx);
+        if (this.visualSeq === visualStart) {
+          this.recordVisual({
+            kind: 'effect', action: 'trigger', sourceUid: unit.battleId, targetUid: unit.battleId,
+            sourceName: unit.name, targetName: unit.name, self: true,
+            name: def.name, effectType: def.type || 'special',
+            sourceSide: unit.side, targetSide: unit.side
+          });
+        }
       }
     } finally {
       this.triggerDepth -= 1;
@@ -919,7 +958,7 @@ class Battle {
   triggerEvent(eventName, eventData, options) {
     options = options || {};
     if (this.triggerDepth >= ENGINE_LIMITS.triggerDepth) {
-      this.log('system', '触发链达到上限，停止继续响应。');
+      this.log('system', L('ui.08cd765267ea'));
       return;
     }
     this.triggerDepth += 1;
@@ -958,8 +997,8 @@ class Battle {
         if (!candidate.unit.alive) continue;
         if (candidate.kind === 'skill') {
           const skill = candidate.skill;
-          this.pushTrigger(candidate.unit, '技能', skill.name, eventName);
-          this.log('passive', candidate.unit.name + ' 触发被动「' + skill.name + '」。', { side: candidate.unit.side });
+          this.pushTrigger(candidate.unit, L('ui.53da139b6a5c'), skill.name, eventName);
+          this.log('passive', candidate.unit.name + L('ui.65e907be7f03') + skill.name + '」。', { side: candidate.unit.side });
           const visualStart = this.visualSeq;
           const ctx = this.createContext(candidate.unit, skill, eventData.targets || [], { eventData, eventName });
           this.executeSteps(skill.steps || [], ctx);
@@ -980,8 +1019,8 @@ class Battle {
           }
         } else {
           const def = candidate.def;
-          this.pushTrigger(candidate.unit, '效果', def.name, eventName);
-          this.log('trigger', candidate.unit.name + ' 的效果「' + def.name + '」触发。', { side: candidate.unit.side });
+          this.pushTrigger(candidate.unit, L('ui.151ddd4f1f9f'), def.name, eventName);
+          this.log('trigger', candidate.unit.name + L('ui.cfb26dec4e12') + def.name + L('ui.2b81ee152797'), { side: candidate.unit.side });
           const visualStart = this.visualSeq;
           const ctx = this.createContext(candidate.unit, null, eventData.targets || [], { eventData, eventName, effectId: def.id });
           this.executeSteps(def.steps || [], ctx);
@@ -1034,7 +1073,7 @@ class Battle {
     options = options || {};
     if (!unit || !skill) return null;
     if (!unit.alive && !options.allowDeadSource) return null;
-    this.log('skill', unit.name + ' 释放「' + skill.name + '」。', { side: unit.side });
+    this.log('skill', unit.name + L('ui.da885de6b6e3') + skill.name + '」。', { side: unit.side });
     this.lastSkill = { unitId: unit.battleId, skillId: skill.id };
     const visualStart = this.visualSeq;
     const ctx = this.createContext(unit, skill, chosen, options);
@@ -1097,8 +1136,8 @@ class Battle {
         const raw = total * (Number(rider.ratio) || 0.5);
         const extra = (rider.rounding === 'floor') ? Math.floor(raw) : Math.ceil(raw);
         if (extra <= 0) continue;
-        this.pushTrigger(unit, '效果', def.name, 'action');
-        this.log('trigger', unit.name + ' 的效果「' + def.name + '」对 ' + target.name + ' 追加 ' + extra + ' 点真实伤害。', { side: unit.side });
+        this.pushTrigger(unit, L('ui.151ddd4f1f9f'), def.name, 'action');
+        this.log('trigger', unit.name + L('ui.cfb26dec4e12') + def.name + L('ui.a2cfa7950322') + target.name + L('ui.b7e43b346376') + extra + L('ui.d19c86fbdfae'), { side: unit.side });
         this.dealDamage(unit, target, extra, rider.damageType || 'true', {
           isAttack: false,
           ignoreResistance: true,
@@ -1111,7 +1150,7 @@ class Battle {
   executeSteps(steps, ctx) {
     if (!Array.isArray(steps)) return ctx;
     if (ctx.stepsDepth >= ENGINE_LIMITS.stepDepth) {
-      this.log('system', '步骤嵌套达到上限，停止执行。');
+      this.log('system', L('ui.7d3b0ffa63b7'));
       return ctx;
     }
     ctx.stepsDepth += 1;
@@ -1204,7 +1243,7 @@ class Battle {
               sourceName: ctx.unit.name,
               targetName: target.name,
               self: target === ctx.unit,
-              name: def ? def.name : (step.effectId || '效果'),
+              name: def ? def.name : (step.effectId || L('ui.151ddd4f1f9f')),
               effectType: def ? (def.type || 'special') : 'special',
               sourceSide: ctx.unit.side,
               targetSide: target.side
@@ -1231,14 +1270,14 @@ class Battle {
           const next = step.mode === 'set' ? value : current + value;
           const before = current;
           this.setCount(ctx.unit, step.scope || 'unit', step.countId, next);
-          this.log('count', ctx.unit.name + ' 的「' + this.countLabel(step.countId) + '」从 ' + before + ' 变为 ' + Math.max(0, next) + '。', { side: ctx.unit.side });
+          this.log('count', ctx.unit.name + L('ui.4ac21152b1ea') + this.countLabel(step.countId) + L('ui.5dadd90a0d00') + before + L('ui.94e935dbc13d') + Math.max(0, next) + '。', { side: ctx.unit.side });
           break;
         }
         case 'readCount': {
           const value = this.getCount(ctx.unit, step.scope || 'unit', step.countId);
           if (!ctx.vars) ctx.vars = {};
           ctx.vars[step.varName || 'value'] = value;
-          this.log('count', ctx.unit.name + ' 读取「' + this.countLabel(step.countId) + '」= ' + value + '，写入临时变量 ' + (step.varName || 'value') + '。', { side: ctx.unit.side });
+          this.log('count', ctx.unit.name + L('ui.82730939af93') + this.countLabel(step.countId) + '」= ' + value + L('ui.2d4ff0ce0e72') + (step.varName || 'value') + '。', { side: ctx.unit.side });
           break;
         }
         case 'branch': {
@@ -1275,7 +1314,7 @@ class Battle {
         }
         case 'castSkill': {
           const skill = this.maps.skills.get(step.skillId);
-          if (!skill) { this.log('system', '释放技能失败：技能 ID 不存在。'); break; }
+          if (!skill) { this.log('system', L('ui.d948ecca7e7c')); break; }
           const targetMode = skill.targetMode || 'none';
           let chosen = [];
           if (targetMode === 'self') chosen = [ctx.unit];
@@ -1289,13 +1328,13 @@ class Battle {
           const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self' }, ctx);
           for (const target of targets) {
             target.acted = true;
-            this.log('effect', target.name + ' 被跳过本回合行动。', { side: target.side });
+            this.log('effect', target.name + L('ui.24aa02f4b605'), { side: target.side });
           }
           break;
         }
         case 'immuneDamage': {
-          if (ctx.fatalGuard) { ctx.immune = true; this.log('effect', ctx.unit.name + ' 免疫了此次伤害。', { side: ctx.unit.side }); }
-          else this.log('system', '免疫步骤仅在致命伤害或受伤触发中生效。');
+          if (ctx.fatalGuard) { ctx.immune = true; this.log('effect', ctx.unit.name + L('ui.bba95015644f'), { side: ctx.unit.side }); }
+          else this.log('system', L('ui.4a1c47520080'));
           break;
         }
         case 'forceRetreat': {
@@ -1314,12 +1353,20 @@ class Battle {
           const amount = Math.max(0, Math.min(ENGINE_LIMITS.summonCount, Math.round(this.evalFormula(step.count || '1', ctx))));
           const sideId = ctx.unit.side;
           const ignoreFieldLimit = !!step.ignoreFieldLimit;
+          const fromDefeat = !!(ctx.unit && (!ctx.unit.alive || ctx.unit.hp <= 0));
           for (let i = 0; i < amount; i += 1) {
             if (!ignoreFieldLimit && this.sides[sideId].units.length >= this.rules.maxField) {
-              this.log('summon', '场地已满，召唤「' + ((this.maps.units.get(step.unitId) || {}).name || step.unitId) + '」被推迟。', { side: sideId });
+              this.log('summon', L('ui.3b5c6b31cd32') + ((this.maps.units.get(step.unitId) || {}).name || step.unitId) + L('ui.2a30f9f06957'), { side: sideId });
               break;
             }
-            const summoned = this.deploySummon(sideId, step.unitId, { ignoreFieldLimit });
+            const summoned = this.deploySummon(sideId, step.unitId, {
+              ignoreFieldLimit,
+              sourceUid: ctx.unit ? ctx.unit.battleId : null,
+              sourceName: ctx.unit ? ctx.unit.name : side.name,
+              summonIndex: i,
+              summonCount: amount,
+              fromDefeat
+            });
             if (!summoned) break;
           }
           break;
@@ -1331,7 +1378,7 @@ class Battle {
           for (const target of targets) {
             target.tempMods[stat] = (target.tempMods[stat] || 0) + amount;
             this.recalcUnit(target);
-            this.log('effect', target.name + ' 的属性修正 ' + (STAT_KEYS[stat] || stat) + ' 变为 ' + target.tempMods[stat] + '。', { side: target.side });
+            this.log('effect', target.name + L('ui.9718591ae2b7') + (STAT_KEYS[stat] || stat) + L('ui.94e935dbc13d') + target.tempMods[stat] + '。', { side: target.side });
           }
           break;
         }
@@ -1339,14 +1386,14 @@ class Battle {
           if (!ctx.vars) ctx.vars = {};
           const value = this.evalFormula(step.formula || '0', ctx);
           ctx.vars[step.varName || 'value'] = value;
-          this.log('system', '临时变量 ' + (step.varName || 'value') + ' = ' + value + '。', { side: ctx.unit.side });
+          this.log('system', L('ui.154784eb4966') + (step.varName || 'value') + ' = ' + value + '。', { side: ctx.unit.side });
           break;
         }
         default:
-          this.log('system', '未知步骤：' + step.kind);
+          this.log('system', L('ui.3c93b9fe06a1') + step.kind);
       }
     } catch (error) {
-      this.log('system', '步骤执行失败（' + step.kind + '）：' + error.message);
+      this.log('system', L('ui.1b71939b72ca') + step.kind + '）：' + error.message);
       console.error(error);
     }
   }
@@ -1354,7 +1401,7 @@ class Battle {
   deploySummon(sideId, unitId, options) {
     options = options || {};
     const card = this.maps.units.get(unitId);
-    if (!card) { this.log('summon', '召唤失败：单位 ID 不存在。'); return null; }
+    if (!card) { this.log('summon', L('ui.0f7d4b2e2528')); return null; }
     const side = this.sides[sideId];
     if (!options.ignoreFieldLimit && side.units.length >= this.rules.maxField) return null;
     const unit = this.createBattleUnit(card);
@@ -1364,19 +1411,34 @@ class Battle {
     unit.hp = unit.maxHp;
     this.recalcSide(sideId);
     unit.acted = true;
-    this.log('summon', side.name + ' 召唤「' + card.name + '」。', { side: sideId });
+    this.log('summon', side.name + L('ui.33c221414492') + card.name + '」。', { side: sideId });
+    this.recordVisual({
+      kind: 'summon',
+      action: 'summon',
+      sourceUid: options.sourceUid || unit.battleId,
+      targetUid: unit.battleId,
+      sourceName: options.sourceName || unit.name,
+      targetName: unit.name,
+      name: card.name,
+      unitId: card.id,
+      summonIndex: options.summonIndex == null ? 0 : options.summonIndex,
+      summonCount: options.summonCount == null ? 1 : options.summonCount,
+      fromDefeat: !!options.fromDefeat,
+      sourceSide: sideId,
+      targetSide: sideId
+    });
     this.triggerEvent('enterField', { unit }, { ownerOnly: true });
     return unit;
   }
 
   getFatalGuardCandidates(unit) {
     const candidates = [];
+    for (const skill of this.getUnitSkills(unit)) {
+      if (skill.type === 'passive' && skill.trigger && skill.trigger.event === 'fatalDamage') candidates.push({ kind: 'skill', skill });
+    }
     for (const inst of unit.effects) {
       const def = this.maps.effects.get(inst.effectId);
       if (def && def.trigger && def.trigger.event === 'fatalDamage') candidates.push({ kind: 'effect', def });
-    }
-    for (const skill of this.getUnitSkills(unit)) {
-      if (skill.type === 'passive' && skill.trigger && skill.trigger.event === 'fatalDamage') candidates.push({ kind: 'skill', skill });
     }
     return candidates;
   }
@@ -1385,15 +1447,15 @@ class Battle {
     options = options || {};
     if (!unit.alive) return false;
     if (candidate.kind === 'skill') {
-      this.pushTrigger(unit, '技能', candidate.skill.name, 'fatalDamage');
-      this.log('passive', unit.name + ' 触发致命伤害被动「' + candidate.skill.name + '」。', { side: unit.side });
+      this.pushTrigger(unit, L('ui.53da139b6a5c'), candidate.skill.name, 'fatalDamage');
+      this.log('passive', unit.name + L('ui.33bd881406f7') + candidate.skill.name + '」。', { side: unit.side });
       const ctx = this.createContext(unit, candidate.skill, [unit], { eventData: { target: unit, source }, fatalGuard: true, eventName: 'fatalDamage' });
       ctx.fatalGuard = true;
       this.executeSteps(candidate.skill.steps || [], ctx);
       return !!ctx.immune;
     }
-    this.pushTrigger(unit, '效果', candidate.def.name, 'fatalDamage');
-    this.log('trigger', unit.name + ' 的效果「' + candidate.def.name + '」对致命伤害作出响应。', { side: unit.side });
+    this.pushTrigger(unit, L('ui.151ddd4f1f9f'), candidate.def.name, 'fatalDamage');
+    this.log('trigger', unit.name + L('ui.cfb26dec4e12') + candidate.def.name + L('ui.b76289a5db6d'), { side: unit.side });
     const ctx = this.createContext(unit, null, [unit], { eventData: { target: unit, source }, effectId: candidate.def.id, fatalGuard: true, eventName: 'fatalDamage' });
     ctx.fatalGuard = true;
     this.executeSteps(candidate.def.steps || [], ctx);
@@ -1408,6 +1470,7 @@ class Battle {
     const isAttack = !!options.isAttack && !isBonus;
     const base = Math.max(0, Number(baseAmount) || 0);
     const beforeHp = target.hp;
+    const maxHp = target.maxHp;
     let finalAmount = 0;
     let resistance = 0;
     let mods = {};
@@ -1422,19 +1485,11 @@ class Battle {
       const takenScale = 1 - (targetMods.takenPct || 0) / 100;
       finalAmount = Math.max(0, Math.round(outgoing2 * takenScale - (targetMods.takenFlat || 0) - resistance));
     }
-    let immune = false;
-    if (finalAmount >= target.hp && finalAmount > 0 && !target.pendingDefeat) {
-      const candidates = this.getFatalGuardCandidates(target);
-      for (const candidate of candidates) {
-        immune = this.runFatalGuard(candidate, target, source) || immune;
-        if (immune) break;
-      }
-      if (immune) {
-        this.log('damage', target.name + ' 免疫了致命伤害。', { side: target.side });
-        return { hit: true, amount: 0, beforeHp, afterHp: target.hp, immune: true };
-      }
-    }
+
+    // Apply the hit first so hits on fatal-guard units still produce a visible
+    // damage number and HP drop before the guard heals them back.
     target.hp = Math.max(0, target.hp - finalAmount);
+    const afterDamageHp = target.hp;
     this.damageSeq += 1;
     const visual = {
       kind: 'damage',
@@ -1442,7 +1497,7 @@ class Battle {
       targetUid: target.battleId,
       targetName: target.name,
       sourceUid: source ? source.battleId : '',
-      sourceName: source ? source.name : '状态',
+      sourceName: source ? source.name : L('ui.62e951a692ff'),
       amount: finalAmount,
       type,
       damageType: type,
@@ -1452,32 +1507,86 @@ class Battle {
       rider: !!options.rider,
       sourceSide: source ? source.side : null,
       targetSide: target.side,
+      beforeHp,
+      afterHp: afterDamageHp,
+      maxHp,
+      lethal: afterDamageHp <= 0 && finalAmount > 0,
+      defeated: false,
+      guarded: false,
+      finalHp: afterDamageHp,
       round: this.round
     };
     this.damageFeed.unshift(Object.assign({ id: this.damageSeq, round: this.round }, visual));
     this.damageFeed = this.damageFeed.slice(0, 16);
-    this.recordVisual(visual);
+    const visualEntry = this.recordVisual(visual);
     if (isBonus) {
-      this.log('damage', target.name + ' 受到 ' + finalAmount + ' 点附加' + DAMAGE_TYPES[type].label + '伤害（' + beforeHp + ' → ' + target.hp + '）。附加伤害不受增益、减伤与抗性影响，也不视作独立攻击。', { side: target.side });
+      this.log('damage', target.name + L('ui.da3a3fdf431f') + finalAmount + L('ui.714c4a3bd2cf') + DAMAGE_TYPES[type].label + L('ui.f494d63aef59') + beforeHp + ' → ' + target.hp + L('ui.df98ca476044'), { side: target.side });
       if (this.rules.showFormula !== false) {
-        this.log('formula', '附加伤害结算：基础 ' + base + '，忽略全部伤害增益、减伤与抗性，实际 ' + finalAmount + '。', { side: target.side });
+        this.log('formula', L('ui.dd01ee7e98b5') + base + L('ui.8a77ce4db716') + finalAmount + '。', { side: target.side });
       }
     } else {
-      this.log('damage', target.name + ' 受到 ' + finalAmount + ' 点' + DAMAGE_TYPES[type].label + '伤害（' + beforeHp + ' → ' + target.hp + '）。', { side: target.side });
+      this.log('damage', target.name + L('ui.da3a3fdf431f') + finalAmount + L('ui.3fa855be48bb') + DAMAGE_TYPES[type].label + L('ui.f494d63aef59') + beforeHp + ' → ' + target.hp + '）。', { side: target.side });
       if (this.rules.showFormula !== false) {
         const modsText = [];
-        if (mods.dmgFlat) modsText.push('伤害提升值 ' + mods.dmgFlat);
-        if (mods.dmgPct) modsText.push('伤害提升 ' + mods.dmgPct + '%');
-        if (mods.finalDmgPct) modsText.push('最终伤害 ' + mods.finalDmgPct + '%');
-        if (resistance) modsText.push('抗性 -' + resistance);
-        this.log('formula', '伤害结算：基础 ' + base + '，修正 ' + (modsText.length ? modsText.join('，') : '无') + '，实际 ' + finalAmount + '。', { side: target.side });
+        if (mods.dmgFlat) modsText.push(L('ui.58985e01828c') + mods.dmgFlat);
+        if (mods.dmgPct) modsText.push(L('ui.6297d678916e') + mods.dmgPct + '%');
+        if (mods.finalDmgPct) modsText.push(L('ui.b78f637a503c') + mods.finalDmgPct + '%');
+        if (resistance) modsText.push(L('ui.3c091c518028') + resistance);
+        this.log('formula', L('ui.ae7bb2ee42bc') + base + L('ui.cec11c90e7bd') + (modsText.length ? modsText.join('，') : L('ui.72077749f794')) + L('ui.29429cfaa38a') + finalAmount + '。', { side: target.side });
       }
     }
-    if (target.alive && !target.pendingDefeat && isAttack) {
+
+    let immune = false;
+    if (afterDamageHp <= 0 && !target.pendingDefeat && target.alive) {
+      // Every fatal trigger on the same hit is evaluated. The unit's own
+      // skills run before generic effects, so Philia093 receives her poem
+      // before an external undying curse can short-circuit the chain.
+      const candidates = this.getFatalGuardCandidates(target);
+      for (const candidate of candidates) {
+        if (!target.alive) break;
+        const guarded = this.runFatalGuard(candidate, target, source);
+        immune = guarded || immune;
+        visual.guarded = true;
+      }
+      if (target.hp <= 0 && immune) {
+        const restored = Math.max(1, Math.min(maxHp, beforeHp || 1));
+        target.hp = restored;
+        this.recordVisual({
+          kind: 'heal',
+          sourceUid: target.battleId,
+          sourceName: target.name,
+          targetUid: target.battleId,
+          targetName: target.name,
+          amount: restored,
+          beforeHp: 0,
+          afterHp: restored,
+          maxHp,
+          self: true,
+          guard: true
+        });
+        this.log('effect', target.name + L('ui.7156dbc07361') + restored + '。', { side: target.side });
+      }
+    }
+
+    if (isAttack && target.alive && target.hp > 0 && !target.pendingDefeat) {
       this.triggerEvent('selfAttacked', { target, source, damage: finalAmount, isAttack: true, targets: [source].filter(Boolean) });
     }
     if (target.hp <= 0) this.markPendingDefeat(target);
-    return { hit: true, amount: finalAmount, beforeHp, afterHp: target.hp, bonus: isBonus };
+    visual.finalHp = target.hp;
+    visual.defeated = target.hp <= 0;
+    if (visualEntry) {
+      visualEntry.finalHp = visual.finalHp;
+      visualEntry.defeated = visual.defeated;
+      visualEntry.guarded = visual.guarded;
+      visualEntry.afterHp = visual.afterHp;
+    }
+    if (this.damageFeed[0] && this.damageFeed[0].targetUid === target.battleId) {
+      this.damageFeed[0].finalHp = visual.finalHp;
+      this.damageFeed[0].defeated = visual.defeated;
+      this.damageFeed[0].guarded = visual.guarded;
+      this.damageFeed[0].afterHp = visual.afterHp;
+    }
+    return { hit: true, amount: finalAmount, beforeHp, afterHp: target.hp, bonus: isBonus, defeated: visual.defeated, guarded: visual.guarded };
   }
 
   healUnit(source, target, baseAmount) {
@@ -1492,15 +1601,18 @@ class Battle {
       target.pendingDefeat = false;
       this.pendingDefeats = this.pendingDefeats.filter(item => item !== target);
     }
-    this.log('heal', target.name + ' 回复 ' + healed + ' 点生命（' + before + ' → ' + target.hp + '）。', { side: target.side });
+    this.log('heal', target.name + L('ui.d97eb661bd0f') + healed + L('ui.6e486b3bfcda') + before + ' → ' + target.hp + '）。', { side: target.side });
     if (healed > 0) {
       this.recordVisual({
         kind: 'heal',
         sourceUid: source ? source.battleId : null,
-        sourceName: source ? source.name : '回复',
+        sourceName: source ? source.name : L('ui.ffc7850925e7'),
         targetUid: target.battleId,
         targetName: target.name,
         amount: healed,
+        beforeHp: before,
+        afterHp: target.hp,
+        maxHp: target.maxHp,
         self: !!source && source === target
       });
     }
@@ -1515,7 +1627,7 @@ class Battle {
     let inst = target.effects.find(item => item.effectId === effectId);
     if (inst) {
       if (!def.stackable) {
-        this.log('effect', target.name + ' 已持有「' + def.name + '」。', { side: target.side });
+        this.log('effect', target.name + L('ui.a568f0c3d76f') + def.name + '」。', { side: target.side });
         return inst;
       }
       inst.stacks = Math.min(def.stackMax || 99, inst.stacks + amount);
@@ -1524,7 +1636,12 @@ class Battle {
       target.effects.push(inst);
     }
     this.recalcUnit(target);
-    if (!options.silent) this.log('effect', target.name + ' 获得效果「' + def.name + '」' + (def.stackable ? ' ×' + inst.stacks : '') + '。', { side: target.side });
+    if (def.setUncounted && target.counted) {
+      inst.countedBefore = true;
+      target.counted = false;
+      this.log('effect', target.name + L('ui.41f075bb5295') + def.name + L('ui.3c3304162289'), { side: target.side });
+    }
+    if (!options.silent) this.log('effect', target.name + L('ui.c381f23de046') + def.name + '」' + (def.stackable ? ' ×' + inst.stacks : '') + '。', { side: target.side });
     return inst;
   }
 
@@ -1532,7 +1649,7 @@ class Battle {
     const def = this.maps.effects.get(effectId);
     if (!def || !target) return false;
     if (def.removable === false && !force) {
-      this.log('effect', '「' + def.name + '」不可解除。', { side: target.side });
+      this.log('effect', '「' + def.name + L('ui.65ee0b6d9296'), { side: target.side });
       return false;
     }
     const inst = target.effects.find(item => item.effectId === effectId);
@@ -1540,25 +1657,26 @@ class Battle {
     inst.stacks -= Math.max(0, Number(amount) || 0);
     if (inst.stacks <= 0) {
       target.effects = target.effects.filter(item => item !== inst);
-      this.log('effect', target.name + ' 的效果「' + def.name + '」被移除。', { side: target.side });
+      if (def.setUncounted && inst.countedBefore) target.counted = true;
+      this.log('effect', target.name + L('ui.cfb26dec4e12') + def.name + L('ui.f940cfab0feb'), { side: target.side });
     } else {
-      this.log('effect', target.name + ' 的效果「' + def.name + '」降为 ' + inst.stacks + ' 层。', { side: target.side });
+      this.log('effect', target.name + L('ui.cfb26dec4e12') + def.name + L('ui.80595da7dc75') + inst.stacks + L('ui.2a5cc5eb3fb6'), { side: target.side });
     }
     this.recalcUnit(target);
     return true;
   }
 
   prepareUnit(unitId) {
-    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: '当前无法选择行动单位。' };
+    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: L('ui.862131328faa') };
     const unit = this.getUnit(unitId);
-    if (!unit) return { ok: false, error: '单位不存在。' };
-    if (unit.side !== this.currentSide) return { ok: false, error: '不是当前行动方。' };
-    if (unit.acted) return { ok: false, error: '该单位本回合已行动。' };
-    if (unit.pendingDefeat || !unit.alive) return { ok: false, error: '单位已退场。' };
+    if (!unit) return { ok: false, error: L('ui.88e43057508b') };
+    if (unit.side !== this.currentSide) return { ok: false, error: L('ui.b7e6b7681b4c') };
+    if (unit.acted) return { ok: false, error: L('ui.87910350093c') };
+    if (unit.pendingDefeat || !unit.alive) return { ok: false, error: L('ui.96165073931e') };
     if (!unit.actionStarted) {
       unit.actionStarted = true;
       this.actionStartedFor = unit.battleId;
-      this.log('turn', unit.name + ' 进入行动。', { side: unit.side });
+      this.log('turn', unit.name + L('ui.29e90092b3c2'), { side: unit.side });
       this.beginBatch();
       this.triggerEvent('actionStart', { unit }, { ownerOnly: true });
       this.endBatch();
@@ -1574,22 +1692,22 @@ class Battle {
   }
 
   useSkill(unitId, skillId, targetUid) {
-    if (this.status !== 'active') return { ok: false, error: '战斗已结束。' };
-    if (this.phase !== 'awaiting') return { ok: false, error: '正在结算，请稍候。' };
+    if (this.status !== 'active') return { ok: false, error: L('ui.7e003f486821') };
+    if (this.phase !== 'awaiting') return { ok: false, error: L('ui.61932d0665cf') };
     const unit = this.getUnit(unitId);
-    if (!unit) return { ok: false, error: '单位不存在。' };
-    if (unit.side !== this.currentSide) return { ok: false, error: '不是当前行动单位。' };
-    if (unit.acted) return { ok: false, error: '该单位本回合已行动。' };
+    if (!unit) return { ok: false, error: L('ui.88e43057508b') };
+    if (unit.side !== this.currentSide) return { ok: false, error: L('ui.a3bf27d4972c') };
+    if (unit.acted) return { ok: false, error: L('ui.87910350093c') };
     const skill = this.getSkillForUnit(unit, skillId);
-    if (!skill) return { ok: false, error: '该单位没有此技能。' };
-    if (skill.type !== 'active') return { ok: false, error: '这个技能不是主动技。' };
+    if (!skill) return { ok: false, error: L('ui.84632c148404') };
+    if (skill.type !== 'active') return { ok: false, error: L('ui.419b22d7ba15') };
     const state = this.getSkillState(unit, skill);
     if (!state.usable) return { ok: false, error: state.reason };
     const chosen = this.resolveChosenTargets(unit, skill, targetUid);
     const mode = skill.targetMode || 'none';
-    if ((mode === 'enemy' || mode === 'ally') && !chosen.length) return { ok: false, error: '请选择一个合法目标。' };
-    if ((mode === 'allEnemies') && !chosen.length) return { ok: false, error: '没有可攻击的敌方单位。' };
-    if (!unit.alive || unit.acted) return { ok: false, error: '单位状态已变化。' };
+    if ((mode === 'enemy' || mode === 'ally') && !chosen.length) return { ok: false, error: L('ui.546e45d369c5') };
+    if ((mode === 'allEnemies') && !chosen.length) return { ok: false, error: L('ui.104e3d0d8d59') };
+    if (!unit.alive || unit.acted) return { ok: false, error: L('ui.8fd61ed3c843') };
     unit.acted = true;
     this.phase = 'resolving';
     this.turnSerial += 1;
@@ -1602,19 +1720,19 @@ class Battle {
   }
 
   useExtraSkill(unitId, skillId, targetUid) {
-    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: '当前无法释放附加技。' };
+    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: L('ui.476292a5497a') };
     const unit = this.getUnit(unitId);
-    if (!unit) return { ok: false, error: '单位不存在。' };
+    if (!unit) return { ok: false, error: L('ui.88e43057508b') };
     const skill = this.getSkillForUnit(unit, skillId);
-    if (!skill || skill.type !== 'extra') return { ok: false, error: '该单位没有此附加技。' };
+    if (!skill || skill.type !== 'extra') return { ok: false, error: L('ui.8f2b7be4cdbf') };
     const state = this.getSkillState(unit, skill);
     if (!state.usable) return { ok: false, error: state.reason };
     const chosen = this.resolveChosenTargets(unit, skill, targetUid);
     const mode = skill.targetMode || 'none';
-    if ((mode === 'enemy' || mode === 'ally') && !chosen.length) return { ok: false, error: '请选择一个合法目标。' };
+    if ((mode === 'enemy' || mode === 'ally') && !chosen.length) return { ok: false, error: L('ui.546e45d369c5') };
     this.phase = 'resolving';
     this.beginBatch();
-    this.log('extra', unit.name + ' 释放附加技「' + skill.name + '」，不占用行动。', { side: unit.side });
+    this.log('extra', unit.name + L('ui.6d9e4cc6da7f') + skill.name + L('ui.b46f99906963'), { side: unit.side });
     this.executeSkill(unit, skill, chosen, { countAsAttack: true, applyActionEffects: true });
     this.endBatch();
     this.phase = this.status === 'active' ? 'awaiting' : 'ended';
@@ -1623,16 +1741,16 @@ class Battle {
   }
 
   passAction(unitId) {
-    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: '当前无法待机。' };
+    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: L('ui.895c47024b8c') };
     const unit = this.getUnit(unitId);
-    if (!unit || unit.side !== this.currentSide || unit.acted) return { ok: false, error: '无法令该单位待机。' };
+    if (!unit || unit.side !== this.currentSide || unit.acted) return { ok: false, error: L('ui.d7d79a0c0601') };
     if (!unit.actionStarted) {
       const prep = this.prepareUnit(unitId);
       if (!prep.ok) return prep;
       if (prep.skipped) return { ok: true };
     }
     unit.acted = true;
-    this.log('turn', unit.name + ' 选择待机。', { side: unit.side });
+    this.log('turn', unit.name + L('ui.29c1c3eb5ec4'), { side: unit.side });
     this.phase = 'awaiting';
     this.advanceTurn();
     return { ok: true };
@@ -1668,7 +1786,7 @@ class Battle {
       this.endRound();
       return;
     }
-    if (guard >= 8) this.log('system', '行动调度达到上限，等待手动继续。');
+    if (guard >= 8) this.log('system', L('ui.b01227638bfb'));
   }
 
   hasUnacted(sideId) {
@@ -1693,8 +1811,8 @@ class Battle {
       unit.acted = false;
       unit.actionStarted = false;
       unit.extraActionUsed = true;
-      this.log('turn', '结束阶段：' + unit.name + ' 获得一次额外行动。', { side: unit.side });
-      this.pushTrigger(unit, '效果', '额外行动', 'roundEnd');
+      this.log('turn', L('ui.7122c31651d7') + unit.name + L('ui.dcec5737e379'), { side: unit.side });
+      this.pushTrigger(unit, L('ui.151ddd4f1f9f'), L('ui.5d5d29c6a7ac'), 'roundEnd');
       this.recordVisual({
         kind: 'effect',
         action: 'trigger',
@@ -1703,7 +1821,7 @@ class Battle {
         sourceName: unit.name,
         targetName: unit.name,
         self: true,
-        name: '额外行动',
+        name: L('ui.5d5d29c6a7ac'),
         effectType: 'positive',
         sourceSide: unit.side,
         targetSide: unit.side
@@ -1723,7 +1841,7 @@ class Battle {
     this.endingRound = true;
     this.phase = 'roundEnd';
     this.beginBatch();
-    this.log('round', '第 ' + this.round + ' 回合结束，结算回合结束触发。', {});
+    this.log('round', L('ui.f495347d6acf') + this.round + L('ui.de1041c3c441'), {});
     this.triggerEvent('roundEnd', { round: this.round });
     this.endBatch();
     if (this.status === 'active') {
@@ -1737,7 +1855,7 @@ class Battle {
       }
       this.actionStartedFor = null;
       this.phase = 'muster';
-      this.log('round', '第 ' + this.round + ' 回合开始。', {});
+      this.log('round', L('ui.f495347d6acf') + this.round + L('ui.5876e5b2563f'), {});
       this.beginBatch();
       this.drawAndEnterRound();
       this.triggerEvent('roundStart', { round: this.round });
@@ -1751,7 +1869,7 @@ class Battle {
     }
     this.endingRound = false;
     if (this.status === 'active') {
-      this.log('system', '当前行动方：' + this.sides[this.currentSide].name + '。');
+      this.log('system', L('ui.f47b4af92082') + this.sides[this.currentSide].name + '。');
     }
   }
 
@@ -1767,7 +1885,7 @@ class Battle {
       });
       if (handCounted) continue;
       const winnerSide = sideId === 'A' ? 'B' : 'A';
-      this.finish(winnerSide, side.name + '场上已无计数单位，且没有可紧急入场的计数角色。');
+      this.finish(winnerSide, side.name + L('ui.eed93be056ec'));
       return;
     }
   }
@@ -1778,8 +1896,8 @@ class Battle {
     this.phase = 'ended';
     this.winner = winnerSide;
     this.endedAt = Date.now();
-    const name = winnerSide ? this.sides[winnerSide].name : '平局';
-    this.log('victory', '战斗结束：' + name + '胜利。' + (reason ? ' ' + reason : ''), { side: winnerSide });
+    const name = winnerSide ? this.sides[winnerSide].name : L('ui.66402ea5332d');
+    this.log('victory', L('ui.fea3c47959c2') + name + L('ui.cf3109c198d0') + (reason ? ' ' + reason : ''), { side: winnerSide });
     if (typeof this.finishCallback === 'function') {
       try { this.finishCallback({ winner: winnerSide, reason, round: this.round }); }
       catch (error) { console.error(error); }
@@ -1789,7 +1907,7 @@ class Battle {
   surrenderSide(sideId) {
     if (this.status !== 'active') return;
     const winner = sideId === 'A' ? 'B' : 'A';
-    this.finish(winner, this.sides[sideId].name + '主动投降。');
+    this.finish(winner, this.sides[sideId].name + L('ui.d8041a2d905c'));
   }
 
   aiPlan() {
