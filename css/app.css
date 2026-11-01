@@ -2057,3 +2057,56 @@
   .battle-page .action-panel { min-height: 0; }
   .action-empty { min-height: 160px; padding: 18px 12px; }
 }
+
+/* Five-mode card editor */
+.editor-tabs.five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.editor-tabs.five .segment { min-height: 29px; font-size: 9.5px; padding-left: 4px; padding-right: 4px; }
+.editor-form > .editor-form-section > .form-grid { margin-bottom: 2px; }
+.editor-form > .editor-savebar { margin: 14px -16px -14px; }
+.editor-card-hint { color: var(--ink-faint); font-size: 9px; line-height: 1.5; }
+@media (max-width: 720px) {
+  .editor-tabs.five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Pre-battle lineup */
+.loadout-lineup { margin-bottom: 13px; }
+.loadout-item.unit { width: 100%; gap: 7px; padding: 7px 8px; text-align: left; color: var(--ink-soft); font: inherit; cursor: pointer; }
+.loadout-item.unit .loadout-main { flex: 1; min-width: 0; }
+.loadout-item.unit strong { display: block; font-size: 10.5px; }
+.loadout-item.unit small { display: block; color: var(--ink-faint); font-size: 8.5px; }
+.loadout-item.unit:hover { border-color: var(--line-strong); background: #fffdf8; }
+.loadout-item.unit.selected { border-color: var(--gold); background: var(--gold-soft); }
+
+/* Permanent character shop */
+.character-shop-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.character-shop-card { display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 4px; background: rgba(251,248,241,.62); padding: 6px; }
+.character-shop-card img { width: 34px; height: 44px; object-fit: cover; border: 1px solid var(--line); border-radius: 3px; }
+.character-shop-card .character-shop-main { flex: 1; min-width: 0; }
+.character-shop-card strong { display: block; font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.character-shop-card small { display: block; color: var(--ink-faint); font-size: 8px; }
+.character-shop-card .btn { flex: none; min-width: 58px; }
+.character-shop-card.sold { opacity: .5; }
+.character-shop-panel .panel-body { padding: 9px; }
+@media (min-width: 720px) and (max-width: 1180px) {
+  .character-shop-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Editor target pack bar */
+.editor-pack-bar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; padding: 8px; border: 1px solid var(--line); border-radius: 5px; background: rgba(251,248,241,.65); }
+.editor-pack-bar label { flex: none; color: var(--ink-faint); font-size: 8.5px; }
+.editor-pack-bar .select { flex: 1; min-width: 100px; min-height: 27px; padding: 3px 6px; font-size: 9.5px; }
+.editor-pack-bar .field-hint { flex-basis: 100%; font-family: var(--mono); font-size: 7.5px; }
+
+/* Custom challenge designer */
+.challenge-designer { max-height: 62vh; overflow: auto; padding-right: 3px; }
+.challenge-design-stage { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+.challenge-design-stage:first-of-type { border-top: 0; }
+.challenge-design-units { max-height: 120px; overflow: auto; border: 1px solid var(--line); border-radius: 4px; padding: 7px; background: rgba(251,248,241,.55); }
+.challenge-design-units .form-check-inline { width: calc(50% - 8px); }
+
+/* Formula reference and effect-holder target */
+.formula-help { border-top: 1px solid var(--line); padding-top: 8px; font-size: 8.5px; color: var(--ink-soft); }
+.formula-help ul { margin: 4px 0 0; padding-left: 13px; display: grid; gap: 3px; }
+.formula-help li { line-height: 1.45; }
+.formula-help code { font-family: var(--mono); font-size: 8px; background: rgba(44,40,37,.06); padding: 0 2px; border-radius: 2px; }
+.formula-help b { color: var(--ink); }
