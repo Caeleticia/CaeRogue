@@ -144,6 +144,11 @@ const EditorUI = {
     for (const pack of packs) {
       if (!pack || !pack.content || seen.has(pack.id)) continue;
       seen.add(pack.id);
+      for (const event of pack.rogueEvents || []) {
+        for (const choice of event.choices || []) {
+          if (choice && mapping[choice.id]) choice.id = mapping[choice.id];
+        }
+      }
       for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
         for (const item of pack.content[category] || []) {
           if (item.skills) item.skills = replaceList(item.skills);

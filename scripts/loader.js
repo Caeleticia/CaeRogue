@@ -6,7 +6,12 @@
 
 const DataLoader = {
   manifest: { packs: [] },
+  manifestError: '',
   loadedPacks: [],
+  rogueEvents: [],
+  rogueEventError: '',
+  rogueConfig: null,
+  rogueConfigError: '',
 
   async fetchJson(path) {
     const response = await fetch(path + (path.includes('?') ? '&' : '?') + 'v=' + Date.now(), { cache: 'no-store' });
@@ -25,6 +30,7 @@ const DataLoader = {
       pack.content[category].forEach(item => { item.packId = 'core'; });
     }
     CORE_PACK = pack;
+    window.CORE_PACK_BASE = deepClone(pack);
 
     const [deckA, deckB] = await Promise.all([
       this.fetchJson('data/deck/default_a.json'),
@@ -45,11 +51,43 @@ const DataLoader = {
     return window.I18n || null;
   },
 
+  async loadRogueEvents() {
+    this.rogueEventError = '';
+    try {
+      const data = await this.fetchJson('data/rogue/events.json');
+      this.rogueEvents = data && Array.isArray(data.events) ? data.events : [];
+      if (!Array.isArray(this.rogueEvents)) this.rogueEvents = [];
+    } catch (error) {
+      this.rogueEvents = [];
+      this.rogueEventError = 'data/rogue/events.json: ' + error.message;
+    }
+    return this.rogueEvents;
+  },
+
+  async loadRogueConfig() {
+    this.rogueConfigError = '';
+    try {
+      const data = await this.fetchJson('data/rogue/config.json');
+      this.rogueConfig = data && typeof data === 'object' ? data : {};
+    } catch (error) {
+      this.rogueConfig = {};
+      this.rogueConfigError = 'data/rogue/config.json: ' + error.message;
+    }
+    return this.rogueConfig;
+  },
+
   async loadManifest() {
+    this.manifestError = '';
     try {
       const manifest = await this.fetchJson('data/pack/index.json');
-      this.manifest = manifest && Array.isArray(manifest.packs) ? manifest : { packs: [] };
+      if (!manifest || !Array.isArray(manifest.packs)) {
+        this.manifestError = L('ui.c5ad35600a7a');
+        this.manifest = { packs: [] };
+        return this.manifest;
+      }
+      this.manifest = manifest;
     } catch (error) {
+      this.manifestError = 'data/pack/index.json: ' + error.message;
       this.manifest = { packs: [] };
     }
     return this.manifest;
@@ -57,7 +95,7 @@ const DataLoader = {
 
   async loadExtraPacks(StoreApi) {
     await this.loadManifest();
-    const errors = [];
+    const errors = this.manifestError ? [this.manifestError] : [];
     for (const file of this.manifest.packs || []) {
       const clean = String(file || '').trim();
       if (!clean || clean === 'defaultcards.json') continue;
@@ -71,7 +109,7 @@ const DataLoader = {
         StoreApi.rebuild();
         this.loadedPacks.push(raw.id);
       } catch (error) {
-        errors.push(clean + '：' + error.message);
+        errors.push(clean + ': ' + error.message);
       }
     }
     return { errors };

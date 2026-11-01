@@ -215,6 +215,7 @@ class Battle {
     this.rules = Object.assign({}, DEFAULT_RULES, config.rules || {});
     this.rules.maxField = Math.max(1, Number(this.rules.maxField) || 3);
     this.rules.initialDraw = Math.max(0, Number(this.rules.initialDraw) || 0);
+    this.drawFromPool = !!(config.drawFromPool || this.rules.drawFromPool);
     this.controllers = Object.assign({ A: 'human', B: 'human' }, config.controllers || {});
     this.modifiers = config.modifiers || {};
     this.content = Store.content();
@@ -268,16 +269,18 @@ class Battle {
       units: [],
       counts: {},
       runes: [],
-      equipmentPool: []
+      equipmentPool: [],
+      damageDealt: 0,
+      damageTaken: 0
     };
-    const unitIds = (loadout.units || []).filter(item => this.maps.units.has(item));
+    const unitIds = this.drawFromPool ? [] : (loadout.units || []).filter(item => this.maps.units.has(item));
     side.deck = shuffle(unitIds);
-    side.equipmentPool = (loadout.equipment || []).filter(item => this.maps.equipment.has(item));
-    const runeIds = [...new Set((loadout.runes || []).filter(item => this.maps.runes.has(item)))];
+    side.equipmentPool = this.drawFromPool ? [] : (loadout.equipment || []).filter(item => this.maps.equipment.has(item));
+    const runeIds = this.drawFromPool ? [] : [...new Set((loadout.runes || []).filter(item => this.maps.runes.has(item)))];
     side.runePool = runeIds.map(item => this.maps.runes.get(item));
-    const requestedActive = Array.isArray(loadout.activeRunes)
+    const requestedActive = this.drawFromPool ? [] : (Array.isArray(loadout.activeRunes)
       ? loadout.activeRunes.filter(item => runeIds.includes(item))
-      : runeIds.slice(0, 3);
+      : runeIds.slice(0, 3));
     side.runes = [...new Set(requestedActive)].slice(0, 3).map(item => this.maps.runes.get(item));
     return side;
   }
@@ -729,18 +732,75 @@ class Battle {
       } else {
         this.drawCards(sideId, this.rules.initialDraw, true);
       }
-      this.musterSide(sideId);
+      if (!this.drawFromPool) this.musterSide(sideId);
     }
     this.log('round', L('ui.68af3e7446ba'), {});
     this.triggerEvent('roundStart', { round: this.round });
     this.endBatch();
+    if (this.drawFromPool) {
+      this.currentSide = null;
+      this.beginBatch();
+      for (const sideId of ['A', 'B']) {
+        if (this.sides[sideId].controller === 'ai') this.musterSide(sideId);
+      }
+      this.endBatch();
+      this.phase = 'muster';
+      this.log('system', L('ui.dfaf9ea041a5'));
+      return;
+    }
     this.currentSide = this.firstSide;
     this.phase = this.status === 'active' ? 'awaiting' : 'ended';
     this.ensureActionable();
     if (this.status === 'active') this.log('system', L('ui.f47b4af92082') + this.sides[this.currentSide].name + '。');
   }
 
+  drawPoolCard() {
+    const units = (this.content && this.content.units) || [];
+    if (!units.length) return null;
+    const roll = Math.random();
+    const quality = roll < 0.5 ? 'white' : roll < 0.9 ? 'blue' : 'gold';
+    let pool = units.filter(unit => unit.quality === quality);
+    if (!pool.length) pool = units;
+    return pool[Math.floor(Math.random() * pool.length)] || null;
+  }
+
+  drawPoolCards(sideId, count, silent) {
+    const side = this.sides[sideId];
+    const amount = Math.max(0, Number(count) || 0);
+    let drawn = 0;
+    for (let i = 0; i < amount; i += 1) {
+      const card = this.drawPoolCard();
+      if (!card) break;
+      side.hand.push(card.id);
+      drawn += 1;
+    }
+    if (drawn && !silent) this.log('system', side.name + L('ui.fb5662e4fa98') + drawn + L('ui.8a5923356f1b'), { side: sideId });
+    return drawn;
+  }
+
+  beginMuster() {
+    if (this.status !== 'active' || this.phase !== 'muster') return { ok: false, error: L('ui.6f5882bd9048') };
+    for (const sideId of ['A', 'B']) {
+      const counted = this.getFieldUnits(sideId).filter(unit => unit.counted).length;
+      if (!counted) return { ok: false, error: L('ui.ba45b06fb181') };
+    }
+    this.phase = 'awaiting';
+    this.currentSide = this.firstSide;
+    for (const side of Object.values(this.sides)) {
+      for (const unit of side.units) {
+        unit.acted = false;
+        unit.actionStarted = false;
+        unit.extraActionUsed = false;
+      }
+    }
+    this.actionStartedFor = null;
+    this.ensureActionable();
+    this.log('round', L('ui.26b4c77aae28') + this.sides[this.firstSide].name + L('ui.027c22f27415'));
+    return { ok: true };
+  }
+
   drawCards(sideId, count, silent) {
+    if (this.drawFromPool) return this.drawPoolCards(sideId, count, silent);
     const side = this.sides[sideId];
     const amount = Math.max(0, Number(count) || 0);
     let drawn = 0;
@@ -778,6 +838,15 @@ class Battle {
   }
 
   drawAndEnterRound() {
+    if (this.drawFromPool) {
+      if (this.rules.drawDuringBattle && this.round > 1 && this.rules.drawInterval > 0 && (this.round - 1) % this.rules.drawInterval === 0) {
+        for (const sideId of ['A', 'B']) this.drawPoolCards(sideId, this.rules.drawCount, false);
+      }
+      for (const sideId of ['A', 'B']) {
+        if (this.sides[sideId].controller === 'ai') this.musterSide(sideId);
+      }
+      return;
+    }
     if (this.rules.drawDuringBattle && this.round > 1 && this.rules.drawInterval > 0) {
       if ((this.round - 1) % this.rules.drawInterval === 0) {
         for (const sideId of ['A', 'B']) {
@@ -887,7 +956,7 @@ class Battle {
   }
 
   manualDeployCard(sideId, handIndex) {
-    if (this.status !== 'active' || this.phase !== 'awaiting') return { ok: false, error: L('ui.93b74f0abd4d') };
+    if (this.status !== 'active' || (this.phase !== 'awaiting' && this.phase !== 'muster')) return { ok: false, error: L('ui.93b74f0abd4d') };
     const side = this.sides[sideId];
     const index = Number(handIndex);
     if (!side || !Number.isInteger(index) || index < 0 || index >= side.hand.length) return { ok: false, error: L('ui.a46924a9796e') };
@@ -1561,6 +1630,13 @@ class Battle {
     // damage number and HP drop before the guard heals them back.
     target.hp = Math.max(0, target.hp - finalAmount);
     const afterDamageHp = target.hp;
+    const actualAmount = Math.max(0, beforeHp - afterDamageHp);
+    const targetSide = this.sides[target.side];
+    if (targetSide) targetSide.damageTaken = (targetSide.damageTaken || 0) + actualAmount;
+    if (source && source.side && source.side !== target.side) {
+      const sourceSide = this.sides[source.side];
+      if (sourceSide) sourceSide.damageDealt = (sourceSide.damageDealt || 0) + actualAmount;
+    }
     this.damageSeq += 1;
     const visual = {
       kind: 'damage',
@@ -1570,6 +1646,7 @@ class Battle {
       sourceUid: source ? source.battleId : '',
       sourceName: source ? source.name : L('ui.62e951a692ff'),
       amount: finalAmount,
+      actualAmount,
       type,
       damageType: type,
       isAttack,
@@ -1657,7 +1734,7 @@ class Battle {
       this.damageFeed[0].guarded = visual.guarded;
       this.damageFeed[0].afterHp = visual.afterHp;
     }
-    return { hit: true, amount: finalAmount, beforeHp, afterHp: target.hp, bonus: isBonus, defeated: visual.defeated, guarded: visual.guarded };
+    return { hit: true, amount: finalAmount, actualAmount, beforeHp, afterHp: target.hp, bonus: isBonus, defeated: visual.defeated, guarded: visual.guarded };
   }
 
   healUnit(source, target, baseAmount) {

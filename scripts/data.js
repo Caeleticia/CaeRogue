@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.7.1';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -187,6 +187,7 @@ const CHALLENGE_DEFINITIONS = [
 const GAME_MODES = {
   versus:    { name: L('ui.6dbf1f702a07'), short: L('ui.883524f86de6'), icon: 'assets/icons/versus.svg', desc: L('ui.10affce00163') },
   custom:    { name: L('ui.bdf4604699e6'), short: L('ui.c493338e8c33'), icon: 'assets/icons/custom.svg', desc: L('ui.3431a803753a') },
+  builder:   { name: L('ui.d5858652d876'), short: L('ui.d5858652d876'), icon: 'assets/icons/library.svg', desc: L('ui.be921da1b1f4') },
   tutorial:  { name: L('ui.0de9c5503e7c'), short: L('ui.b6edf34dbad7'), icon: 'assets/icons/versus.svg', desc: L('ui.283c4cb9b7e3') },
   rogue:     { name: L('ui.85646631c0e1'), short: L('ui.85646631c0e1'), icon: 'assets/icons/rogue.svg', desc: L('ui.c2ec0defa623') },
   challenge: { name: L('ui.9294c931e171'), short: L('ui.9294c931e171'), icon: 'assets/icons/challenge.svg', desc: L('ui.93c4839f3ad2') },

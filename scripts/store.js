@@ -59,6 +59,8 @@ function normalizePack(raw) {
   pack.description = String(pack.description || '');
   pack.dependencies = Array.isArray(pack.dependencies) ? pack.dependencies.map(String) : [];
   pack.countDefs = pack.countDefs && typeof pack.countDefs === 'object' ? pack.countDefs : {};
+  pack.rogueEvents = Array.isArray(pack.rogueEvents) ? pack.rogueEvents : [];
+  pack.rogueConfig = pack.rogueConfig && typeof pack.rogueConfig === 'object' ? pack.rogueConfig : null;
   const source = pack.content && typeof pack.content === 'object' ? pack.content : {};
   pack.content = {
     units: Array.isArray(source.units) ? source.units : [],
@@ -116,6 +118,14 @@ function validatePackShape(pack, packs) {
   }
   if (duplicatesAgainstCore.length) {
     errors.push(L('ui.0f9f4251bb16') + duplicatesAgainstCore.join('、'));
+  }
+  const eventIds = new Set();
+  for (const event of pack.rogueEvents || []) {
+    if (!event || typeof event !== 'object' || !event.id) { errors.push(L('ui.9ffe29b7a034')); continue; }
+    if (eventIds.has(event.id)) errors.push(L('ui.9b64169f39d4') + event.id);
+    eventIds.add(event.id);
+    if (!event.title) errors.push(L('ui.8eb807a6a14a') + event.id + L('ui.54e5993e9dd6'));
+    if (!Array.isArray(event.choices) || !event.choices.length) errors.push(L('ui.8eb807a6a14a') + event.id + L('ui.96c387954c15'));
   }
   return { errors, warnings };
 }
@@ -319,6 +329,35 @@ const Store = {
       console.warn(L('ui.9f3f362e3e89'), error);
       return false;
     }
+  },
+
+  rogueConfig() {
+    const merge = (base, extra) => {
+      if (Array.isArray(extra)) return deepClone(extra);
+      if (!extra || typeof extra !== 'object') return extra === undefined ? base : extra;
+      const result = Object.assign({}, base && typeof base === 'object' ? base : {});
+      for (const key of Object.keys(extra)) {
+        result[key] = merge(result[key], extra[key]);
+      }
+      return result;
+    };
+    let config = merge({}, (window.DataLoader && DataLoader.rogueConfig) || {});
+    for (const pack of this.index ? this.index.packs : []) {
+      if (pack.rogueConfig) config = merge(config, pack.rogueConfig);
+    }
+    return config;
+  },
+
+  rogueEvents() {
+    const map = new Map();
+    const add = (events) => {
+      for (const event of events || []) {
+        if (event && event.id) map.set(event.id, deepClone(event));
+      }
+    };
+    add(window.DataLoader && DataLoader.rogueEvents);
+    for (const pack of this.index ? this.index.packs : []) add(pack.rogueEvents);
+    return [...map.values()];
   },
 
   rebuild() {

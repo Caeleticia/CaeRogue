@@ -318,8 +318,12 @@ const App = {
         throw new Error(I18n && I18n.loadError ? I18n.loadError : L('ui.506300e29e75'));
       }
       await DataLoader.loadCore();
+      await DataLoader.loadRogueEvents();
+      await DataLoader.loadRogueConfig();
       Store.init();
       const extra = await DataLoader.loadExtraPacks(Store);
+      if (DataLoader.rogueEventError) extra.errors.unshift(DataLoader.rogueEventError);
+      if (DataLoader.rogueConfigError) extra.errors.unshift(DataLoader.rogueConfigError);
       if (extra && extra.errors && extra.errors.length) {
         console.warn(L('ui.4dbfe8c32b39'), extra.errors);
       }
@@ -360,7 +364,7 @@ const App = {
     if (this.route !== route) this.cancelBattleFx();
     this.closeModal(true);
     if (route === 'battle' && !this.battle) route = 'home';
-    if (route === 'builder' && !this.builder) route = this.setup ? 'setup' : 'home';
+    if (route === 'builder' && !this.builder) { this.openBuilder('A'); return; }
     if (route === 'setup' && !this.setup) route = 'home';
     if (route === 'editor' && window.EditorUI) EditorUI.enter(this);
     if (['rogue', 'challenge', 'endless'].includes(route) && window.ModesUI) ModesUI.enter(route, this);
@@ -488,19 +492,20 @@ const App = {
     const menu = [
       { key: 'versus', action: 'open-setup', mode: 'versus', number: '01', wide: true, featured: true },
       { key: 'custom', action: 'open-setup', mode: 'custom', number: '02', wide: true },
-      { key: 'rogue', action: 'open-route', route: 'rogue', number: '03' },
-      { key: 'challenge', action: 'open-route', route: 'challenge', number: '04' },
-      { key: 'endless', action: 'open-route', route: 'endless', number: '05' },
-      { key: 'library', action: 'open-route', route: 'library', number: '06' },
-      { key: 'editor', action: 'open-route', route: 'editor', number: '07' },
-      { key: 'expansions', action: 'open-route', route: 'expansions', number: '08' },
-      { key: 'workshop', action: 'open-route', route: 'workshop', number: '09' },
-      { key: 'settings', action: 'open-route', route: 'settings', number: '10' }
+      { key: 'builder', action: 'open-route', route: 'builder', number: '03' },
+      { key: 'rogue', action: 'open-route', route: 'rogue', number: '04' },
+      { key: 'challenge', action: 'open-route', route: 'challenge', number: '05' },
+      { key: 'endless', action: 'open-route', route: 'endless', number: '06' },
+      { key: 'library', action: 'open-route', route: 'library', number: '07' },
+      { key: 'editor', action: 'open-route', route: 'editor', number: '08' },
+      { key: 'expansions', action: 'open-route', route: 'expansions', number: '09' },
+      { key: 'workshop', action: 'open-route', route: 'workshop', number: '10' },
+      { key: 'settings', action: 'open-route', route: 'settings', number: '11' }
     ];
     const menuHtml = menu.map(entry => {
       const mode = GAME_MODES[entry.key];
       return '<button class="menu-card' + (entry.wide ? ' wide' : '') + (entry.featured ? ' featured' : '') + '" type="button" data-action="' + entry.action + '" data-mode="' + (entry.mode || '') + '" data-route="' + (entry.route || '') + '">' +
-        '<div class="mc-top"><img src="' + mode.icon + '" alt=""><span class="mc-no">' + entry.number + ' / 10</span></div>' +
+        '<div class="mc-top"><img src="' + mode.icon + '" alt=""><span class="mc-no">' + entry.number + ' / 11</span></div>' +
         '<h3>' + esc(mode.name) + '</h3>' +
         '<p>' + esc(mode.desc) + '</p>' +
         L('ui.5f5b7233311e') +
@@ -587,12 +592,14 @@ const App = {
   openSetup(mode) {
     const actual = mode === 'custom' ? 'custom' : 'versus';
     if (!this.setup || this.setup.mode !== actual || this.route !== 'builder') {
+      const rules = deepClone(DEFAULT_RULES);
+      if (actual === 'versus') rules.drawDuringBattle = true;
       this.setup = {
         mode: actual,
         opponent: 'human',
-        rules: deepClone(DEFAULT_RULES),
-        deckA: deepClone(Store.state.decks.A || DEFAULT_LOADOUT_A),
-        deckB: deepClone(Store.state.decks.B || DEFAULT_LOADOUT_B)
+        rules,
+        deckA: deepClone(DEFAULT_LOADOUT_A),
+        deckB: deepClone(DEFAULT_LOADOUT_B)
       };
     }
     this.setupMode = actual;
@@ -641,83 +648,73 @@ const App = {
     const setup = this.setup;
     if (!setup) return this.renderMissingModule(L('ui.a51c63fbc4b7'));
     const mode = GAME_MODES[setup.mode] || GAME_MODES.versus;
-    const rules = setup.rules;
     const custom = setup.mode === 'custom';
-    const validationA = this.validateDeck(setup.deckA, rules);
-    const validationB = this.validateDeck(setup.deckB, rules);
-    const deckHtml = (side, validation) => {
-      const deck = side === 'A' ? setup.deckA : setup.deckB;
-      const cards = validation.cards;
-      const unitMinis = cards.units.slice(0, 6).map(unit => '<span class="deck-mini-card tip" data-tip="' + attr(unit.name + ' · ' + (RESISTANCE_TYPES[unit.resistance.type] || { label: L('ui.aa8457052a32') }).label + ' ' + unit.resistance.value) + '"><img src="' + attr(cardArt(unit)) + '" alt=""><span class="mini-q ' + qualityClass(unit.quality) + '"></span></span>').join('');
-      const more = cards.units.length > 6 ? '<span class="deck-mini-more">+' + (cards.units.length - 6) + '</span>' : '';
-      return '<div class="panel deck-side-panel">' +
-        '<div class="deck-side-head"><div class="deck-side-title"><span class="side-mark ' + (side === 'B' ? 'enemy' : '') + '">' + (this.setupSideName(side) === L('ui.13d56d03d73a') ? L('ui.5e3127724b85') : this.setupSideName(side) === L('ui.4bdaf46d2363') ? L('ui.a44c5936fb41') : side) + '</span><div><h3>' + this.setupSideName(side) + L('ui.9f1dce6b0ef6') + (side === 'A' ? L('ui.330331230c35') : custom && this.setup.opponent === 'ai' ? L('ui.abc506fb8a46') : L('ui.9e8b53a748b9')) + '</small></div></div><span class="chip">' + cards.units.length + L('ui.d26fe30720c1') +
-        '<div class="deck-mini-row">' + (unitMinis || L('ui.39bed673b827')) + more + '</div>' +
-        '<div class="deck-side-meta">' +
-          cards.equipment.map(item => '<span class="chip gold">' + esc(item.name) + '</span>').join('') +
-          cards.runes.map(item => '<span class="chip violet">' + esc(item.name) + '</span>').join('') +
-          (!cards.equipment.length && !cards.runes.length ? L('ui.04b95e71d194') : '') +
-        '</div>' +
-        (validation.errors.length ? '<div class="deck-warning">' + validation.errors.map(esc).join('；') + '</div>' : '') +
-        '<div class="deck-side-actions"><button class="btn btn-sm" type="button" data-action="setup-edit-deck" data-side="' + side + L('ui.a822140b395b') + side + L('ui.8fbec1d4c198') +
-      '</div>';
+    const rules = setup.rules;
+    const drawMode = !custom || !!rules.drawDuringBattle;
+    const defaultDeckMode = custom && !rules.drawDuringBattle;
+    const builtDeckA = deepClone(Store.state.decks.A || DEFAULT_LOADOUT_A);
+    const builtDeckB = deepClone(Store.state.decks.B || DEFAULT_LOADOUT_B);
+    const builtCardsA = this.deckCards(builtDeckA);
+    const builtCardsB = this.deckCards(builtDeckB);
+    const defaultA = this.validateDeck(builtDeckA, rules);
+    const defaultB = this.validateDeck(builtDeckB, rules);
+    const startDisabled = defaultDeckMode ? (!defaultA.ok || !defaultB.ok) : false;
+    const deckSummary = (cards) => {
+      const names = cards.units.map(unit => unit.name);
+      const shown = names.slice(0, 6).join('、') + (names.length > 6 ? '…' : '');
+      return (shown || L('ui.5656d581df55')) + L('ui.d65a0a66148c') + cards.equipment.length + L('ui.b604c4619b70') + cards.runes.length;
     };
-    const startDisabled = !validationA.ok || !validationB.ok;
-    const drawDisabled = custom || !rules.drawDuringBattle;
+    const drawDisabled = !drawMode;
+    const opponent = custom
+      ? L('ui.be812d843059') + (setup.opponent !== 'ai' ? ' active' : '') + L('ui.0ea6ea613888') + (setup.opponent === 'ai' ? ' active' : '') + L('ui.cf0d1da75636')
+      : '';
+    const rulePanel = L('ui.183ed5c2b066') + (drawMode ? L('ui.f7aff8c0e244') : L('ui.a0a8f6bd664c')) + '</span></div><div class="panel-body">' +
+      opponent +
+      '<div class="rules-grid">' +
+        L('ui.aaa8e8cbcb9c') + esc(rules.maxField) + L('ui.4f607c19530f') +
+        L('ui.921adaeca2e4') + esc(rules.initialDraw) + '" data-setup-rule="initialDraw"' + (drawDisabled ? ' disabled' : '') + L('ui.e3effbb5ff65') + (drawDisabled ? L('ui.a0398b354e8d') : L('ui.60abea9f521b')) + '</div></div>' +
+        L('ui.70c89623dd08') + (drawDisabled ? L('ui.85f7e17cab6e') : L('ui.65365779fbfc')) + '</small></div><button class="toggle' + (rules.drawDuringBattle ? ' on' : '') + '" type="button" aria-pressed="' + (rules.drawDuringBattle ? 'true' : 'false') + '" data-action="setup-toggle-rule" data-rule="drawDuringBattle"' + (setup.mode === 'versus' ? ' disabled' : '') + '></button></div></div>' +
+        L('ui.35af0c015328') + esc(rules.drawInterval) + '" data-setup-rule="drawInterval"' + (drawDisabled ? ' disabled' : '') + L('ui.0109582ffc72') +
+        L('ui.6803f26e2fc9') + esc(rules.drawCount) + '" data-setup-rule="drawCount"' + (drawDisabled ? ' disabled' : '') + L('ui.d4ce44071af7') +
+        L('ui.2d0c441f57b6') + (rules.allowDuplicates ? ' on' : '') + '" type="button" aria-pressed="' + (rules.allowDuplicates ? 'true' : 'false') + '" data-action="setup-toggle-rule" data-rule="allowDuplicates"></button></div></div>' +
+      '</div></div></section>';
+    const modePanel = drawMode
+      ? L('ui.91b3b4c2557a') +
+          L('ui.4841288cfe65') + esc(rules.initialDraw) + L('ui.49b902c804f3') +
+          L('ui.88b6bb0fb0a4') +
+          L('ui.541cc8fd75c3') + esc(rules.drawInterval) + L('ui.ff0f1e90f05f') + esc(rules.drawCount) + L('ui.66045ac49a74') +
+          L('ui.82d6353a3b19') +
+        '</div></div></section>'
+      : L('ui.8440dbd6f8dc') +
+          L('ui.d558a5508a38') + esc(deckSummary(builtCardsA)) + '</span></div>' +
+          L('ui.1d78a678cae5') + esc(deckSummary(builtCardsB)) + '</span></div>' +
+          L('ui.3bb46b4c7686') +
+          L('ui.6384d20a11a4') +
+          (defaultA.ok && defaultB.ok ? '' : '<div class="notice danger">' + esc([...defaultA.errors, ...defaultB.errors].join('；')) + '</div>') +
+        '</div></div></section>';
     return '' +
       '<div class="page-wrap setup-page">' +
-        '<div class="page-head">' +
-          '<div class="page-head-main"><div class="page-kicker">MATCH CONFIGURATION</div><h1>' + (custom ? (setup.opponent === 'ai' ? L('ui.ca405286fe34') : L('ui.cc5545a601b4')) : L('ui.9028b6f7b920')) + '</h1><p>' + (custom ? (setup.opponent === 'ai' ? L('ui.c587a25a4944') : L('ui.3512f7d3d592')) : L('ui.768ee876e994')) + '</p></div>' +
-          L('ui.2de40de44afb') + (startDisabled ? ' disabled' : '') + L('ui.a086522d5457') +
-        '</div>' +
-        '<div class="mode-banner"><img src="' + mode.icon + '" alt=""><div><h3>' + esc(mode.name) + '</h3><p>' + esc(mode.desc) + '</p></div><span class="mode-flag">' + (custom ? L('ui.f0b50e09b858') : L('ui.56a641852161')) + '</span></div>' +
-        '<div class="setup-layout mt-2">' +
-          '<div class="setup-main stack">' +
-            '<section class="panel">' +
-              L('ui.022218efde24') + (custom ? L('ui.39b9f8877714') : L('ui.f282cf6f2785')) + '</span></div>' +
-              '<div class="panel-body">' + (custom ? L('ui.c07cf170aada') + (setup.opponent !== 'ai' ? ' active' : '') + L('ui.0ea6ea613888') + (setup.opponent === 'ai' ? ' active' : '') + L('ui.cf0d1da75636') : '') + '<div class="rules-grid">' +
-                L('ui.c4b39e49661a') +
-                L('ui.91bc2b1b1054') + esc(rules.initialDraw) + '" data-setup-rule="initialDraw"' + (custom ? ' disabled' : '') + L('ui.e3effbb5ff65') + (custom ? L('ui.186e297237da') : L('ui.4a92256cda42')) + '</div></div>' +
-                L('ui.801e1e3976b6') + esc(rules.maxField) + L('ui.6722c1944de7') +
-                L('ui.145bfdeda268') + (rules.allowDuplicates ? 'true' : 'false') + L('ui.6e684a2c435e') +
-                L('ui.2579f5316db3') + (rules.defeatedToDeck ? 'true' : 'false') + L('ui.73e3bdf88e57') +
-                L('ui.543a7bb9ce40') +
-                L('ui.bf08d4f80a88') + (rules.drawDuringBattle ? 'true' : 'false') + '" data-action="setup-toggle-rule" data-rule="drawDuringBattle"' + (custom ? ' disabled' : '') + L('ui.89dad0432b57') +
-                L('ui.35af0c015328') + esc(rules.drawInterval) + '" data-setup-rule="drawInterval"' + (drawDisabled ? ' disabled' : '') + L('ui.0109582ffc72') +
-                L('ui.6803f26e2fc9') + esc(rules.drawCount) + '" data-setup-rule="drawCount"' + (drawDisabled ? ' disabled' : '') + L('ui.d4ce44071af7') +
-                L('ui.3cf53afd6110') +
-              '</div></div>' +
-            '</section>' +
-            L('ui.8568a765581e') + deckHtml('A', validationA) + deckHtml('B', validationB) + '</div></div></section>' +
-          '</div>' +
-          '<aside class="setup-aside">' +
-            L('ui.871c4bfca213') + mode.icon + '" alt="" width="29" height="29" style="border-radius:5px"></div>' +
-              '<div class="panel-body">' +
-                L('ui.dc705fb9da3e') + esc(mode.short) + '</b></div>' +
-                L('ui.fd741d923d0f') + esc(this.setupSideName('B')) + ' / B</b></div>' +
-                L('ui.593baf19e99a') + (custom ? L('ui.fc84e419f86b') : rules.initialDraw + L('ui.972cc4b623e8')) + '</b></div>' +
-                L('ui.4cbae6d5a548') + rules.maxField + L('ui.3af39782bb47') +
-                L('ui.2a71de38b4f9') + (rules.allowDuplicates ? L('ui.4c0c0aed67f7') : L('ui.41cd13289ce7')) + '</b></div>' +
-                L('ui.fe8ea3c8b187') + (custom ? L('ui.6c14bd7f6f9e') : rules.drawDuringBattle ? L('ui.256783b7d4ea') : L('ui.6c14bd7f6f9e')) + '</b></div>' +
-                '<div class="mt-2"><div class="validity-list">' +
-                  '<span class="chip ' + (validationA.ok ? 'green' : 'red') + '">' + esc(this.setupSideName('A')) + ' ' + (validationA.ok ? L('ui.b1d5a436fc60') : L('ui.3ca478bdd17e')) + '</span>' +
-                  '<span class="chip ' + (validationB.ok ? 'green' : 'red') + '">' + esc(this.setupSideName('B')) + (custom && setup.opponent === 'ai' ? L('ui.931f27549b2a') : '') + ' ' + (validationB.ok ? L('ui.b1d5a436fc60') : L('ui.3ca478bdd17e')) + '</span>' +
-                '</div></div>' +
-                (validationA.errors.length || validationB.errors.length ? '<div class="notice danger mt-2">' + [...validationA.errors, ...validationB.errors].map(esc).join('；') + '</div>' : '') +
-                '<div class="start-cta"><button class="btn btn-primary btn-block btn-lg" type="button" data-action="setup-start"' + (startDisabled ? ' disabled' : '') + L('ui.a086522d5457') +
-                '<p class="start-caption">' + (custom ? L('ui.d17957fd7d71') : L('ui.d12d2c75447a')) + '</p>' +
-              '</div>' +
-            '</section>' +
-            L('ui.4446a749b805') +
-          '</aside>' +
-        '</div>' +
+        '<div class="page-head"><div class="page-head-main"><div class="page-kicker">MATCH CONFIGURATION</div><h1>' + (custom ? (setup.opponent === 'ai' ? L('ui.510aeff51ed1') : L('ui.9d56c4ef3801')) : L('ui.6dbf1f702a07')) + '</h1><p>' + (drawMode ? L('ui.1066621b417a') : L('ui.9b274e75b441')) + '</p></div><div class="page-head-side"><button class="btn btn-primary btn-lg" type="button" data-action="setup-start"' + (startDisabled ? ' disabled' : '') + L('ui.11445dcb323c') +
+        '<div class="mode-banner"><img src="' + mode.icon + '" alt=""><div><h3>' + esc(mode.name) + '</h3><p>' + esc(mode.desc) + '</p></div><span class="mode-flag">' + (drawMode ? L('ui.f7aff8c0e244') : L('ui.a0a8f6bd664c')) + '</span></div>' +
+        '<div class="setup-layout mt-2"><div class="setup-main stack">' + rulePanel + modePanel + '</div><aside class="setup-aside">' +
+          L('ui.c5acfa0274da') +
+            L('ui.4a07dd36954f') + esc(mode.short) + '</span></div>' +
+            L('ui.d3a7f6299ebf') + (custom && setup.opponent === 'ai' ? L('ui.ad9f0dc50328') : L('ui.ca55daa1c64c')) + '</span></div>' +
+            L('ui.09a9976125cc') + (drawMode ? L('ui.971f3007661c') : L('ui.6c14bd7f6f9e')) + '</span></div>' +
+            (drawMode ? L('ui.635fd2b183b0') + esc(rules.initialDraw) + L('ui.972cc4b623e8') + '</span></div>' : L('ui.083a023c93b4') + builtCardsA.units.length + L('ui.e2f1a84cc132') + builtCardsB.units.length + L('ui.67eb66f38591')) +
+            L('ui.4b37bbf9194e') + (drawMode ? L('ui.bf305518607d') : L('ui.40d1c2865e8d')) + '</span></div>' +
+            '<div class="notice ' + (startDisabled ? 'danger' : '') + ' mt-2">' + (startDisabled ? L('ui.fd92c866de53') : (drawMode ? L('ui.e6f76816d16e') : L('ui.403d84f4a1bd'))) + '</div>' +
+            '<button class="btn btn-primary btn-block btn-lg mt-2" type="button" data-action="setup-start"' + (startDisabled ? ' disabled' : '') + L('ui.fea868b1bad3') +
+          '</div></div></section>' +
+        '</aside></div>' +
       '</div>';
   },
 
   setupToggleRule(rule) {
     if (!this.setup) return;
-    if (this.setup.mode === 'custom' && ['drawDuringBattle'].includes(rule)) return;
+    if (this.setup.mode === 'versus' && rule === 'drawDuringBattle') return;
     this.setup.rules[rule] = !this.setup.rules[rule];
+    if (rule === 'drawDuringBattle' && this.setup.rules[rule] && this.setup.mode === 'versus') this.setup.rules[rule] = true;
     this.render();
   },
 
@@ -727,7 +724,7 @@ const App = {
     if (numeric.includes(rule)) {
       let n = parseInt(value, 10);
       if (!Number.isFinite(n)) n = DEFAULT_RULES[rule];
-      const min = { initialDraw: 0, drawInterval: 1, drawCount: 1, maxField: 1 }[rule];
+      const min = { initialDraw: 1, drawInterval: 1, drawCount: 1, maxField: 1 }[rule];
       const max = { initialDraw: 30, drawInterval: 10, drawCount: 8, maxField: 5 }[rule];
       n = Math.max(min, Math.min(max, n));
       this.setup.rules[rule] = n;
@@ -736,24 +733,37 @@ const App = {
 
   setupStart() {
     if (!this.setup) return;
-    const { deckA, deckB, rules, mode } = this.setup;
+    const { rules, mode } = this.setup;
+    const custom = mode === 'custom';
+    const customAI = custom && this.setup.opponent === 'ai';
+    const drawMode = !custom || !!rules.drawDuringBattle;
+    if (drawMode) {
+      const initialDraw = Math.max(1, Math.min(30, Number(rules.initialDraw) || 1));
+      this.startBattle({
+        loadouts: { A: { units: [], equipment: [], runes: [] }, B: { units: [], equipment: [], runes: [] } },
+        rules: Object.assign({}, rules, { initialDraw, drawDuringBattle: true, showFormula: Store.state.settings.showFormula }),
+        controllers: { A: 'human', B: customAI ? 'ai' : 'human' },
+        mode,
+        drawFromPool: true,
+        context: { mode, source: 'setup', custom, customAI, drawMode: true }
+      });
+      return;
+    }
+    const deckA = deepClone(Store.state.decks.A || DEFAULT_LOADOUT_A);
+    const deckB = deepClone(Store.state.decks.B || DEFAULT_LOADOUT_B);
     const validationA = this.validateDeck(deckA, rules);
     const validationB = this.validateDeck(deckB, rules);
     if (!validationA.ok || !validationB.ok) {
       this.toast([...validationA.errors, ...validationB.errors].join('；'), 'error', L('ui.c46848abe6b1'));
       return;
     }
-    Store.saveDeck('A', deckA);
-    Store.saveDeck('B', deckB);
-    const custom = mode === 'custom';
-    const customAI = custom && this.setup.opponent === 'ai';
     this.startBattle({
-      loadouts: { A: deepClone(deckA), B: deepClone(deckB) },
-      rules: Object.assign({}, rules, { showFormula: Store.state.settings.showFormula }),
+      loadouts: { A: deckA, B: deckB },
+      rules: Object.assign({}, rules, { drawDuringBattle: false, showFormula: Store.state.settings.showFormula }),
       controllers: { A: 'human', B: customAI ? 'ai' : 'human' },
       mode,
-      noDraw: custom,
-      context: { mode, source: 'setup', custom, customAI }
+      noDraw: true,
+      context: { mode, source: 'setup', custom, customAI, drawMode: false }
     });
   },
 
@@ -767,17 +777,35 @@ const App = {
 
   /* ---------- Builder ---------- */
   openBuilder(side) {
-    if (!this.setup) return;
-    const deck = deepClone(side === 'B' ? this.setup.deckB : this.setup.deckA);
+    const selectedSide = side === 'B' ? 'B' : 'A';
+    const source = Store.state.decks[selectedSide] || (selectedSide === 'A' ? DEFAULT_LOADOUT_A : DEFAULT_LOADOUT_B);
+    const deck = deepClone(source);
     this.builder = {
-      side: side === 'B' ? 'B' : 'A',
+      side: selectedSide,
       deck,
       type: 'unit',
       search: '',
       selectedType: (deck.units || []).length ? 'unit' : 'unit',
-      selectedId: (deck.units || [])[0] || (Store.index.units[0] && Store.index.units[0].id) || null
+      selectedId: (deck.units || [])[0] || (Store.index.units[0] && Store.index.units[0].id) || null,
+      returnRoute: this.route === 'setup' ? 'setup' : 'home',
+      rules: deepClone(DEFAULT_RULES)
     };
     this.go('builder');
+  },
+
+  builderSideName(side) {
+    return side === 'A' ? L('ui.13d56d03d73a') : L('ui.4bdaf46d2363');
+  },
+
+  builderSwitchSide(side) {
+    if (!this.builder) return;
+    const selectedSide = side === 'B' ? 'B' : 'A';
+    const source = Store.state.decks[selectedSide] || (selectedSide === 'A' ? DEFAULT_LOADOUT_A : DEFAULT_LOADOUT_B);
+    this.builder.side = selectedSide;
+    this.builder.deck = deepClone(source);
+    this.builder.selectedType = 'unit';
+    this.builder.selectedId = (this.builder.deck.units || [])[0] || (Store.index.units[0] && Store.index.units[0].id) || null;
+    this.render();
   },
 
   builderPool(type) {
@@ -798,7 +826,7 @@ const App = {
     if (!this.builder) return '';
     const type = this.builder.type;
     const pool = this.builderPool(type);
-    const rules = this.setup ? this.setup.rules : DEFAULT_RULES;
+    const rules = (this.builder && this.builder.rules) || DEFAULT_RULES;
     if (!pool.length) return L('ui.0f7db6488fdc') + esc(cardTypeLabel(type)) + '。</div>';
     return pool.map(card => {
       const selected = this.builder.selectedId === card.id && this.builder.selectedType === type;
@@ -823,7 +851,7 @@ const App = {
   renderBuilder() {
     const state = this.builder;
     if (!state) return this.renderMissingModule(L('ui.39ef96f312da'));
-    const rules = this.setup ? this.setup.rules : DEFAULT_RULES;
+    const rules = (this.builder && this.builder.rules) || DEFAULT_RULES;
     const cards = this.deckCards(state.deck);
     const validation = this.validateDeck(state.deck, rules);
     const selected = this.builderSelectedCard();
@@ -868,8 +896,8 @@ const App = {
     return '' +
       '<div class="page-wrap builder-page">' +
         '<div class="page-head">' +
-          L('ui.176cdeb2ab82') + this.setupSideName(state.side) + L('ui.a35624836d06') + state.side + L('ui.fe2ef2c0ac5d') +
-          '<div class="page-head-side"><span class="chip ' + (validation.ok ? 'green' : 'red') + '">' + (validation.ok ? L('ui.391327e176a3') : L('ui.464b5123c53c')) + L('ui.ef8c6b81b882') +
+          L('ui.176cdeb2ab82') + this.builderSideName(state.side) + L('ui.a35624836d06') + state.side + L('ui.fe2ef2c0ac5d') +
+          '<div class="page-head-side"><div class="segmented mini"><button class="segment' + (state.side === 'A' ? ' active' : '') + '" type="button" data-action="builder-side" data-side="A">' + L('ui.13d56d03d73a') + '</button><button class="segment' + (state.side === 'B' ? ' active' : '') + '" type="button" data-action="builder-side" data-side="B">' + L('ui.4bdaf46d2363') + '</button></div><span class="chip ' + (validation.ok ? 'green' : 'red') + '">' + (validation.ok ? L('ui.391327e176a3') : L('ui.464b5123c53c')) + L('ui.ef8c6b81b882') +
         '</div>' +
         '<div class="builder-layout">' +
           '<aside class="builder-left">' +
@@ -885,7 +913,7 @@ const App = {
           '</aside>' +
           '<section class="builder-center">' +
             '<div class="panel deck-board">' +
-              '<div class="deck-board-head"><div class="deck-board-title"><span class="side-mark ' + (state.side === 'B' ? 'enemy' : '') + '">' + (this.setupSideName(state.side) === L('ui.13d56d03d73a') ? L('ui.5e3127724b85') : this.setupSideName(state.side) === L('ui.4bdaf46d2363') ? L('ui.a44c5936fb41') : state.side) + '</span><h2>' + this.setupSideName(state.side) + L('ui.b66528c0cbac') +
+              '<div class="deck-board-head"><div class="deck-board-title"><span class="side-mark ' + (state.side === 'B' ? 'enemy' : '') + '">' + (this.builderSideName(state.side) === L('ui.13d56d03d73a') ? L('ui.5e3127724b85') : this.builderSideName(state.side) === L('ui.4bdaf46d2363') ? L('ui.a44c5936fb41') : state.side) + '</span><h2>' + this.builderSideName(state.side) + L('ui.b66528c0cbac') +
                 '<div class="deck-board-meta"><span class="chip">' + cards.units.length + L('ui.8d4b1c335716') + cards.equipment.length + L('ui.526114e152b6') + cards.runes.length + L('ui.f02b5b2acbb0') + (validation.ok ? 'green' : 'red') + '">' + (validation.ok ? L('ui.7035f86dd0f0') : L('ui.4abb02b25213')) + '</span></div></div>' +
               '<div class="deck-columns">' + deckColumn('units') + deckColumn('equipment') + deckColumn('runes') + '</div>' +
               '<div class="deck-builder-foot"><div class="validity-list">' +
@@ -911,7 +939,7 @@ const App = {
     if (!this.builder) return;
     const key = type === 'unit' ? 'units' : type === 'equipment' ? 'equipment' : 'runes';
     const list = this.builder.deck[key] || (this.builder.deck[key] = []);
-    const rules = this.setup ? this.setup.rules : DEFAULT_RULES;
+    const rules = (this.builder && this.builder.rules) || DEFAULT_RULES;
     if (type === 'unit' && !rules.allowDuplicates && list.includes(id)) {
       this.toast(L('ui.daa8f16ae05e'), 'error');
       return;
@@ -943,19 +971,25 @@ const App = {
   },
 
   builderSaved() {
-    if (!this.builder || !this.setup) return;
-    const validation = this.validateDeck(this.builder.deck, this.setup.rules);
+    if (!this.builder) return;
+    const validation = this.validateDeck(this.builder.deck, this.builder.rules || DEFAULT_RULES);
     if (!validation.ok) {
       this.toast(validation.errors.join('；'), 'error', L('ui.90972156f4cc'));
       return;
     }
-    if (this.builder.side === 'A') this.setup.deckA = deepClone(this.builder.deck);
-    else this.setup.deckB = deepClone(this.builder.deck);
     Store.saveDeck(this.builder.side, this.builder.deck);
     const side = this.builder.side;
+    const returnRoute = this.builder.returnRoute || 'home';
     this.builder = null;
-    this.go('setup');
-    this.toast(this.setupSideName(side) + L('ui.0bf5a48144df'), 'success');
+    this.go(returnRoute);
+    this.toast(this.builderSideName(side) + L('ui.0bf5a48144df'), 'success');
+  },
+
+  builderBack() {
+    if (!this.builder) { this.go('home'); return; }
+    const returnRoute = this.builder.returnRoute || 'home';
+    this.builder = null;
+    this.go(returnRoute);
   },
 
   builderRecommended() {
@@ -1209,6 +1243,7 @@ App.startBattle = function (config) {
       controllers: config.controllers || { A: 'human', B: 'ai' },
       mode: config.mode || 'versus',
       noDraw: !!config.noDraw,
+      drawFromPool: !!config.drawFromPool,
       modifiers: config.modifiers || {},
       onEnd: null
     });
@@ -1315,13 +1350,13 @@ App.renderBattleField = function (sideId) {
   const activeSkills = this.battleSkillContext();
   const isHuman = battle.controllers[sideId] === 'human';
   const emptySlots = Math.max(0, battle.rules.maxField - units.length);
-  const canDeploy = isHuman && battle.status === 'active' && battle.phase === 'awaiting' && side.hand.length > 0;
+  const canDeploy = isHuman && battle.status === 'active' && (battle.phase === 'awaiting' || battle.phase === 'muster') && side.hand.length > 0;
   const slotHtml = Array.from({ length: emptySlots }).map(() => canDeploy
-    ? '<button class="unit-empty-slot deployable" type="button" data-action="battle-deploy-open" data-side="' + sideId + L('ui.d4ea18c3bcd3') + side.hand.length + '</button>'
-    : '<div class="unit-empty-slot"><span class="plus">+</span>' + (battle.phase !== 'awaiting' ? L('ui.f293b187bb5a') : side.hand.length ? L('ui.022ac12f149f') : L('ui.496e93ff1e71')) + '</div>').join('');
+    ? '<button class="unit-empty-slot deployable" type="button" data-action="battle-deploy-open" data-side="' + sideId + '">' + (battle.phase === 'muster' ? L('ui.a2b3787c398d') : L('ui.93e91308f357')) + '<small>' + side.hand.length + L('ui.5276fb3453e2')
+    : '<div class="unit-empty-slot"><span class="plus">+</span>' + (battle.phase !== 'awaiting' && battle.phase !== 'muster' ? L('ui.f293b187bb5a') : side.hand.length ? L('ui.022ac12f149f') : L('ui.496e93ff1e71')) + '</div>').join('');
   const sideLabel = side.name + L('ui.9fdd27834e9e');
   const runeSlots = Array.from({ length: 3 }).map((_, index) => side.runes[index]
-    ? '<span class="rune-mini" title="' + attr(side.runes[index].description || '') + '">' + esc(side.runes[index].name) + '</span>'
+    ? '<span class="rune-mini previewable" data-action="battle-preview-card" data-type="rune" data-id="' + attr(side.runes[index].id) + '" title="' + attr(side.runes[index].description || '') + '">' + esc(side.runes[index].name) + '</span>'
     : '<span class="rune-mini empty">+</span>').join('');
   const runeFooter = '<span class="field-runes-static">' + runeSlots + '</span>';
   const activeLabel = isActive ? (battle.controllers[sideId] === 'ai' ? L('ui.9456ff9f51bf') : L('ui.dd1df425f7f9')) : '';
@@ -1370,7 +1405,7 @@ App.renderBattleUnit = function (unit) {
   const modChips = this.renderUnitModChips(unit);
   const gear = ['weapon', 'accessory'].map(slot => {
     const item = unit.equipment[slot];
-    return '<span class="gear-slot' + (item ? ' filled' : '') + '" title="' + attr(slot === 'weapon' ? L('ui.22dfca867179') : L('ui.ba579c7d0a4e')) + '">' + (item ? esc(item.name) : (slot === 'weapon' ? L('ui.b26a320cc217') : L('ui.a5b968e57adc'))) + '</span>';
+    return '<span class="gear-slot' + (item ? ' filled' : '') + '"' + (item ? ' data-action="battle-preview-card" data-type="equipment" data-id="' + attr(item.id) + '"' : '') + ' title="' + attr(slot === 'weapon' ? L('ui.22dfca867179') : L('ui.ba579c7d0a4e')) + '">' + (item ? esc(item.name) : (slot === 'weapon' ? L('ui.b26a320cc217') : L('ui.a5b968e57adc'))) + '</span>';
   }).join('');
   const hpPct = Math.max(0, Math.min(100, Math.round(unit.hp / Math.max(1, unit.maxHp) * 100)));
   const baseResLabel = (RESISTANCE_TYPES[unit.card.resistance.type] || { label: L('ui.aa8457052a32') }).label;
@@ -1385,8 +1420,8 @@ App.renderBattleUnit = function (unit) {
   return '' +
     '<article class="' + classes.join(' ') + '" data-action="battle-unit" data-uid="' + attr(unit.battleId) + '" role="button" tabindex="0" aria-label="' + attr(unit.name) + '">' +
       (isTarget ? L('ui.59df40f55ff0') : '') +
-      '<div class="unit-top"><div class="unit-name-wrap"><div class="unit-name"><strong>' + esc(unit.name) + '</strong><span class="unit-uid">' + esc(unit.battleId) + '</span></div><div class="unit-tags">' + qualityBadge(unit.quality) + '<span class="chip">' + (unit.counted ? L('ui.37802b1dfc26') : L('ui.79b46e5f7db7')) + '</span>' + (isAutoUnit ? L('ui.a4b2c63b6709') : '') + (unit.acted ? L('ui.e5bba186348c') : '') + '</div></div></div>' +
-      '<div class="unit-body"><div class="unit-portrait"><img src="' + attr(cardArt(unit.card)) + '" alt=""><span class="unit-counted-mark">' + (unit.counted ? L('ui.94da9e6f36bd') : L('ui.8fa7401e9077')) + '</span></div><div class="unit-info">' +
+      '<div class="unit-top"><div class="unit-name-wrap"><div class="unit-name"><strong data-action="battle-preview-card" data-type="unit" data-id="' + attr(unit.card.id) + '" data-uid="' + attr(unit.battleId) + '" title="' + attr(L('ui.34a6af38b8ac')) + '">' + esc(unit.name) + '</strong><span class="unit-uid">' + esc(unit.battleId) + '</span></div><div class="unit-tags">' + qualityBadge(unit.quality) + '<span class="chip">' + (unit.counted ? L('ui.37802b1dfc26') : L('ui.79b46e5f7db7')) + '</span>' + (isAutoUnit ? L('ui.a4b2c63b6709') : '') + (unit.acted ? L('ui.e5bba186348c') : '') + '</div></div></div>' +
+      '<div class="unit-body"><div class="unit-portrait previewable" data-action="battle-preview-card" data-type="unit" data-id="' + attr(unit.card.id) + '" data-uid="' + attr(unit.battleId) + '" title="' + attr(L('ui.34a6af38b8ac')) + '"><img src="' + attr(cardArt(unit.card)) + '" alt=""><span class="unit-counted-mark">' + (unit.counted ? L('ui.94da9e6f36bd') : L('ui.8fa7401e9077')) + '</span></div><div class="unit-info">' +
         L('ui.2c05f3b28021') + (unit.hp < unit.maxHp ? ' hurt' : '') + '">' + unit.hp + '<small> / ' + unit.maxHp + '</small></span></div>' +
         '<div class="hp-bar' + (hpPct > 50 ? ' green' : '') + '"><span style="width:' + hpPct + '%"></span></div>' +
         '<div class="unit-statline"><span class="chip" title="' + attr(L('ui.648f602905d5') + baseResLabel + ' ' + unit.card.resistance.value) + L('ui.37e19f689902') + res.physical + L('ui.2dd83c18a982') + res.mental + L('ui.a3dc4af8ce5b') + unit.atk + '</b></span></div>' +
@@ -1411,9 +1446,12 @@ App.renderBattleActionPanel = function () {
     const result = this.battleResultSummary();
     body = '<div class="action-empty"><img src="assets/pictures/brand-mark.svg" alt="" width="45" height="45"><h3>' + esc(result.title) + '</h3><p>' + esc(result.subtitle) + L('ui.82e3ba86f7f1');
     footer = L('ui.c77ad8099178') + battle.round + L('ui.60df091919ab');
-  } else if (isAi) {
-    body = '<div class="ai-thinking"><div class="ai-orbit"></div><strong class="serif">' + esc(current.name) + L('ui.6d2751458f60');
-    footer = L('ui.aa9c6354bed7');
+  } else if (battle.phase === 'muster') {
+    const countedA = battle.getFieldUnits('A').filter(unit => unit.counted).length;
+    const countedB = battle.getFieldUnits('B').filter(unit => unit.counted).length;
+    const ready = countedA > 0 && countedB > 0;
+    body = L('ui.0d2166aad1ac') + (countedA ? 'green' : 'red') + L('ui.e549f982faa2') + countedA + '</span><span class="chip ' + (countedB ? 'green' : 'red') + L('ui.51a6344f4a05') + countedB + '</span></div><div class="btn-row mt-2"><button class="btn btn-primary" type="button" data-action="battle-begin-muster"' + (ready ? '' : ' disabled') + L('ui.a4cde1b97d2b');
+    footer = L('ui.d09ecb5efd28');
   } else if (pending) {
     const skill = pending.skill;
     const mode = skill.targetMode || 'none';
@@ -1613,14 +1651,14 @@ App.renderBattleLoadout = function () {
     const canEdit = battle.status === 'active' && battle.phase === 'awaiting' && battle.currentSide === sideId && battle.controllers[sideId] === 'human' && !this._battleFxActive;
     const gear = (side.equipmentPool || []).map(id => battle.maps.equipment.get(id)).filter(Boolean);
     const gearCards = gear.length ? gear.map(item => {
-      const content = '<img src="' + attr(cardArt(item)) + '" alt=""><span class="loadout-equip-main"><strong>' + esc(item.name) + '</strong><small>' + esc((item.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + ' · ' + (modSummary(item.mods, true) || L('ui.455d56230713'))) + '</small></span>';
+      const content = '<img src="' + attr(cardArt(item)) + '" alt="" data-action="battle-preview-card" data-type="equipment" data-id="' + attr(item.id) + '" title="' + attr(L('ui.34a6af38b8ac')) + '"><span class="loadout-equip-main"><strong data-action="battle-preview-card" data-type="equipment" data-id="' + attr(item.id) + '">' + esc(item.name) + '</strong><small>' + esc((item.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + ' · ' + (modSummary(item.mods, true) || L('ui.455d56230713'))) + '</small></span>';
       return canEdit
         ? '<button class="loadout-equip" type="button" data-action="battle-equipment-open" data-side="' + sideId + '" data-id="' + attr(item.id) + '">' + content + '</button>'
         : '<div class="loadout-equip is-static">' + content + '</div>';
     }).join('') : L('ui.9517f5af584b');
     const runeSlots = Array.from({ length: 3 }).map((_, index) => {
       const rune = side.runes[index];
-      return '<span class="loadout-rune' + (rune ? ' filled' : '') + '" title="' + attr(rune ? (rune.description || '') : L('ui.716791b90bf3')) + '">' + (rune ? esc(rune.name) : '+') + '</span>';
+      return '<span class="loadout-rune' + (rune ? ' filled previewable' : '') + '"' + (rune ? ' data-action="battle-preview-card" data-type="rune" data-id="' + attr(rune.id) + '"' : '') + ' title="' + attr(rune ? (rune.description || '') : L('ui.716791b90bf3')) + '">' + (rune ? esc(rune.name) : '+') + '</span>';
     }).join('');
     const title = hotseat ? side.name + L('ui.46023c2ba2d0') : L('ui.46023c2ba2d0');
     return '<section class="loadout-side' + (battle.currentSide === sideId && battle.status === 'active' ? ' active' : '') + '">' +
@@ -1634,22 +1672,22 @@ App.renderBattleLoadout = function () {
 
 App.renderBattleHand = function () {
   const battle = this.battle;
-  const side = battle.sides[battle.currentSide || 'A'];
-  const hand = (side.hand || []).map(id => battle.deckUnitCard(id)).filter(Boolean);
-  const countdown = battle.drawCountdown();
-  const handCards = hand.length ? hand.slice(0, 12).map(card => {
-    return '<button class="hand-card" type="button" data-action="battle-hand-info" data-id="' + attr(card.id) + '">' +
-      '<img src="' + attr(cardArt(card)) + '" alt="">' +
-      '<span class="hc-name">' + esc(card.name) + '</span>' +
-      '<span class="hc-badges">' + qualityBadge(card.quality) + '<span>' + (card.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</span></span>' +
-    '</button>';
-  }).join('') : L('ui.f7f40b11cdc5');
-  return '<section class="hand-zone panel">' +
-    '<div class="hand-head"><div class="hand-head-left"><span class="field-side-mark">' + (side.id === 'A' ? L('ui.34f201bc507e') : L('ui.1729f61b01d3')) + '</span><h2>' + esc(side.name) + L('ui.a02e14251bba') + hand.length + L('ui.67eb66f38591') +
-      L('ui.6c718065c0b6') + side.deck.length + L('ui.e3e0bb5a7b4e') + side.deck.length + L('ui.67b7977918ab') + side.discard.length + L('ui.790cf89b8278') + side.retreat.length + '</b></span>' + (battle.rules.drawDuringBattle ? L('ui.74de1ea25ad0') + (countdown == null ? '—' : countdown) + L('ui.29080f43156e') : L('ui.e9527f78c2f6')) + '</div></div>' +
-    '<div class="hand-body">' + handCards + '</div>' +
-    L('ui.dbb855b1d850') +
-  '</section>';
+  const renderSide = (sideId) => {
+    const side = battle.sides[sideId];
+    const hand = (side.hand || []).map(id => battle.deckUnitCard(id)).filter(Boolean);
+    const handCards = hand.length ? hand.slice(0, 30).map(card => {
+      return '<button class="hand-card" type="button" data-action="battle-hand-info" data-id="' + attr(card.id) + '">' +
+        '<img src="' + attr(cardArt(card)) + '" alt="">' +
+        '<span class="hc-name">' + esc(card.name) + '</span>' +
+        '<span class="hc-badges">' + qualityBadge(card.quality) + '<span>' + (card.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '</span></span>' +
+      '</button>';
+    }).join('') : L('ui.f7f40b11cdc5');
+    return '<section class="hand-zone panel"><div class="hand-head"><div class="hand-head-left"><span class="field-side-mark">' + (side.id === 'A' ? L('ui.34f201bc507e') : L('ui.1729f61b01d3')) + '</span><h2>' + esc(side.name) + L('ui.967450fee80c') + hand.length + '</h2></div><span class="chip">' + (battle.phase === 'muster' ? L('ui.a2b3787c398d') : L('ui.8c83f7cda7aa')) + '</span></div>' +
+      '<div class="hand-body">' + handCards + '</div>' +
+      '<div class="hand-foot">' + (battle.drawFromPool ? L('ui.0ae25fe39394') : '') + '</div></section>';
+  };
+  if (battle.drawFromPool) return '<div class="hand-columns">' + renderSide('A') + renderSide('B') + '</div>';
+  return renderSide(battle.currentSide || 'A');
 };
 
 App.renderBattleRail = function () {
@@ -1925,6 +1963,18 @@ App.cancelBattleSkill = function () {
   this.render();
 };
 
+App.beginMusterAction = function () {
+  if (!this.battle || this.battle.status !== 'active' || this.battle.phase !== 'muster') return;
+  this.beginBattleEngineAction();
+  const result = this.battle.beginMuster();
+  if (!result.ok) {
+    this._battlePreRects = null;
+    this.toast(result.error, 'error');
+    return;
+  }
+  this.finishBattleEngineAction();
+};
+
 App.passBattleAction = function (uid) {
   if (!this.battle || this.battle.status !== 'active') return;
   if (this._autoPendingUid || this.autoUnitWaiting()) { this.toast(L('ui.96cc2e9615ef'), 'error'); return; }
@@ -1937,7 +1987,7 @@ App.passBattleAction = function (uid) {
 
 App.openDeployMenu = function (sideId) {
   const battle = this.battle;
-  if (!battle || battle.status !== 'active' || battle.phase !== 'awaiting' || this._battleFxActive) return;
+  if (!battle || battle.status !== 'active' || (battle.phase !== 'awaiting' && battle.phase !== 'muster') || this._battleFxActive) return;
   const side = battle.sides[sideId];
   if (!side || battle.controllers[sideId] !== 'human') return;
   if (battle.getFieldUnits(sideId).length >= battle.rules.maxField) return;
@@ -2097,6 +2147,28 @@ App.applyRuneConfig = function (sideId) {
   this.closeModal(true);
   this.render();
   this.afterBattleRender();
+};
+
+App.previewCard = function (type, id, subtitle) {
+  const map = { unit: Store.index.maps.units, equipment: Store.index.maps.equipment, rune: Store.index.maps.runes }[type];
+  const card = map && map.get(id);
+  if (!card) return;
+  this.openModal({
+    title: card.name,
+    subtitle: subtitle || (L('ui.ee061a1f9feb') + cardTypeLabel(type) + ' · ' + card.id),
+    size: 'large',
+    body: renderCardDetail(card, type)
+  });
+};
+
+App.previewBattleCard = function (type, id, uid) {
+  const battle = this.battle;
+  let subtitle = L('ui.34a6af38b8ac');
+  if (uid && battle && type === 'unit') {
+    const unit = battle.getUnit(uid);
+    if (unit) subtitle = battle.sides[unit.side].name + ' · ' + (unit.counted ? L('ui.52cb1d3915a1') : L('ui.360daa2c9859')) + L('ui.9b7caa90be18') + unit.hp + ' / ' + unit.maxHp;
+  }
+  this.previewCard(type, id, subtitle);
 };
 
 App.openBattleUnitInfo = function (uid) {
@@ -2937,9 +3009,11 @@ App.handleAction = function (action, el, event) {
     case 'builder-save':
       this.builderSaved();
       break;
+    case 'builder-side':
+      this.builderSwitchSide(data.side);
+      break;
     case 'builder-back':
-      this.builder = null;
-      this.go('setup');
+      this.builderBack();
       break;
     case 'builder-recommended':
       this.builderRecommended();
@@ -2973,8 +3047,14 @@ App.handleAction = function (action, el, event) {
     case 'battle-cancel-skill':
       this.cancelBattleSkill();
       break;
+    case 'battle-begin-muster':
+      this.beginMusterAction();
+      break;
     case 'battle-pass':
       this.passBattleAction(data.uid);
+      break;
+    case 'battle-preview-card':
+      this.previewBattleCard(data.type, data.id, data.uid);
       break;
     case 'battle-unit-info':
       this.openBattleUnitInfo(data.uid);
