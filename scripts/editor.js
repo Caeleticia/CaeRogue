@@ -177,7 +177,7 @@ const EditorUI = {
       name: L('ui.6eb8bd65f93e'),
       quality: 'white',
       type: 'unit',
-      faction: 'player',
+      faction: 'general',
       counted: true,
       hp: 4,
       attack: 1,
@@ -706,7 +706,7 @@ const EditorUI = {
     const artRow = L('ui.2772217f8945') + attr(item.art || '') + '" data-meta-field="art" placeholder="assets/pictures/..."' + disabled + L('ui.953655b0d171');
     if (mode === 'units') {
       return '<div class="form-grid">' + commonTop +
-        L('ui.8e3232d487ca') + attr(item.faction || '') + '" data-meta-field="faction"' + disabled + '></div>' +
+        L('ui.8e3232d487ca') + attr(item.faction || '') + '" data-meta-field="faction"' + disabled + L('ui.fe2506bc3ef0') +
         L('ui.b6ee21a2d52b') + attr(item.hp == null ? 4 : item.hp) + '" data-meta-field="hp"' + disabled + '></div>' +
         L('ui.3405d40e7f81') + attr(item.attack == null ? 0 : item.attack) + '" data-meta-field="attack"' + disabled + '></div>' +
         L('ui.bddf6db72a26') + disabled + '>' + this.optionList(Object.keys(RESISTANCE_TYPES).map(key => ({ value: key, label: RESISTANCE_TYPES[key].label })), (item.resistance || {}).type || 'general') + '</select></div>' +
