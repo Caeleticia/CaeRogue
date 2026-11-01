@@ -1,14 +1,7 @@
 {
   "units": [
-    "slime_small",
-    "slime_big",
-    "catgirl_jk",
-    "philia093"
+    "slime_small"
   ],
-  "equipment": [
-    "soap"
-  ],
-  "runes": [
-    "agility"
-  ]
+  "equipment": [],
+  "runes": []
 }
