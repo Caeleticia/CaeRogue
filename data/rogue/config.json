@@ -1,0 +1,431 @@
+{
+  "version": 1,
+  "startingGold": 30,
+  "battleRules": {
+    "initialDraw": 10,
+    "maxField": 3,
+    "allowDuplicates": true,
+    "defeatedToDeck": false,
+    "drawDuringBattle": false
+  },
+  "characterShop": {
+    "offerCount": 5,
+    "refreshCost": 10,
+    "autoRefreshPerNode": true,
+    "qualityWeights": {
+      "white": 50,
+      "blue": 40,
+      "gold": 10,
+      "rainbow": 0
+    },
+    "prices": {
+      "white": 5,
+      "blue": 10,
+      "gold": 15,
+      "rainbow": 20
+    }
+  },
+  "map": {
+    "layers": [
+      [
+        "battle",
+        "event"
+      ],
+      [
+        "battle",
+        "shop"
+      ],
+      [
+        "elite",
+        "rest"
+      ],
+      [
+        "battle",
+        "event"
+      ],
+      [
+        "shop",
+        "rest"
+      ],
+      [
+        "elite",
+        "battle"
+      ],
+      [
+        "boss"
+      ]
+    ],
+    "nodeTitles": {
+      "battle": [
+        "遭遇战",
+        "正面冲突",
+        "伏击"
+      ],
+      "elite": [
+        "精英遭遇",
+        "危险目标"
+      ],
+      "boss": [
+        "首领战",
+        "层主"
+      ],
+      "event": [
+        "未知事件",
+        "路边的记录"
+      ],
+      "shop": [
+        "旅途补给",
+        "流动商店"
+      ],
+      "rest": [
+        "休整处",
+        "旧营地"
+      ]
+    }
+  },
+  "encounters": {
+    "battle": {
+      "targetCount": 3,
+      "powerOffset": 0,
+      "hpFlatPerPower": 0.5,
+      "hpFlatMax": 10,
+      "hpFlatBonus": 0,
+      "dmgFlatPerPower": 0.333333,
+      "dmgFlatMax": 5,
+      "avoidDuplicates": true,
+      "pools": [
+        {
+          "minPower": 0,
+          "units": [
+            "slime_small",
+            "slime_small",
+            "slime_big",
+            "catgirl_jk",
+            "catgirl_jk"
+          ]
+        },
+        {
+          "minPower": 3,
+          "units": [
+            "philia093"
+          ]
+        },
+        {
+          "minPower": 5,
+          "units": [
+            "yonava",
+            "slime_big"
+          ]
+        },
+        {
+          "minPower": 7,
+          "units": [
+            "philia093",
+            "catgirl_jk",
+            "yonava"
+          ]
+        }
+      ],
+      "equipment": [
+        {
+          "minPower": 3,
+          "id": "soap"
+        }
+      ],
+      "runes": [
+        {
+          "minPower": 2,
+          "id": "agility"
+        },
+        {
+          "minPower": 4,
+          "id": "war_spirit"
+        }
+      ],
+      "startingEffects": [
+        {
+          "minPower": 5,
+          "unitId": "philia093",
+          "effectId": "poem",
+          "stacks": 2,
+          "bossStacks": 4
+        }
+      ],
+      "fallbackCounted": "catgirl_jk"
+    },
+    "elite": {
+      "targetCount": 4,
+      "powerOffset": 2,
+      "hpFlatPerPower": 0.5,
+      "hpFlatMax": 10,
+      "hpFlatBonus": 1,
+      "dmgFlatPerPower": 0.333333,
+      "dmgFlatMax": 5,
+      "avoidDuplicates": true,
+      "pools": [
+        {
+          "minPower": 0,
+          "units": [
+            "slime_small",
+            "slime_small",
+            "slime_big",
+            "catgirl_jk",
+            "catgirl_jk"
+          ]
+        },
+        {
+          "minPower": 3,
+          "units": [
+            "philia093"
+          ]
+        },
+        {
+          "minPower": 5,
+          "units": [
+            "yonava",
+            "slime_big"
+          ]
+        },
+        {
+          "minPower": 7,
+          "units": [
+            "philia093",
+            "catgirl_jk",
+            "yonava"
+          ]
+        }
+      ],
+      "equipment": [
+        {
+          "minPower": 3,
+          "id": "soap"
+        }
+      ],
+      "runes": [
+        {
+          "minPower": 2,
+          "id": "agility"
+        },
+        {
+          "minPower": 4,
+          "id": "war_spirit"
+        }
+      ],
+      "startingEffects": [
+        {
+          "minPower": 5,
+          "unitId": "philia093",
+          "effectId": "poem",
+          "stacks": 2,
+          "bossStacks": 4
+        }
+      ],
+      "fallbackCounted": "catgirl_jk"
+    },
+    "boss": {
+      "targetCount": 5,
+      "powerOffset": 4,
+      "hpFlatPerPower": 0.5,
+      "hpFlatMax": 10,
+      "hpFlatBonus": 3,
+      "dmgFlatPerPower": 0.333333,
+      "dmgFlatMax": 5,
+      "avoidDuplicates": false,
+      "pools": [
+        {
+          "minPower": 0,
+          "units": [
+            "slime_small",
+            "slime_small",
+            "slime_big",
+            "catgirl_jk",
+            "catgirl_jk"
+          ]
+        },
+        {
+          "minPower": 3,
+          "units": [
+            "philia093"
+          ]
+        },
+        {
+          "minPower": 5,
+          "units": [
+            "yonava",
+            "slime_big"
+          ]
+        },
+        {
+          "minPower": 7,
+          "units": [
+            "philia093",
+            "catgirl_jk",
+            "yonava"
+          ]
+        }
+      ],
+      "equipment": [
+        {
+          "minPower": 3,
+          "id": "soap"
+        }
+      ],
+      "runes": [
+        {
+          "minPower": 2,
+          "id": "agility"
+        },
+        {
+          "minPower": 4,
+          "id": "war_spirit"
+        }
+      ],
+      "startingEffects": [
+        {
+          "minPower": 5,
+          "unitId": "philia093",
+          "effectId": "poem",
+          "stacks": 2,
+          "bossStacks": 4
+        }
+      ],
+      "fallbackCounted": "catgirl_jk"
+    }
+  },
+  "shop": {
+    "qualityWeights": {
+      "white": 50,
+      "blue": 40,
+      "gold": 10,
+      "rainbow": 0
+    },
+    "priceBonus": 3,
+    "maxEquipment": 6,
+    "maxRunes": 6,
+    "offers": [
+      {
+        "kind": "unit",
+        "enabled": true,
+        "required": false,
+        "priceBonus": 3
+      },
+      {
+        "kind": "equipment",
+        "enabled": true,
+        "required": true,
+        "priceBonus": 3
+      },
+      {
+        "kind": "rune",
+        "enabled": true,
+        "required": true,
+        "priceBonus": 3
+      },
+      {
+        "kind": "upgradeHp",
+        "enabled": true,
+        "required": false,
+        "price": 20,
+        "value": 2
+      },
+      {
+        "kind": "upgradeDmg",
+        "enabled": true,
+        "required": false,
+        "price": 20,
+        "value": 1
+      },
+      {
+        "kind": "removeUnit",
+        "enabled": true,
+        "required": false,
+        "price": 10,
+        "minUnits": 2
+      }
+    ],
+    "offerCount": 4
+  },
+  "loot": {
+    "choiceCount": 3,
+    "guaranteedGear": true,
+    "maxEquipment": 6,
+    "maxRunes": 6,
+    "qualityWeights": {
+      "white": 50,
+      "blue": 40,
+      "gold": 10,
+      "rainbow": 0
+    },
+    "entries": [
+      {
+        "kind": "unit",
+        "enabled": true
+      },
+      {
+        "kind": "equipment",
+        "enabled": true
+      },
+      {
+        "kind": "rune",
+        "enabled": true
+      },
+      {
+        "kind": "upgradeHp",
+        "enabled": true,
+        "value": 2
+      },
+      {
+        "kind": "upgradeDmg",
+        "enabled": true,
+        "value": 1
+      },
+      {
+        "kind": "gold",
+        "enabled": true,
+        "value": 10
+      }
+    ]
+  },
+  "rest": {
+    "fallbackGold": 10,
+    "options": [
+      {
+        "id": "hp",
+        "label": "调养",
+        "hint": "本局生命上限 +2。",
+        "effect": "hp",
+        "value": 2
+      },
+      {
+        "id": "dmg",
+        "label": "磨砺",
+        "hint": "本局伤害 +1。",
+        "effect": "dmg",
+        "value": 1
+      },
+      {
+        "id": "gear",
+        "label": "翻找旧装备",
+        "hint": "随机获得一件尚未拥有的装备。",
+        "effect": "equipment"
+      },
+      {
+        "id": "rune",
+        "label": "临摹符文",
+        "hint": "随机获得一枚尚未拥有的符文。",
+        "effect": "rune"
+      },
+      {
+        "id": "gold",
+        "label": "整理行囊",
+        "hint": "获得 10 金币。",
+        "effect": "gold",
+        "value": 10
+      }
+    ]
+  },
+  "battleGold": {
+    "perDamage": 1,
+    "minimum": 0
+  }
+}
