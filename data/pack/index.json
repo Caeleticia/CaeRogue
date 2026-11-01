@@ -1,5 +1,6 @@
 {
   "packs": [
     "extra_supplies.json"
+    "study.caerogue.json"
   ]
 }
