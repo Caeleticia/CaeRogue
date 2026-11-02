@@ -194,37 +194,92 @@ assets/sounds/           预留音效目录
 - 角色计数：每个上阵单位独立记录，同名角色互不影响。
 - 效果层数：挂在对应战斗单位的独立效果实例上。
 
-公式支持数字、百分比、`+ - * / ^ **`、括号、`exp/ln/log/log10/log2`、`min/max/floor/ceil/round/abs/sqrt/pow`、常量 `pi/e` 与比较运算；除零、非法对数或非有限结果按 0 处理。常用变量：
+### 目标选择器
 
-```
-$atk         当前攻击力
-$hpMax       当前生命上限
-$hp          当前生命
-$resist      当前抗性
-$lastHitCount 最近一次伤害命中目标数
-$multiplier  技能倍率，100 表示 1 倍
-$targetCount 当前目标数量
-$count.ha       角色计数
-$sideCount.ha   一方计数
-$globalCount.ha 全场计数
-$effect.poem    来源/自身的效果层数
-$target.hp      当前步骤目标的当前生命
-$target.hpMax   当前步骤目标的生命上限
-$target.missingHp 目标已损生命
-$target.hpPct   目标生命百分比（0-100）
-$target.hpRatio 目标生命比例（0-1）
-$target.atk     目标当前攻击力
-$target.resist  目标当前抗性
-$target.counted 目标是否为计数单位（1 / 0）
-$target.effectCount 目标身上的效果实例数量
-$target.count.ha      目标角色计数
-$target.sideCount.ha  目标一方计数
-$target.effect.poem   目标身上的效果层数
-$source.effect.poem   来源单位身上的效果层数
-$var.name       临时变量
+目标字段使用花括号标识符：
+
+```text
+{target}                     技能指定的目标
+{enemy}                      全体敌方
+{friendly}                   全体友方
+{self}                       自己
+{with_effect[love]}          全体持有 love 效果者
+{satisfy({target}, 条件)}    集合中满足条件的对象，条件内 {unit} 为当前对象
+{unit}                       遍历中的当前对象
+{enemyside}                  敌方阵营，只能读取计数
+{friendlyside}               友方阵营，只能读取计数
+{field}                      战场，只能读取计数
 ```
 
-`$target.*` 在伤害、治疗、附加效果、移除效果和属性修改步骤中按目标分别计算；群体技能的每个目标可以读取自己的生命、计数和效果层数。没有明确步骤目标时，`$target` 回退到技能选定目标或当前单位。
+集合运算：
+
+```text
+in({}, {})      交集
+un({}, {})      并集
+diff({}, {})    相对差集
+```
+
+攻击对象：
+
+```text
+choose({enemy}, 1)    从集合中选择至多 1 个单位
+choose({enemy}, 3)    从集合中选择至多 3 个单位
+all({enemy})          自动选中集合中的所有单位
+```
+
+### 数值表达式
+
+```text
+{target}.atk
+{target}.hp
+{target}.max_hp
+{target}.res
+{target}.last_hit_count
+{target}.count                  目标数量
+{target}.effect[love].count     指定效果层数
+{target}.count[ha]              对象计数
+{enemyside}.count[ha]           敌方阵营计数
+{friendlyside}.count[ha]        友方阵营计数
+{field}.count[ha]               战场计数
+```
+
+支持：
+
+- `+ - * /`、括号和一元正负号
+- `log(,)`、`min()`、`max()`、`floor()`、`ceil()`、`round()`、`abs()`、`sqrt()`、`pow(,)`
+- 常数 `\pi`、`\e`
+- 字符串 `[id]`
+- 条件：`==`、`!=`、`<=`、`>=`、`<`、`>`，以及 `and`、`or`、`not`
+- 非法对数、除零或非有限结果按 0 处理
+
+### 旧版兼容与迁移
+
+旧版目标 `chosen / self / allEnemies / allAllies / item / owner` 与旧版 `$atk`、`$target.hp` 等公式仍由兼容解析器运行。编辑器提供「迁移新版表达式」一键转换当前包；未识别的旧变量会保留并由兼容解析器继续处理。
+
+### 步骤级旧版 / 公式模式
+
+每个步骤块独立选择「旧版」或「公式」：
+
+- 旧版：目标使用下拉选择器，条件步骤使用左侧/运算符/右侧三段式。
+- 公式：目标使用 `{...}` / `choose` / `all` 表达式，条件步骤使用单一条件表达式。
+- 两种模式的原字段都会保留，来回切换不会丢失另一套写法。
+- 新建步骤默认使用公式模式；旧步骤默认按旧版模式显示。
+
+### 仅保留解析的旧步骤
+
+以下步骤已从步骤选择器中移除，旧卡牌中的实例仍可被引擎解析，但编辑器不再允许创建或编辑：
+
+- `selectTarget`：直接使用目标表达式替代。
+- `readCount`：直接使用 `{self}.count[id]`、`{friendlyside}.count[id]` 等公式替代。
+- `setVar`：直接在使用处内联公式替代。
+
+旧实例在编辑器里只显示兼容占位块，可删除；运行时不丢失原逻辑。
+
+### 其他同步
+
+- 卡牌 ID / 效果 ID 重命名会同步更新目标表达式中的 `with_effect[...]`、公式中的 `effect[...]`、条件、分支条件和肉鸽配置中的引用。
+- 一键迁移会给步骤写入公式字段，同时保留旧版字段，便于切回旧版检查。
+
 
 ### 伤害
 
@@ -368,6 +423,8 @@ immuneDamage / forceRetreat / summon / modifyStat / setVar
 5. **符文**：适用系列、数值修正、赋予技能、介绍与卡面。
 
 顶部可以选择编辑目标：草稿、默认卡包或任意已加载扩展。默认卡包和扩展内容可以直接修改；核心内容会保存为本地覆盖。草稿是独立包，创建后立即出现在卡牌库、牌组构筑与模式中，不需要先发布。
+
+每个步骤块可单独切换旧版 / 公式模式。`selectTarget`、`readCount`、`setVar` 等可被目标表达式或数值公式替代的旧步骤已从选择器隐藏，只保留运行时解析。
 
 「保存草稿」保存当前目标；「发布草稿」把草稿发布为本地扩展包，并清空草稿内容。编辑器还提供「包 ID」和「修改 ID」按钮：包 ID 变更会同步该包所有卡牌前缀，卡牌 ID 会强制使用 `包id_类型_自定义内容` 格式，并同步更新牌组、技能步骤、公式、挑战定义等引用。
 
