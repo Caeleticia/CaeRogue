@@ -1,0 +1,404 @@
+{
+  "format": "caerogue.expansion",
+  "id": "zyc",
+  "name": "zyc的设计草稿",
+  "version": "0.1.0",
+  "author": "zyc",
+  "description": "添加了一些钢铁雄心四单位",
+  "dependencies": [],
+  "countDefs": {},
+  "content": {
+    "units": [
+      {
+        "id": "zyc.unit.1",
+        "packId": "zyc",
+        "name": "戈培尔",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 24,
+        "attack": 1,
+        "resistance": {
+          "type": "mental",
+          "value": 1
+        },
+        "skills": [
+          "zyc.skill.2",
+          "study.skill.mental-damage"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 32,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": ""
+      },
+      {
+        "id": "zyc.unit.2",
+        "packId": "zyc",
+        "name": "希特勒（1945）",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 8,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "zyc.skill.3"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": ""
+      },
+      {
+        "id": "zyc_unit_1",
+        "packId": "zyc",
+        "name": "曼施坦因",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 32,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "zyc_skill_1",
+          "zyc.skill.3"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 40,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": ""
+      },
+      {
+        "id": "zyc_unit_2",
+        "packId": "zyc",
+        "name": "希特勒（1942）",
+        "quality": "white",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 24,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "zyc_skill_2",
+          "zyc_skill_3",
+          "zyc_skill_4"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 30,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": ""
+      }
+    ],
+    "skills": [
+      {
+        "id": "zyc.skill.1",
+        "packId": "zyc",
+        "name": "崩坏",
+        "type": "extra",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "roundStart"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "physical",
+            "formula": "1",
+            "ignoreResistance": true,
+            "bonus": true
+          },
+          {
+            "kind": "damage",
+            "target": "allAllies",
+            "damageType": "physical",
+            "formula": "1",
+            "ignoreResistance": true,
+            "bonus": true
+          }
+        ]
+      },
+      {
+        "id": "zyc.skill.2",
+        "packId": "zyc",
+        "name": "总体战",
+        "type": "active",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "zyc.effect.1",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "zyc.skill.3",
+        "packId": "zyc",
+        "name": "焦土",
+        "type": "active",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "zyc.effect.2",
+            "stacks": "1"
+          },
+          {
+            "kind": "addEffect",
+            "target": "allEnemies",
+            "effectId": "zyc.effect.2",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "zyc_skill_1",
+        "packId": "zyc",
+        "name": "突破",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "4*$atk",
+            "ignoreResistance": true,
+            "bonus": false
+          },
+          {
+            "kind": "branch",
+            "left": "$target.hp",
+            "op": "lte",
+            "right": "4*$atk",
+            "then": [
+              {
+                "kind": "damage",
+                "target": "eventTarget",
+                "damageType": "true",
+                "formula": "4*$atk",
+                "ignoreResistance": true,
+                "bonus": true
+              },
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "damageType": "physical",
+                "formula": "2",
+                "ignoreResistance": false
+              }
+            ],
+            "elseSteps": []
+          }
+        ]
+      },
+      {
+        "id": "zyc_skill_2",
+        "packId": "zyc",
+        "name": "毕其功于一役",
+        "type": "passive",
+        "op": "special",
+        "quality": "blue",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "summon",
+            "unitId": "zyc.unit.2",
+            "count": "1"
+          }
+        ]
+      },
+      {
+        "id": "zyc_skill_3",
+        "packId": "zyc",
+        "name": "征服经济",
+        "type": "passive",
+        "op": "heal",
+        "quality": "gold",
+        "targetMode": "allAllies",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "allyAttack"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "heal",
+            "target": "allAllies",
+            "formula": "2*$target.atk"
+          }
+        ]
+      },
+      {
+        "id": "zyc_skill_4",
+        "packId": "zyc",
+        "name": "梅福券",
+        "type": "passive",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "roundEnd"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "self",
+            "damageType": "true",
+            "formula": "4",
+            "ignoreResistance": true,
+            "bonus": true
+          }
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "id": "zyc.effect.1",
+        "packId": "zyc",
+        "name": "总动员",
+        "type": "special",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "roundStart"
+        },
+        "steps": [
+          {
+            "kind": "modifyStat",
+            "stat": "atkFlat",
+            "target": "self",
+            "formula": "1"
+          },
+          {
+            "kind": "modifyStat",
+            "stat": "maxHpFlat",
+            "target": "self",
+            "formula": "-1"
+          },
+          {
+            "kind": "heal",
+            "target": "self",
+            "formula": "1"
+          }
+        ],
+        "description": ""
+      },
+      {
+        "id": "zyc.effect.2",
+        "packId": "zyc",
+        "name": "崩坏",
+        "type": "special",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "roundStart"
+        },
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "physical",
+            "formula": "1",
+            "ignoreResistance": false,
+            "bonus": true
+          },
+          {
+            "kind": "damage",
+            "target": "allAllies",
+            "damageType": "true",
+            "formula": "1",
+            "ignoreResistance": false,
+            "bonus": true
+          }
+        ],
+        "description": ""
+      },
+      {
+        "id": "zyc.effect.3",
+        "packId": "zyc",
+        "name": "新的高级效果",
+        "type": "special",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      }
+    ],
+    "equipment": [],
+    "runes": []
+  },
+  "rogueEvents": [],
+  "rogueConfig": null
+}
