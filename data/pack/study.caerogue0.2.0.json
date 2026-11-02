@@ -1,0 +1,1028 @@
+{
+  "format": "caerogue.expansion",
+  "id": "study",
+  "name": "妙妙生物第一弹",
+  "version": "0.1.0",
+  "author": "caeleticia",
+  "description": "这里有很多妙妙生物",
+  "dependencies": [],
+  "countDefs": {},
+  "content": {
+    "units": [
+      {
+        "id": "study.unit.egg-immortal",
+        "packId": "study",
+        "name": "鸡蛋仙人",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 4,
+        "attack": 2,
+        "resistance": {
+          "type": "mental",
+          "value": 0
+        },
+        "skills": [
+          "study.skill.mental-damage",
+          "study.skill.back-cf"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "妈妈正在给我煎鸡蛋呢"
+      },
+      {
+        "id": "study.unit.tang-de-mei-bian",
+        "packId": "study",
+        "name": "唐得没边",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 4,
+        "attack": 1,
+        "resistance": {
+          "type": "mental",
+          "value": 2
+        },
+        "skills": [
+          "study.skill.mental-damage",
+          "study.skill.wala-wala"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "予你大唐盛氏"
+      },
+      {
+        "id": "study.unit.squidward",
+        "packId": "study",
+        "name": "章鱼哥",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 5,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "study.skill.a-bit-of-number-theory"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "蹦蹦跳跳"
+      },
+      {
+        "id": "study.unit.emperor-childhood",
+        "packId": "study",
+        "name": "皇帝小时候",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 5,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "study.skill.then-square",
+          "study.skill.preview-or-foresee"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "向量，如此简单"
+      },
+      {
+        "id": "study.unit.my-class-representative",
+        "packId": "study",
+        "name": "我的课代表",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 5,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "study.skill.strong-strong-strong"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "这是我的课代表……"
+      },
+      {
+        "id": "study.unit.amazing-attention",
+        "packId": "study",
+        "name": "注意力惊人",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 6,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "study.skill.sprint-charge",
+          "study.skill.i-dont-want-to-do-math"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "……这个也是我的课代表!"
+      },
+      {
+        "id": "study.unit.ct-mecha",
+        "packId": "study",
+        "name": "ct机甲",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 9,
+        "attack": 1,
+        "resistance": {
+          "type": "physical",
+          "value": 2
+        },
+        "skills": [
+          "study.skill.mecha-heavy-strike",
+          "study.skill.mecha-artillery"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "超模的存在"
+      },
+      {
+        "id": "study.unit.super-ct-mecha",
+        "packId": "study",
+        "name": "超级ct机甲",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 18,
+        "attack": 1,
+        "resistance": {
+          "type": "physical",
+          "value": 3
+        },
+        "skills": [
+          "study.skill.large-mecha-heavy-strike",
+          "study.skill.large-mecha-artillery",
+          "study.skill.war-stomp"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "因为机甲太大了，所以会一直踩自己的队友"
+      },
+      {
+        "id": "study.unit.hao-ge",
+        "packId": "study",
+        "name": "豪哥",
+        "quality": "white",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 6,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "study.skill.basic-physical-attack"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "豪哥"
+      },
+      {
+        "id": "study.unit.mortal-enemy",
+        "packId": "study",
+        "name": "不共戴天",
+        "quality": "white",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 4,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "study.skill.mortal-enemy"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "我和所有人不共戴天"
+      },
+      {
+        "id": "study.unit.mutated-chocolate",
+        "packId": "study",
+        "name": "变异的巧克力",
+        "quality": "white",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 4,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "study.skill.chocolate-pollution"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "恐怖的污染者"
+      },
+      {
+        "id": "study.unit.hates-homosexuals",
+        "packId": "study",
+        "name": "讨厌同性恋",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "study",
+        "counted": true,
+        "hp": 6,
+        "attack": 1,
+        "resistance": {
+          "type": "mental",
+          "value": 2
+        },
+        "skills": [
+          "study.skill.punish-male-homosexuals",
+          "study.skill.thought-must-be-upright"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "直接让游戏变成星冰乐"
+      }
+    ],
+    "skills": [
+      {
+        "id": "study.skill.back-cf",
+        "packId": "study",
+        "name": "去背cf",
+        "type": "active",
+        "op": "debuff",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "让一个敌人去背该死的cf",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "study.effect.recite-cf",
+            "stacks": "1",
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.mental-damage",
+        "packId": "study",
+        "name": "精神伤害",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "2",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.wala-wala",
+        "packId": "study",
+        "name": "瓦拉瓦拉",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "allyAttack"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "mental",
+            "formula": "1",
+            "ignoreResistance": true,
+            "bonus": true,
+            "legacyTarget": "allEnemies",
+            "targetExpression": "all({enemy})",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.a-bit-of-number-theory",
+        "packId": "study",
+        "name": "一点数论",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "1",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "study.effect.number-theory-local",
+            "stacks": "1",
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.then-square",
+        "packId": "study",
+        "name": "那就平方",
+        "type": "active",
+        "op": "debuff",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "好好预习一下向量",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "study.effect.number-theory-local",
+            "stacks": "3",
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.preview-or-foresee",
+        "packId": "study",
+        "name": "预习还是预见？",
+        "type": "active",
+        "op": "debuff",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "反正我是预习",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allEnemies",
+            "effectId": "study.effect.number-theory-local",
+            "stacks": "1",
+            "legacyTarget": "allEnemies",
+            "targetExpression": "all({enemy})",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.strong-strong-strong",
+        "packId": "study",
+        "name": "[强][强][强]",
+        "type": "active",
+        "op": "debuff",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "[强][强][强]，为指定敌方单体施加3层数论",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "study.effect.number-theory-local",
+            "stacks": "3",
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.sprint-charge",
+        "packId": "study",
+        "name": "冲刺，冲!",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "向前冲刺，然后创飞敌人，造成两点物理伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.i-dont-want-to-do-math",
+        "packId": "study",
+        "name": "我不想做数学",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "数论什么的一边去",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "study.effect.number-theory-local",
+            "stacks": "9999",
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.mecha-heavy-strike",
+        "packId": "study",
+        "name": "机甲重击",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "一拳造成4点物理伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "4",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.mecha-artillery",
+        "packId": "study",
+        "name": "机甲炮火",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "发射火炮，群攻2点物理伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.large-mecha-heavy-strike",
+        "packId": "study",
+        "name": "大型机甲重击",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "操控机甲狠狠的锤爆对手，造成6点物理伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "6",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.large-mecha-artillery",
+        "packId": "study",
+        "name": "大型机甲火炮",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "进行一个毁灭式的打击，群攻4点物理伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "4",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.war-stomp",
+        "packId": "study",
+        "name": "战争践踏(?)",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "因为机甲太大了，所以会踩到自己的队友，每次行动的时候向全体其他友方附加6点物理伤害",
+        "trigger": {
+          "event": "actionStart"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "study.effect.maybe-stepped-on",
+            "stacks": "1",
+            "legacyTarget": "allAllies",
+            "targetExpression": "all({friendly})",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "study.effect.maybe-stepped-on",
+            "stacks": "9999",
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "damage",
+            "target": "owner",
+            "damageType": "physical",
+            "formula": "6",
+            "ignoreResistance": false,
+            "bonus": true,
+            "ownerEffectId": "study.effect.maybe-stepped-on",
+            "legacyTarget": "owner",
+            "targetExpression": "{with_effect[study.effect.maybe-stepped-on]}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.basic-physical-attack",
+        "packId": "study",
+        "name": "普攻·物理",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "2",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.mortal-enemy",
+        "packId": "study",
+        "name": "不共戴天",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "平等地精神污染每一个人，对除了自己以外的单位造成2点无视抗性的精神伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allEnemies",
+            "effectId": "study.effect.mortal-enemy-mark",
+            "stacks": "1",
+            "legacyTarget": "allEnemies",
+            "targetExpression": "all({enemy})",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "study.effect.mortal-enemy-mark",
+            "stacks": "1",
+            "legacyTarget": "allAllies",
+            "targetExpression": "all({friendly})",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "study.effect.mortal-enemy-mark",
+            "stacks": "9999",
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "damage",
+            "target": "owner",
+            "damageType": "mental",
+            "formula": "2",
+            "ignoreResistance": true,
+            "ownerEffectId": "study.effect.mortal-enemy-mark",
+            "bonus": false,
+            "legacyTarget": "owner",
+            "targetExpression": "{with_effect[study.effect.mortal-enemy-mark]}",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "allEnemies",
+            "effectId": "study.effect.mortal-enemy-mark",
+            "stacks": "9999",
+            "legacyTarget": "allEnemies",
+            "targetExpression": "all({enemy})",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "allAllies",
+            "effectId": "study.effect.mortal-enemy-mark",
+            "stacks": "9999",
+            "legacyTarget": "allAllies",
+            "targetExpression": "all({friendly})",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.chocolate-pollution",
+        "packId": "study",
+        "name": "巧克力污染",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "精神污染，造成20%百分比伤害，不超过4点",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "min({target}.max_hp*0.2,4)",
+            "ignoreResistance": false,
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.punish-male-homosexuals",
+        "packId": "study",
+        "name": "对男同性恋的一种惩罚",
+        "type": "active",
+        "op": "debuff",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "study.effect.aids",
+            "stacks": "1",
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "study.skill.thought-must-be-upright",
+        "packId": "study",
+        "name": "你不要觉得这种观点很普遍好吗",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "思想一定要正",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "study.effect.aids",
+            "stacks": "9999",
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          }
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "id": "study.effect.recite-cf",
+        "packId": "study",
+        "name": "背诵cf",
+        "type": "special",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "actionStart"
+        },
+        "steps": [
+          {
+            "kind": "skipAction",
+            "target": "self",
+            "expressionMode": "formula",
+            "legacyTarget": "self",
+            "targetExpression": "{self}"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "study.effect.recite-cf",
+            "stacks": "1",
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          }
+        ],
+        "description": "这下好了"
+      },
+      {
+        "id": "study.effect.number-theory-local",
+        "packId": "study",
+        "name": "数论",
+        "type": "negative",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 9999,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "actionStart"
+        },
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "self",
+            "damageType": "mental",
+            "formula": "{self}.effect[study.effect.number-theory-local].count",
+            "ignoreResistance": true,
+            "bonus": true,
+            "expressionMode": "formula",
+            "legacyTarget": "self",
+            "targetExpression": "{self}"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "study.effect.number-theory-local",
+            "stacks": "1",
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          }
+        ],
+        "description": "学数学学疯了"
+      },
+      {
+        "id": "study.effect.maybe-stepped-on",
+        "packId": "study",
+        "name": "可能要被踩到了",
+        "type": "special",
+        "removable": true,
+        "stackable": false,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      },
+      {
+        "id": "study.effect.mortal-enemy-mark",
+        "packId": "study",
+        "name": "不共戴天",
+        "type": "special",
+        "removable": true,
+        "stackable": false,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": "总之就是不共戴天"
+      },
+      {
+        "id": "study.effect.aids",
+        "packId": "study",
+        "name": "艾滋病",
+        "type": "negative",
+        "removable": true,
+        "stackable": false,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "selfAttack"
+        },
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "study.effect.aids",
+            "stacks": "1",
+            "legacyTarget": "chosen",
+            "targetExpression": "{target}",
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "damage",
+            "target": "self",
+            "damageType": "true",
+            "formula": "min({target}.max_hp*0.5,999)",
+            "ignoreResistance": false,
+            "bonus": true,
+            "legacyTarget": "self",
+            "targetExpression": "{self}",
+            "expressionMode": "formula"
+          }
+        ],
+        "description": "这下好了吧"
+      }
+    ],
+    "equipment": [],
+    "runes": []
+  },
+  "rogueEvents": [],
+  "rogueConfig": null
+}
