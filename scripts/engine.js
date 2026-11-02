@@ -196,6 +196,298 @@ class FormulaParser {
   }
 }
 
+class FormulaParser2 {
+  constructor(text, battle, ctx) {
+    this.text = String(text || '');
+    this.battle = battle;
+    this.ctx = ctx || {};
+    this.pos = 0;
+  }
+
+  fail(message) { throw new FormulaError(message || L('ui.2fce10f3d424')); }
+  skip() { while (this.pos < this.text.length && /\s/.test(this.text[this.pos])) this.pos += 1; }
+  peek() { return this.text[this.pos]; }
+  eat(value) {
+    this.skip();
+    if (this.text.startsWith(value, this.pos)) { this.pos += value.length; return true; }
+    return false;
+  }
+  expect(value) { if (!this.eat(value)) this.fail(L('ui.104a5c5ee326') + value); }
+  readWord() {
+    this.skip();
+    const start = this.pos;
+    while (this.pos < this.text.length && /[A-Za-z0-9_]/.test(this.text[this.pos])) this.pos += 1;
+    return this.text.slice(start, this.pos);
+  }
+  matchWord(word) {
+    this.skip();
+    if (this.text.slice(this.pos, this.pos + word.length).toLowerCase() !== word) return false;
+    const next = this.text[this.pos + word.length] || '';
+    if (/[A-Za-z0-9_]/.test(next)) return false;
+    this.pos += word.length;
+    return true;
+  }
+  readBalanced(open, close) {
+    this.skip();
+    if (this.text[this.pos] !== open) this.fail(L('ui.104a5c5ee326') + open);
+    let depth = 0;
+    const start = this.pos + 1;
+    for (let i = this.pos; i < this.text.length; i += 1) {
+      const ch = this.text[i];
+      if (ch === open) depth += 1;
+      else if (ch === close) {
+        depth -= 1;
+        if (depth === 0) {
+          const content = this.text.slice(start, i);
+          this.pos = i + 1;
+          return content;
+        }
+      }
+    }
+    this.fail(L('ui.104a5c5ee326') + close);
+  }
+  splitArgs(text) {
+    const args = [];
+    let depthBrace = 0, depthParen = 0, depthBracket = 0, start = 0;
+    for (let i = 0; i < text.length; i += 1) {
+      const ch = text[i];
+      if (ch === '{') depthBrace += 1;
+      else if (ch === '}') depthBrace -= 1;
+      else if (ch === '(') depthParen += 1;
+      else if (ch === ')') depthParen -= 1;
+      else if (ch === '[') depthBracket += 1;
+      else if (ch === ']') depthBracket -= 1;
+      else if (ch === ',' && depthBrace === 0 && depthParen === 0 && depthBracket === 0) {
+        args.push(text.slice(start, i).trim());
+        start = i + 1;
+      }
+    }
+    const tail = text.slice(start).trim();
+    if (tail) args.push(tail);
+    return args;
+  }
+  readCall(name) {
+    this.skip();
+    if (this.text.startsWith(name, this.pos)) this.pos += name.length;
+    this.skip();
+    const open = this.peek();
+    let close = ')';
+    if (open === '(') close = ')';
+    else if (open === '<') close = '>';
+    else this.fail(name + L('ui.f9292ddf2e12'));
+    return this.splitArgs(this.readBalanced(open, close));
+  }
+  parse() {
+    const value = this.parseOr();
+    this.skip();
+    if (this.pos < this.text.length) this.fail(L('ui.17ed4c668ac0'));
+    if (typeof value === 'number' && !Number.isFinite(value)) this.fail(L('ui.b8fe69162928'));
+    return value;
+  }
+  truthy(value) {
+    if (typeof value === 'string') return value.length > 0;
+    return Number(value) !== 0 && Number.isFinite(Number(value));
+  }
+  parseOr() {
+    let left = this.parseAnd();
+    while (this.matchWord('or')) {
+      const right = this.parseAnd();
+      left = this.truthy(left) || this.truthy(right) ? 1 : 0;
+    }
+    return left;
+  }
+  parseAnd() {
+    let left = this.parseNot();
+    while (this.matchWord('and')) {
+      const right = this.parseNot();
+      left = this.truthy(left) && this.truthy(right) ? 1 : 0;
+    }
+    return left;
+  }
+  parseNot() {
+    if (this.matchWord('not')) return this.truthy(this.parseNot()) ? 0 : 1;
+    return this.parseComparison();
+  }
+  parseComparison() {
+    let left = this.parseAdd();
+    while (true) {
+      this.skip();
+      let op = '';
+      for (const candidate of ['==', '!=', '<=', '>=', '<', '>', '=']) {
+        if (this.text.startsWith(candidate, this.pos)) { op = candidate; break; }
+      }
+      if (!op) break;
+      this.pos += op.length;
+      const right = this.parseAdd();
+      let result = false;
+      if (op === '==' || op === '=') result = left === right;
+      else if (op === '!=') result = left !== right;
+      else if (typeof left === 'string' || typeof right === 'string') {
+        const ls = String(left), rs = String(right);
+        if (op === '<') result = ls < rs;
+        else if (op === '>') result = ls > rs;
+        else if (op === '<=') result = ls <= rs;
+        else result = ls >= rs;
+      } else {
+        if (op === '<') result = left < right;
+        else if (op === '>') result = left > right;
+        else if (op === '<=') result = left <= right;
+        else result = left >= right;
+      }
+      left = result ? 1 : 0;
+    }
+    return left;
+  }
+  parseAdd() {
+    let left = this.parseMul();
+    while (true) {
+      this.skip();
+      const op = this.peek();
+      if (op !== '+' && op !== '-') break;
+      this.pos += 1;
+      const right = this.parseMul();
+      left = op === '+' ? left + right : left - right;
+    }
+    return left;
+  }
+  parseMul() {
+    let left = this.parseUnary();
+    while (true) {
+      this.skip();
+      const two = this.text.slice(this.pos, this.pos + 2);
+      if (two === '**') { this.pos += 2; left = Math.pow(left, this.parseUnary()); continue; }
+      const op = this.peek();
+      if (op !== '*' && op !== '/') break;
+      this.pos += 1;
+      const right = this.parseUnary();
+      left = op === '*' ? left * right : left / right;
+    }
+    return left;
+  }
+  parseUnary() {
+    this.skip();
+    if (this.peek() === '-') { this.pos += 1; return -this.parseUnary(); }
+    if (this.peek() === '+') { this.pos += 1; return this.parseUnary(); }
+    return this.parsePower();
+  }
+  parsePower() {
+    let left = this.parsePrimary();
+    this.skip();
+    if (this.peek() === '^') {
+      this.pos += 1;
+      left = Math.pow(left, this.parseUnary());
+    }
+    return left;
+  }
+  parsePrimary() {
+    this.skip();
+    const ch = this.peek();
+    if (ch === undefined) this.fail(L('ui.9493ec599c15'));
+    if (/[0-9]/.test(ch) || (ch === '.' && /[0-9]/.test(this.text[this.pos + 1] || ''))) {
+      let end = this.pos;
+      while (end < this.text.length && /[0-9.]/.test(this.text[end])) end += 1;
+      let percent = false;
+      if (this.text[end] === '%') { percent = true; end += 1; }
+      const value = Number(this.text.slice(this.pos, percent ? end - 1 : end)) / (percent ? 100 : 1);
+      this.pos = end;
+      return value;
+    }
+    if (ch === '{') {
+      const content = this.readBalanced('{', '}');
+      return this.parseSelectorValue(content);
+    }
+    if (ch === '[') return this.readBalanced('[', ']');
+    if (ch === '\\') {
+      this.pos += 1;
+      const word = this.readWord();
+      if (word === 'pi') return Math.PI;
+      if (word === 'e') return Math.E;
+      this.fail(L('ui.a8aae17bd63d') + word);
+    }
+    if (ch === '$') {
+      this.pos += 1;
+      const start = this.pos;
+      while (this.pos < this.text.length && /[A-Za-z0-9_.]/.test(this.text[this.pos])) this.pos += 1;
+      return this.battle.resolveFormulaToken('$' + this.text.slice(start, this.pos), this.ctx);
+    }
+    if (ch === '(') {
+      this.pos += 1;
+      const value = this.parseOr();
+      this.expect(')');
+      return value;
+    }
+    if (/[A-Za-z_]/.test(ch)) {
+      const name = this.readWord();
+      if (name === 'pi') return Math.PI;
+      if (name === 'e') return Math.E;
+      if (name === 'true') return 1;
+      if (name === 'false') return 0;
+      if (['min', 'max', 'log', 'pow', 'floor', 'ceil', 'round', 'abs', 'sqrt', 'ln', 'exp', 'log10', 'log2'].includes(name)) {
+        const args = this.readCall(name);
+        const values = args.map(arg => new FormulaParser2(arg, this.battle, this.ctx).parse());
+        if (name === 'min') return values.length ? Math.min(...values) : 0;
+        if (name === 'max') return values.length ? Math.max(...values) : 0;
+        if (name === 'pow') return Math.pow(values[0] || 0, values[1] || 0);
+        if (name === 'log') {
+          if (values.length < 2) return Math.log10(values[0] || 0);
+          return Math.log(values[0]) / Math.log(values[1]);
+        }
+        if (name === 'ln') return Math.log(values[0] || 0);
+        if (name === 'exp') return Math.exp(values[0] || 0);
+        if (name === 'log10') return Math.log10(values[0] || 0);
+        if (name === 'log2') return Math.log2(values[0] || 0);
+        if (name === 'sqrt') return Math.sqrt(values[0] || 0);
+        if (name === 'floor') return Math.floor(values[0] || 0);
+        if (name === 'ceil') return Math.ceil(values[0] || 0);
+        if (name === 'round') return Math.round(values[0] || 0);
+        return Math.abs(values[0] || 0);
+      }
+      this.fail(L('ui.656cd97bdd3b') + name);
+    }
+    this.fail(L('ui.367ce0b08f68') + ch);
+  }
+  parseSelectorValue(content) {
+    const marker = this.battle.resolveSelectorMarker(content, this.ctx);
+    this.skip();
+    if (this.peek() !== '.') this.fail(L('ui.10323b1be7ee'));
+    this.pos += 1;
+    const property = this.readWord();
+    if (property === 'count' && String(content || '').trim() === 'target' && !this.ctx.__setResolution) {
+      const chosen = Array.isArray(this.ctx.chosen) ? this.ctx.chosen.filter(Boolean) : [];
+      if (chosen.length) return chosen.length;
+    }
+    if (marker.kind === 'side') {
+      if (property !== 'count') this.fail(L('ui.d57035b94786'));
+      const id = this.readBalanced('[', ']');
+      return this.battle.selectorSideCount(marker.side, id, this.ctx);
+    }
+    const units = marker.units || [];
+    if (property === 'count') {
+      this.skip();
+      if (this.peek() === '[') {
+        const id = this.readBalanced('[', ']');
+        return units.reduce((sum, unit) => sum + this.battle.getCount(unit, 'unit', id), 0);
+      }
+      return units.length;
+    }
+    if (property === 'effect') {
+      const id = this.readBalanced('[', ']');
+      this.expect('.');
+      const suffix = this.readWord();
+      if (suffix !== 'count') this.fail(L('ui.9497dbb49ae2'));
+      return units.reduce((sum, unit) => sum + this.battle.getEffectStacks(unit, id), 0);
+    }
+    if (property === 'last_hit_count') return this.ctx.lastHitCount || 0;
+    if (property === 'atk') return units.reduce((sum, unit) => sum + (unit.atk || 0), 0);
+    if (property === 'hp') return units.reduce((sum, unit) => sum + (unit.hp || 0), 0);
+    if (property === 'max_hp' || property === 'maxHp') return units.reduce((sum, unit) => sum + (unit.maxHp || 0), 0);
+    if (property === 'res') return units.reduce((sum, unit) => {
+      return sum + (unit.resistance.current || this.battle.getResistance(unit, (unit.card && unit.card.resistance && unit.card.resistance.type) || 'general'));
+    }, 0);
+    this.fail(L('ui.a3702a434596') + property);
+  }
+}
+
 function shuffle(list) {
   const result = list.slice();
   for (let i = result.length - 1; i > 0; i -= 1) {
@@ -529,6 +821,57 @@ class Battle {
     return ctx.target || (ctx.chosen && ctx.chosen[0]) || (ctx.eventData && (ctx.eventData.target || (ctx.eventData.targets && ctx.eventData.targets[0]))) || ctx.unit || null;
   }
 
+  resolveFormulaToken(token, ctx) {
+    const source = ctx.source || ctx.unit;
+    if (!source) return 0;
+    if (token === '$atk') return source.atk;
+    if (token === '$hp') return source.hp;
+    if (token === '$hpMax') return source.maxHp;
+    if (token === '$resist') return source.resistance.current || this.getResistance(source, source.card.resistance.type);
+    if (token === '$lastHitCount') return ctx.lastHitCount || 0;
+    if (token === '$multiplier') return ctx.multiplier == null ? 1 : ctx.multiplier;
+    if (token === '$targetCount') return (ctx.chosen || []).length;
+    if (token === '$round') return this.round;
+    if (token.startsWith('$count.')) return this.getCount(source, 'unit', token.slice(7));
+    if (token.startsWith('$sideCount.')) return this.getCount(source, 'side', token.slice(11));
+    if (token.startsWith('$globalCount.')) return this.getCount(source, 'global', token.slice(13));
+    if (token.startsWith('$effect.')) return this.getEffectStacks(source, token.slice(8));
+    if (token.startsWith('$var.')) return (ctx.vars && ctx.vars[token.slice(5)]) || 0;
+    if (token.startsWith('$event.')) {
+      const key = token.slice(7);
+      return (ctx.eventData && ctx.eventData[key]) || 0;
+    }
+    const target = this.formulaTarget(ctx);
+    if (token === '$target.hp') return target ? target.hp : 0;
+    if (token === '$target.hpMax' || token === '$target.maxHp') return target ? target.maxHp : 0;
+    if (token === '$target.missingHp') return target ? Math.max(0, target.maxHp - target.hp) : 0;
+    if (token === '$target.hpPct') return target && target.maxHp > 0 ? (target.hp / target.maxHp) * 100 : 0;
+    if (token === '$target.hpRatio') return target && target.maxHp > 0 ? target.hp / target.maxHp : 0;
+    if (token === '$target.atk') return target ? target.atk : 0;
+    if (token === '$target.resist') return target ? (target.resistance.current || this.getResistance(target, (target.card && target.card.resistance && target.card.resistance.type) || 'general')) : 0;
+    if (token === '$target.counted') return target && target.counted ? 1 : 0;
+    if (token === '$target.effectCount') return target ? target.effects.length : 0;
+    if (token.startsWith('$target.count.')) return target ? this.getCount(target, 'unit', token.slice('$target.count.'.length)) : 0;
+    if (token.startsWith('$target.sideCount.')) return target ? this.getCount(target, 'side', token.slice('$target.sideCount.'.length)) : 0;
+    if (token.startsWith('$target.effect.')) return target ? this.getEffectStacks(target, token.slice('$target.effect.'.length)) : 0;
+    if (token.startsWith('$source.effect.')) return this.getEffectStacks(source, token.slice('$source.effect.'.length));
+    return 0;
+  }
+
+  looksLikeNewExpression(formula) {
+    if (typeof formula !== 'string') return false;
+    return /[{}\\]/.test(formula) || /\[[^\]]+\]/.test(formula) || /\b(and|or|not)\b/.test(formula) || /^\s*(choose|all|in|un|diff)\s*\(/.test(formula);
+  }
+
+  evalNewExpression(expression, ctx) {
+    try {
+      return new FormulaParser2(expression, this, ctx || {}).parse();
+    } catch (error) {
+      this.log('system', L('ui.be62c0656ae6') + expression + '（' + error.message + '）');
+      return 0;
+    }
+  }
+
   evalFormula(formula, ctx) {
     if (formula === undefined || formula === null || formula === '') return 0;
     if (typeof formula === 'number') return formula;
@@ -536,42 +879,8 @@ class Battle {
       const raw = formula.trim();
       return raw.endsWith('%') ? Number(raw.slice(0, -1)) / 100 : Number(raw);
     }
-    const resolver = (token) => {
-      const source = ctx.source || ctx.unit;
-      if (!source) return 0;
-      if (token === '$atk') return source.atk;
-      if (token === '$hp') return source.hp;
-      if (token === '$hpMax') return source.maxHp;
-      if (token === '$resist') return source.resistance.current || this.getResistance(source, source.card.resistance.type);
-      if (token === '$lastHitCount') return ctx.lastHitCount || 0;
-      if (token === '$multiplier') return ctx.multiplier == null ? 1 : ctx.multiplier;
-      if (token === '$targetCount') return (ctx.chosen || []).length;
-      if (token === '$round') return this.round;
-      if (token.startsWith('$count.')) return this.getCount(source, 'unit', token.slice(7));
-      if (token.startsWith('$sideCount.')) return this.getCount(source, 'side', token.slice(11));
-      if (token.startsWith('$globalCount.')) return this.getCount(source, 'global', token.slice(13));
-      if (token.startsWith('$effect.')) return this.getEffectStacks(source, token.slice(8));
-      if (token.startsWith('$var.')) return (ctx.vars && ctx.vars[token.slice(5)]) || 0;
-      if (token.startsWith('$event.')) {
-        const key = token.slice(7);
-        return (ctx.eventData && ctx.eventData[key]) || 0;
-      }
-      const target = this.formulaTarget(ctx);
-      if (token === '$target.hp') return target ? target.hp : 0;
-      if (token === '$target.hpMax' || token === '$target.maxHp') return target ? target.maxHp : 0;
-      if (token === '$target.missingHp') return target ? Math.max(0, target.maxHp - target.hp) : 0;
-      if (token === '$target.hpPct') return target && target.maxHp > 0 ? (target.hp / target.maxHp) * 100 : 0;
-      if (token === '$target.hpRatio') return target && target.maxHp > 0 ? target.hp / target.maxHp : 0;
-      if (token === '$target.atk') return target ? target.atk : 0;
-      if (token === '$target.resist') return target ? (target.resistance.current || this.getResistance(target, (target.card && target.card.resistance && target.card.resistance.type) || 'general')) : 0;
-      if (token === '$target.counted') return target && target.counted ? 1 : 0;
-      if (token === '$target.effectCount') return target ? target.effects.length : 0;
-      if (token.startsWith('$target.count.')) return target ? this.getCount(target, 'unit', token.slice('$target.count.'.length)) : 0;
-      if (token.startsWith('$target.sideCount.')) return target ? this.getCount(target, 'side', token.slice('$target.sideCount.'.length)) : 0;
-      if (token.startsWith('$target.effect.')) return target ? this.getEffectStacks(target, token.slice('$target.effect.'.length)) : 0;
-      if (token.startsWith('$source.effect.')) return this.getEffectStacks(source, token.slice('$source.effect.'.length));
-      return 0;
-    };
+    if (this.looksLikeNewExpression(formula)) return this.evalNewExpression(formula, ctx);
+    const resolver = (token) => this.resolveFormulaToken(token, ctx || {});
     try {
       const tokens = tokenizeFormula(formula);
       return new FormulaParser(tokens, resolver).parse();
@@ -581,6 +890,131 @@ class Battle {
     }
   }
 
+  fieldUnitsForSelector() {
+    return ['A', 'B'].flatMap(sideId => this.getFieldUnits(sideId));
+  }
+
+  splitExpressionArgs(text) {
+    return new FormulaParser2('', this, {}).splitArgs(text);
+  }
+
+  resolveSatisfySelector(content, ctx) {
+    const parser = new FormulaParser2(content, this, ctx);
+    const args = parser.readCall('satisfy');
+    if (!args.length) throw new FormulaError(L('ui.20fc597fd5f3'));
+    const set = args.length > 1 ? this.resolveSetExpression(args[0], ctx) : this.fieldUnitsForSelector();
+    const condition = args.length > 1 ? args.slice(1).join(',') : args[0];
+    return set.filter(unit => {
+      const child = Object.assign({}, ctx, { item: unit });
+      try {
+        const childParser = new FormulaParser2(condition, this, child);
+        return childParser.truthy(childParser.parse());
+      } catch (error) {
+        return false;
+      }
+    });
+  }
+
+  resolveSelectorMarker(content, ctx) {
+    ctx = ctx || {};
+    let text = String(content || '').trim();
+    if (/^satisfy\s*<[\s\S]*>$/.test(text)) {
+      text = 'satisfy(' + text.replace(/^satisfy\s*</, '').replace(/>$/, '') + ')';
+    }
+    if (/^satisfy\s*\(/.test(text)) {
+      return { kind: 'units', units: this.resolveSatisfySelector(text, ctx) };
+    }
+    const effectMatch = /^with_effect\s*\[([\s\S]+)\]\s*$/.exec(text);
+    if (effectMatch) {
+      const effectId = effectMatch[1].trim();
+      return { kind: 'units', units: this.fieldUnitsForSelector().filter(unit => this.getEffectStacks(unit, effectId) > 0) };
+    }
+    if (/^(in|un|diff)\s*\(/.test(text)) {
+      return { kind: 'units', units: this.resolveSetExpression(text, ctx) };
+    }
+    if (text === 'enemyside' || text === 'friendlyside' || text === 'field') {
+      return { kind: 'side', side: text };
+    }
+    const actor = ctx.unit || ctx.source;
+    if (text === 'target') {
+      if (ctx.target && !ctx.__setResolution) return { kind: 'units', units: [ctx.target] };
+      const chosen = Array.isArray(ctx.chosen) ? ctx.chosen.slice() : [];
+      return { kind: 'units', units: chosen.filter(Boolean) };
+    }
+    if (text === 'enemy') return { kind: 'units', units: actor ? this.getEnemies(actor) : [] };
+    if (text === 'friendly') return { kind: 'units', units: actor ? this.getLivingAllies(actor) : [] };
+    if (text === 'self') return { kind: 'units', units: actor ? [actor] : [] };
+    if (text === 'unit') {
+      const current = ctx.item || actor;
+      return { kind: 'units', units: current ? [current] : [] };
+    }
+    throw new FormulaError(L('ui.b3c4e2aa0090') + text + '}');
+  }
+
+  resolveSetExpression(expression, ctx) {
+    const text = String(expression || '').trim();
+    if (!text) return [];
+    const setCtx = Object.assign({}, ctx, { __setResolution: true });
+    if (text.startsWith('{')) {
+      const parser = new FormulaParser2(text, this, setCtx);
+      const content = parser.readBalanced('{', '}');
+      parser.skip();
+      if (parser.pos < parser.text.length) throw new FormulaError(L('ui.ec0e31467041'));
+      const marker = this.resolveSelectorMarker(content, setCtx);
+      if (marker.kind !== 'units') throw new FormulaError(L('ui.e6e2006787b0'));
+      return marker.units;
+    }
+    if (/^choose\s*\(/.test(text)) {
+      const args = new FormulaParser2(text, this, setCtx).readCall('choose');
+      const set = this.resolveSetExpression(args[0] || '', setCtx);
+      const count = Math.max(0, Math.floor(Number(this.evalNewExpression(args[1] || '0', ctx)) || 0));
+      const chosen = (ctx.chosen || []).filter(unit => set.includes(unit));
+      const result = [];
+      for (const unit of chosen) if (result.length < count && !result.includes(unit)) result.push(unit);
+      for (const unit of set) if (result.length < count && !result.includes(unit)) result.push(unit);
+      return result;
+    }
+    if (/^all\s*\(/.test(text)) {
+      const args = new FormulaParser2(text, this, setCtx).readCall('all');
+      return this.resolveSetExpression(args[0] || '', setCtx);
+    }
+    if (/^(in|un|diff)\s*\(/.test(text)) {
+      const name = /^(in|un|diff)/.exec(text)[1];
+      const args = new FormulaParser2(text, this, setCtx).readCall(name);
+      const left = this.resolveSetExpression(args[0] || '', setCtx);
+      const right = this.resolveSetExpression(args[1] || '', setCtx);
+      if (name === 'in') return left.filter(unit => right.includes(unit));
+      if (name === 'un') return [...new Set(left.concat(right))];
+      return left.filter(unit => !right.includes(unit));
+    }
+    if (/^with_effect\s*\[/.test(text) || /^satisfy\s*[\(<]/.test(text)) {
+      const marker = this.resolveSelectorMarker(text, setCtx);
+      return marker.units || [];
+    }
+    throw new FormulaError(L('ui.b264195d7084'));
+  }
+
+  selectorSideCount(sideKey, countId, ctx) {
+    if (sideKey === 'field') return this.globalCounts[countId] || 0;
+    const actor = ctx.unit || ctx.source;
+    const actorSide = actor ? actor.side : 'A';
+    const sideId = sideKey === 'enemyside' ? (actorSide === 'A' ? 'B' : 'A') : actorSide;
+    const side = this.sides[sideId];
+    return (side && side.counts && side.counts[countId]) || 0;
+  }
+
+  isNewTargetExpression(value) {
+    if (typeof value !== 'string') return false;
+    return /[{}\\]/.test(value) || /^\s*(choose|all|in|un|diff|with_effect|satisfy)\s*[\(<]/.test(value) || /^\s*satisfy\s*</.test(value);
+  }
+
+  stepTargetExpression(step) {
+    if (!step) return 'chosen';
+    if (step.expressionMode === 'formula') return step.targetExpression || step.target || '{target}';
+    if (step.expressionMode === 'legacy') return step.legacyTarget || step.target || 'chosen';
+    return step.targetExpression || step.target || 'chosen';
+  }
+
   getTargetsForStep(unit, step, ctx) {
     const targets = [];
     const add = (list) => {
@@ -588,7 +1022,15 @@ class Battle {
         if (item && item.alive && item.onField && !targets.includes(item)) targets.push(item);
       }
     };
-    const mode = step.target || 'chosen';
+    const mode = this.stepTargetExpression(step);
+    if (this.isNewTargetExpression(mode)) {
+      try {
+        add(this.resolveSetExpression(mode, ctx));
+      } catch (error) {
+        this.log('system', L('ui.be62c0656ae6') + mode + '（' + error.message + '）');
+      }
+      return targets;
+    }
     if (mode === 'chosen') add(ctx.chosen && ctx.chosen.length ? ctx.chosen : []);
     else if (mode === 'self') add([unit]);
     else if (mode === 'eventTarget') {
@@ -1421,10 +1863,17 @@ class Battle {
           break;
         }
         case 'branch': {
-          const left = this.evalFormula(step.left || '0', ctx);
-          const right = this.evalFormula(step.right || '0', ctx);
-          const op = step.op || 'gte';
-          const passed = op === 'gt' ? left > right : op === 'lt' ? left < right : op === 'lte' ? left <= right : op === 'eq' ? left === right : op === 'neq' ? left !== right : left >= right;
+          let passed;
+          const useCondition = step.expressionMode === 'formula' || (step.expressionMode !== 'legacy' && typeof step.condition === 'string' && step.condition.trim());
+          if (useCondition && typeof step.condition === 'string' && step.condition.trim()) {
+            const value = this.evalFormula(step.condition, ctx);
+            passed = typeof value === 'string' ? value.length > 0 : Number(value) !== 0;
+          } else {
+            const left = this.evalFormula(step.left || '0', ctx);
+            const right = this.evalFormula(step.right || '0', ctx);
+            const op = step.op || 'gte';
+            passed = op === 'gt' ? left > right : op === 'lt' ? left < right : op === 'lte' ? left <= right : op === 'eq' ? left === right : op === 'neq' ? left !== right : left >= right;
+          }
           this.executeSteps(passed ? step.then : step.elseSteps, ctx);
           break;
         }
@@ -1436,7 +1885,11 @@ class Battle {
           break;
         }
         case 'forEach': {
-          const source = step.source || 'chosen';
+          const source = step.expressionMode === 'formula'
+            ? (step.sourceExpression || step.source || '{target}')
+            : step.expressionMode === 'legacy'
+              ? (step.legacySource || step.source || 'chosen')
+              : (step.sourceExpression || step.source || 'chosen');
           const list = this.getTargetsForStep(ctx.unit, { target: source, ownerEffectId: step.ownerEffectId }, ctx);
           let guard = 0;
           for (const item of list) {
@@ -1460,7 +1913,7 @@ class Battle {
           if (targetMode === 'self') chosen = [ctx.unit];
           else if (targetMode === 'allEnemies') chosen = this.getEnemies(ctx.unit);
           else if (targetMode === 'allAllies') chosen = this.getLivingAllies(ctx.unit);
-          else chosen = this.getTargetsForStep(ctx.unit, { target: step.target || 'chosen', ownerEffectId: step.ownerEffectId }, ctx);
+          else chosen = this.getTargetsForStep(ctx.unit, { target: this.stepTargetExpression(step), ownerEffectId: step.ownerEffectId }, ctx);
           this.executeSkill(ctx.unit, skill, chosen, { allowDeadSource: true });
           break;
         }

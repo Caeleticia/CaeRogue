@@ -12,6 +12,8 @@ const EDITOR_STEP_TARGETS = [
   { value: 'owner', label: L('ui.9840e52ac1c6') }
 ];
 
+const HIDDEN_STEP_KINDS = new Set(['selectTarget', 'readCount', 'setVar']);
+
 const EDITOR_CONDITION_OPS = [
   { value: 'gte', label: L('ui.6c2c5ef4dc66') }, { value: 'gt', label: L('ui.66f156cddca3') },
   { value: 'lte', label: L('ui.314d34856eca') }, { value: 'lt', label: L('ui.0511b2da735f') },
@@ -87,6 +89,110 @@ const EditorUI = {
     app.render();
   },
 
+  migrateFormulaText(value) {
+    if (typeof value !== 'string' || !value) return value;
+    let text = value;
+    const replace = (pattern, replacement) => { text = text.replace(pattern, replacement); };
+    replace(/\$target\.count\.([A-Za-z0-9_.-]+)/g, '{target}.count[$1]');
+    replace(/\$target\.effect\.([A-Za-z0-9_.-]+)/g, '{target}.effect[$1].count');
+    replace(/\$source\.effect\.([A-Za-z0-9_.-]+)/g, '{self}.effect[$1].count');
+    replace(/\$effect\.([A-Za-z0-9_.-]+)/g, '{self}.effect[$1].count');
+    replace(/\$target\.hpMax/g, '{target}.max_hp');
+    replace(/\$target\.maxHp/g, '{target}.max_hp');
+    replace(/\$target\.missingHp/g, '({target}.max_hp - {target}.hp)');
+    replace(/\$target\.hpPct/g, '({target}.hp / {target}.max_hp * 100)');
+    replace(/\$target\.hpRatio/g, '({target}.hp / {target}.max_hp)');
+    replace(/\$target\.hp\b/g, '{target}.hp');
+    replace(/\$target\.atk\b/g, '{target}.atk');
+    replace(/\$target\.resist\b/g, '{target}.res');
+    replace(/\$targetCount\b/g, '{target}.count');
+    replace(/\$lastHitCount\b/g, '{self}.last_hit_count');
+    replace(/\$hpMax\b/g, '{self}.max_hp');
+    replace(/\$atk\b/g, '{self}.atk');
+    replace(/\$hp\b/g, '{self}.hp');
+    replace(/\$resist\b/g, '{self}.res');
+    replace(/\$count\.([A-Za-z0-9_.-]+)/g, '{self}.count[$1]');
+    replace(/\$sideCount\.([A-Za-z0-9_.-]+)/g, '{friendlyside}.count[$1]');
+    replace(/\$globalCount\.([A-Za-z0-9_.-]+)/g, '{field}.count[$1]');
+    return text;
+  },
+
+  migrateTargetText(value, step) {
+    if (typeof value !== 'string' || !value) return value;
+    if (/[{}\\]/.test(value) || /^\s*(choose|all|in|un|diff|with_effect|satisfy)\s*[\(<]/.test(value)) return value;
+    const map = {
+      chosen: '{target}',
+      self: '{self}',
+      allEnemies: 'all({enemy})',
+      allAllies: 'all({friendly})',
+      item: '{unit}',
+      eventTarget: '{target}',
+      eventTargets: 'all({target})',
+      owner: step && step.ownerEffectId ? '{with_effect[' + step.ownerEffectId + ']}' : '{self}'
+    };
+    return map[value] || value;
+  },
+
+  migrateLegacyExpressions(app) {
+    const pack = this.currentPack();
+    if (!pack) return;
+    let changed = 0;
+    const targetKinds = ['damage', 'heal', 'addEffect', 'removeEffect', 'skipAction', 'forceRetreat', 'modifyStat', 'castSkill'];
+    const migrateStep = (step) => {
+      if (!step || typeof step !== 'object') return;
+      if (targetKinds.includes(step.kind)) {
+        const oldTarget = step.targetExpression || step.target || 'chosen';
+        if (!step.legacyTarget) step.legacyTarget = this.isNewTargetText(step.target) ? 'chosen' : (step.target || 'chosen');
+        step.targetExpression = this.migrateTargetText(step.targetExpression || step.target || '{target}', step);
+        step.expressionMode = 'formula';
+        changed += 1;
+      }
+      if (step.kind === 'forEach') {
+        if (!step.legacySource) step.legacySource = this.isNewTargetText(step.source) ? 'chosen' : (step.source || 'chosen');
+        step.sourceExpression = this.migrateTargetText(step.sourceExpression || step.source || '{target}', step);
+        step.expressionMode = 'formula';
+        changed += 1;
+      }
+      if (step.kind === 'branch') {
+        if (!step.condition) {
+          const opSymbols = { gt: '>', gte: '>=', lt: '<', lte: '<=', eq: '==', neq: '!=' };
+          step.condition = this.migrateFormulaText(String(step.left == null ? '0' : step.left)) + ' ' + (opSymbols[step.op] || '>=') + ' ' + this.migrateFormulaText(String(step.right == null ? '0' : step.right));
+        }
+        step.condition = this.migrateFormulaText(step.condition);
+        step.expressionMode = 'formula';
+        changed += 1;
+      }
+      for (const field of ['formula', 'times', 'stacks', 'condition']) {
+        if (typeof step[field] === 'string' && step.kind !== 'branch') {
+          const next = this.migrateFormulaText(step[field]);
+          if (next !== step[field]) { step[field] = next; changed += 1; }
+        }
+      }
+      for (const key of ['then', 'elseSteps', 'steps']) {
+        if (Array.isArray(step[key])) step[key].forEach(migrateStep);
+      }
+    };
+    for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
+      for (const item of pack.content[category] || []) {
+        if (item.trigger && typeof item.trigger.condition === 'string') {
+          const next = this.migrateFormulaText(item.trigger.condition);
+          if (next !== item.trigger.condition) { item.trigger.condition = next; changed += 1; }
+        }
+        for (const req of item.requirements || []) {
+          if (typeof req.value === 'string') {
+            const next = this.migrateFormulaText(req.value);
+            if (next !== req.value) { req.value = next; changed += 1; }
+          }
+        }
+        (item.steps || []).forEach(migrateStep);
+      }
+    }
+    this.persistPack();
+    this.dirty = false;
+    app.render();
+    app.toast(L('ui.0a1fdf9d6c50') + changed + L('ui.0bbb89db26ab'), 'success');
+  },
+
   openPackIdEditor(app) {
     const pack = this.currentPack();
     if (!pack || pack.id === CORE_PACK_ID) { app.toast(L('ui.cad643af664c'), 'error'); return; }
@@ -121,6 +227,9 @@ const EditorUI = {
         next = next.split('$effect.' + oldId).join('$effect.' + newId);
         next = next.split('$target.effect.' + oldId).join('$target.effect.' + newId);
         next = next.split('$source.effect.' + oldId).join('$source.effect.' + newId);
+        next = next.split('effect[' + oldId + ']').join('effect[' + newId + ']');
+        next = next.split('with_effect[' + oldId + ']').join('with_effect[' + newId + ']');
+        next = next.split('[' + oldId + ']').join('[' + newId + ']');
       }
       return next;
     };
@@ -131,7 +240,7 @@ const EditorUI = {
         if (mapping[step.effectId]) step.effectId = mapping[step.effectId];
         if (mapping[step.skillId]) step.skillId = mapping[step.skillId];
         if (mapping[step.unitId]) step.unitId = mapping[step.unitId];
-        for (const field of ['formula', 'times', 'left', 'right', 'stacks']) {
+        for (const field of ['formula', 'times', 'left', 'right', 'stacks', 'condition', 'targetExpression', 'sourceExpression']) {
           if (step[field] !== undefined) step[field] = replaceFormula(step[field]);
         }
         replaceSteps(step.then);
@@ -149,6 +258,17 @@ const EditorUI = {
           if (choice && mapping[choice.id]) choice.id = mapping[choice.id];
         }
       }
+      const rewriteConfig = (value) => {
+        if (Array.isArray(value)) return value.map(rewriteConfig);
+        if (typeof value === 'string') return mapping[value] || value;
+        if (value && typeof value === 'object') {
+          const next = {};
+          for (const key of Object.keys(value)) next[key] = rewriteConfig(value[key]);
+          return next;
+        }
+        return value;
+      };
+      if (pack.rogueConfig) pack.rogueConfig = rewriteConfig(pack.rogueConfig);
       for (const category of ['units', 'skills', 'effects', 'equipment', 'runes']) {
         for (const item of pack.content[category] || []) {
           if (item.skills) item.skills = replaceList(item.skills);
@@ -370,7 +490,7 @@ const EditorUI = {
       description: '',
       trigger: { event: 'manual' },
       requirements: [],
-      steps: [{ kind: 'damage', target: 'chosen', damageType: 'physical', formula: '1', ignoreResistance: false }]
+      steps: [{ kind: 'damage', target: '{target}', damageType: 'physical', formula: '1', ignoreResistance: false }]
     };
     pack.content.skills.push(item);
     this.mode = 'skills';
@@ -595,9 +715,72 @@ const EditorUI = {
     return '<label class="form-check-inline"><input type="checkbox" data-list-path="' + attr(listPath) + '" data-step-index="' + index + '" data-step-field="' + attr(field) + '"' + (checked ? ' checked' : '') + (disabled ? ' disabled' : '') + '> ' + esc(label) + '</label>';
   },
 
+  isNewTargetText(value) {
+    return typeof value === 'string' && (/[{}\\]/.test(value) || /^\s*(choose|all|in|un|diff|with_effect|satisfy)\s*[\(<]/.test(value));
+  },
+
+  stepSupportsExpression(step) {
+    if (!step || HIDDEN_STEP_KINDS.has(step.kind)) return false;
+    return ['damage', 'heal', 'addEffect', 'removeEffect', 'skipAction', 'forceRetreat', 'modifyStat', 'castSkill', 'branch', 'forEach'].includes(step.kind);
+  },
+
+  stepExpressionMode(step) {
+    if (step && (step.expressionMode === 'formula' || step.expressionMode === 'legacy')) return step.expressionMode;
+    if (!step) return 'legacy';
+    if (step.kind === 'branch') return step.condition != null && step.condition !== '' ? 'formula' : 'legacy';
+    if (step.kind === 'forEach') return step.sourceExpression ? 'formula' : (this.isNewTargetText(step.source) ? 'formula' : 'legacy');
+    if (step.targetExpression) return 'formula';
+    return this.isNewTargetText(step.target) ? 'formula' : 'legacy';
+  },
+
+  legacyTargetValue(step) {
+    if (!step) return 'chosen';
+    if (step.legacyTarget) return step.legacyTarget;
+    if (step.target && !this.isNewTargetText(step.target)) return step.target;
+    return 'chosen';
+  },
+
+  formulaTargetValue(step) {
+    if (!step) return '{target}';
+    if (step.targetExpression) return step.targetExpression;
+    if (step.target && this.isNewTargetText(step.target)) return step.target;
+    return this.migrateTargetText(step.target || step.legacyTarget || 'chosen', step) || '{target}';
+  },
+
+  legacySourceValue(step) {
+    if (!step) return 'chosen';
+    if (step.legacySource) return step.legacySource;
+    if (step.source && !this.isNewTargetText(step.source)) return step.source;
+    return 'chosen';
+  },
+
+  formulaSourceValue(step) {
+    if (!step) return '{target}';
+    if (step.sourceExpression) return step.sourceExpression;
+    if (step.source && this.isNewTargetText(step.source)) return step.source;
+    return this.migrateTargetText(step.source || step.legacySource || 'chosen', step) || '{target}';
+  },
+
+  stepTargetField(step, listPath, index, readOnly) {
+    const mode = this.stepExpressionMode(step);
+    if (mode === 'formula') {
+      return this.fieldRow(L('ui.941f08313a1d'), this.stepInput(listPath, index, 'targetExpression', this.formulaTargetValue(step), { mono: true, disabled: readOnly }), L('ui.1ccf91cb5c5c'));
+    }
+    return this.fieldRow(L('ui.941f08313a1d'), this.stepInput(listPath, index, 'legacyTarget', this.legacyTargetValue(step), { type: 'select', options: EDITOR_STEP_TARGETS, disabled: readOnly }), L('ui.61026d382dfb'));
+  },
+
+  stepSourceField(step, listPath, index, readOnly) {
+    const mode = this.stepExpressionMode(step);
+    if (mode === 'formula') {
+      return this.fieldRow(L('ui.396c7421b532'), this.stepInput(listPath, index, 'sourceExpression', this.formulaSourceValue(step), { mono: true, disabled: readOnly }), L('ui.2de87ae6921f'));
+    }
+    return this.fieldRow(L('ui.396c7421b532'), this.stepInput(listPath, index, 'legacySource', this.legacySourceValue(step), { type: 'select', options: EDITOR_STEP_TARGETS, disabled: readOnly }), L('ui.21ea89b7eb0a'));
+  },
+
   stepFields(item, step, listPath, index, readOnly) {
     const html = this.stepFieldsInner(item, step, listPath, index, readOnly);
-    const ownerMode = step.target === 'owner' || step.mode === 'owner' || step.source === 'owner';
+    const effectiveLegacyTarget = step.expressionMode === 'legacy' ? (step.legacyTarget || step.target) : step.target;
+    const ownerMode = effectiveLegacyTarget === 'owner' || step.mode === 'owner' || step.source === 'owner';
     if (!ownerMode || !html) return html;
     const effectOptions = this.allEffectRefs().map(effect => ({ value: effect.id, label: effect.name + ' · ' + effect.id }));
     const extra = this.fieldRow(L('ui.3571fa81f147'), this.stepInput(listPath, index, 'ownerEffectId', step.ownerEffectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.8035adedbcd1'), disabled: readOnly }), L('ui.dae392f2b7f4'));
@@ -606,27 +789,25 @@ const EditorUI = {
   },
 
   stepFieldsInner(item, step, listPath, index, readOnly) {
-    const targetOptions = EDITOR_STEP_TARGETS;
     const disabled = readOnly;
-    const targetSelect = (value) => this.stepInput(listPath, index, 'target', value || 'chosen', { type: 'select', options: targetOptions, disabled });
     const effectOptions = this.allEffectRefs().map(effect => ({ value: effect.id, label: effect.name + ' · ' + effect.id }));
     const skillOptions = this.allSkillRefs().map(skill => ({ value: skill.id, label: skill.name + ' · ' + skill.id }));
     const unitOptions = Store.index.units.map(unit => ({ value: unit.id, label: unit.name + ' · ' + unit.id }));
     switch (step.kind) {
       case 'damage':
         return '<div class="step-fields">' +
-          this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target)) +
+          this.stepTargetField(step, listPath, index, readOnly) +
           this.fieldRow(L('ui.c8078d8a7256'), this.stepInput(listPath, index, 'damageType', step.damageType || 'physical', { type: 'select', options: Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), disabled })) +
-          this.fieldRow(L('ui.edb1fa0b195a'), this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), L('ui.694cd528ea42')) +
+          this.fieldRow(L('ui.edb1fa0b195a'), this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), L('ui.1b24c9b4ef8c')) +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'ignoreResistance', !!step.ignoreResistance, L('ui.63d383e14a49'), disabled) + '</div>' +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'bonus', !!step.bonus, L('ui.00e12d3558e4'), disabled) + '</div>' +
         '</div>';
       case 'heal':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target)) + this.fieldRow(L('ui.5ad1fb4006cf'), this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), L('ui.98a4c7619cff')) + '</div>';
+        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.5ad1fb4006cf'), this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), L('ui.98a4c7619cff')) + '</div>';
       case 'addEffect':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target)) + this.fieldRow(L('ui.6a4f4be10d6e'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5fd18d1eb114'), disabled })) + this.fieldRow(L('ui.15e4c563f602'), this.stepInput(listPath, index, 'stacks', step.stacks || '1', { mono: true, disabled })) + '</div>';
+        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.6a4f4be10d6e'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5fd18d1eb114'), disabled })) + this.fieldRow(L('ui.15e4c563f602'), this.stepInput(listPath, index, 'stacks', step.stacks || '1', { mono: true, disabled })) + '</div>';
       case 'removeEffect':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target)) + this.fieldRow(L('ui.151ddd4f1f9f'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5ac431ae3fea'), disabled })) + this.fieldRow(L('ui.90a0885a60a9'), this.stepInput(listPath, index, 'stacks', step.stacks || '9999', { mono: true, disabled })) + '</div>';
+        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.151ddd4f1f9f'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5ac431ae3fea'), disabled })) + this.fieldRow(L('ui.90a0885a60a9'), this.stepInput(listPath, index, 'stacks', step.stacks || '9999', { mono: true, disabled })) + '</div>';
       case 'modifyCount':
         return '<div class="step-fields">' +
           this.fieldRow(L('ui.31618e13034d'), this.stepInput(listPath, index, 'scope', step.scope || 'unit', { type: 'select', options: Object.keys(COUNT_SCOPES).map(key => ({ value: key, label: COUNT_SCOPES[key].label })), disabled })) +
@@ -640,32 +821,34 @@ const EditorUI = {
           this.fieldRow(L('ui.27dc101a73b6'), this.stepInput(listPath, index, 'countId', step.countId || '', { mono: true, disabled })) +
           this.fieldRow(L('ui.74e6096f270d'), this.stepInput(listPath, index, 'varName', step.varName || 'value', { disabled }), L('ui.c68f6c4dada6')) +
         '</div>';
-      case 'branch':
-        return '<div class="step-fields">' +
-          this.fieldRow(L('ui.adf0c6adb033'), this.stepInput(listPath, index, 'left', step.left || '0', { mono: true, disabled })) +
-          this.fieldRow(L('ui.ea940279447b'), this.stepInput(listPath, index, 'op', step.op || 'gte', { type: 'select', options: EDITOR_CONDITION_OPS.map(op => ({ value: op.value, label: op.label })), disabled })) +
-          this.fieldRow(L('ui.425f92eaa7c1'), this.stepInput(listPath, index, 'right', step.right || '0', { mono: true, disabled })) +
-        '</div>' + this.renderNested(item, step.then, listPath + '.' + index + '.then', L('ui.5b36a4a467dd'), readOnly, 'then') + this.renderNested(item, step.elseSteps, listPath + '.' + index + '.elseSteps', L('ui.05fbede32616'), readOnly, 'elseSteps');
+      case 'branch': {
+        const conditionFields = this.stepExpressionMode(step) === 'formula'
+          ? this.fieldRow(L('ui.25290fa627bb'), this.stepInput(listPath, index, 'condition', step.condition || '1 == 1', { mono: true, disabled }), L('ui.6d97351c849d'))
+          : this.fieldRow(L('ui.adf0c6adb033'), this.stepInput(listPath, index, 'left', step.left || '0', { mono: true, disabled })) +
+            this.fieldRow(L('ui.ea940279447b'), this.stepInput(listPath, index, 'op', step.op || 'gte', { type: 'select', options: EDITOR_CONDITION_OPS.map(op => ({ value: op.value, label: op.label })), disabled })) +
+            this.fieldRow(L('ui.425f92eaa7c1'), this.stepInput(listPath, index, 'right', step.right || '0', { mono: true, disabled }));
+        return '<div class="step-fields">' + conditionFields + '</div>' + this.renderNested(item, step.then, listPath + '.' + index + '.then', L('ui.5b36a4a467dd'), readOnly, 'then') + this.renderNested(item, step.elseSteps, listPath + '.' + index + '.elseSteps', L('ui.05fbede32616'), readOnly, 'elseSteps');
+      }
       case 'selectTarget':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.263cd7f8c7ef'), this.stepInput(listPath, index, 'mode', step.mode || 'allEnemies', { type: 'select', options: targetOptions, disabled })) + this.fieldRow(L('ui.60d0c801757c'), this.stepInput(listPath, index, 'varName', step.varName || '', { disabled })) + '</div>';
+        return '<div class="step-fields">' + this.fieldRow(L('ui.263cd7f8c7ef'), this.stepInput(listPath, index, 'mode', step.mode || 'all({enemy})', { mono: true, disabled }), L('ui.be5b11bba6e3')) + this.fieldRow(L('ui.60d0c801757c'), this.stepInput(listPath, index, 'varName', step.varName || '', { disabled })) + '</div>';
       case 'forEach':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.396c7421b532'), this.stepInput(listPath, index, 'source', step.source || 'chosen', { type: 'select', options: targetOptions, disabled })) + '</div>' + this.renderNested(item, step.steps, listPath + '.' + index + '.steps', L('ui.b23b3f7a705d'), readOnly, 'steps');
+        return '<div class="step-fields">' + this.stepSourceField(step, listPath, index, readOnly) + '</div>' + this.renderNested(item, step.steps, listPath + '.' + index + '.steps', L('ui.b23b3f7a705d'), readOnly, 'steps');
       case 'loop':
         return '<div class="step-fields">' + this.fieldRow(L('ui.afc168b7d7ff'), this.stepInput(listPath, index, 'times', step.times || '1', { mono: true, disabled }), L('ui.fc8b3b99435d')) + '</div>' + this.renderNested(item, step.steps, listPath + '.' + index + '.steps', L('ui.b23b3f7a705d'), readOnly, 'steps');
       case 'castSkill':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.53da139b6a5c'), this.stepInput(listPath, index, 'skillId', step.skillId || '', { type: 'select', options: skillOptions, placeholder: L('ui.af6ccc9dee69'), disabled })) + this.fieldRow(L('ui.60ed92dfe589'), this.stepInput(listPath, index, 'target', step.target || 'chosen', { type: 'select', options: targetOptions, disabled })) + '</div>';
+        return '<div class="step-fields">' + this.fieldRow(L('ui.53da139b6a5c'), this.stepInput(listPath, index, 'skillId', step.skillId || '', { type: 'select', options: skillOptions, placeholder: L('ui.af6ccc9dee69'), disabled })) + this.stepTargetField(step, listPath, index, readOnly) + '</div>';
       case 'skipAction':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target || 'self')) + L('ui.594414c28118');
+        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + L('ui.594414c28118');
       case 'immuneDamage':
         return L('ui.47e707f96348');
       case 'forceRetreat':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target || 'self')) + '</div>';
+        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + '</div>';
       case 'summon':
         return '<div class="step-fields">' + this.fieldRow(L('ui.5faece5e0845'), this.stepInput(listPath, index, 'unitId', step.unitId || '', { type: 'select', options: unitOptions, placeholder: L('ui.2150939fb166'), disabled })) + this.fieldRow(L('ui.d4d8e09af202'), this.stepInput(listPath, index, 'count', step.count || '1', { mono: true, disabled })) + '</div>';
       case 'modifyStat':
         return '<div class="step-fields">' +
           this.fieldRow(L('ui.7d3c35c29be1'), this.stepInput(listPath, index, 'stat', step.stat || 'atkFlat', { type: 'select', options: Object.keys(STAT_KEYS).map(key => ({ value: key, label: STAT_KEYS[key] })), disabled })) +
-          this.fieldRow(L('ui.941f08313a1d'), targetSelect(step.target || 'self')) +
+          this.stepTargetField(step, listPath, index, readOnly) +
           this.fieldRow(L('ui.3fe475f7b233'), this.stepInput(listPath, index, 'formula', step.formula || '0', { mono: true, disabled })) +
         '</div>';
       case 'setVar':
@@ -684,6 +867,14 @@ const EditorUI = {
 
   renderStep(item, step, listPath, index, readOnly, depth) {
     const meta = STEP_LIBRARY.find(entry => entry.kind === step.kind) || { name: step.kind, group: L('ui.09d316b96552') };
+    if (HIDDEN_STEP_KINDS.has(step.kind)) {
+      return L('ui.ab1f69fdd1dc') + esc(meta.name) + L('ui.87a2805dd343') +
+        (readOnly ? '' : '<button class="icon-btn small danger" type="button" data-action="ed-step-delete" data-list-path="' + attr(listPath) + '" data-index="' + index + L('ui.2b99232466c2')) +
+      '</div>';
+    }
+    const exprToggle = this.stepSupportsExpression(step)
+      ? '<span class="step-expr-toggle"><button class="segment' + (this.stepExpressionMode(step) === 'legacy' ? ' active' : '') + '" type="button" data-action="ed-step-expression-mode" data-list-path="' + attr(listPath) + '" data-index="' + index + '" data-mode="legacy"' + (readOnly ? ' disabled' : '') + L('ui.0890d8aa7764') + (this.stepExpressionMode(step) === 'formula' ? ' active' : '') + '" type="button" data-action="ed-step-expression-mode" data-list-path="' + attr(listPath) + '" data-index="' + index + '" data-mode="formula"' + (readOnly ? ' disabled' : '') + L('ui.1168cdadf936')
+      : '';
     const displayName = step.kind === 'damage' && step.bonus ? L('ui.683a6ce05a97') : meta.name;
     const isBranch = ['branch', 'forEach', 'loop'].includes(step.kind);
     return '<div class="step-block' + (isBranch ? ' branch-step' : '') + '" data-step-block data-list-path="' + attr(listPath) + '" data-index="' + index + '" draggable="' + (!readOnly ? 'true' : 'false') + '">' +
@@ -692,6 +883,7 @@ const EditorUI = {
         '<span class="step-num">' + (depth ? String(index + 1) : String(index + 1)) + '</span>' +
         '<span class="step-title">' + esc(displayName) + '</span>' +
         '<span class="step-kind">' + esc(meta.group) + '</span>' +
+        exprToggle +
         '<div class="step-actions">' +
           (readOnly ? '' : '<button type="button" data-action="ed-step-up" data-list-path="' + attr(listPath) + '" data-index="' + index + L('ui.a333ba0515d6') + attr(listPath) + '" data-index="' + index + L('ui.7504bd22acc6') + attr(listPath) + '" data-index="' + index + L('ui.beb772a2beb2') + attr(listPath) + '" data-index="' + index + L('ui.40ce48891ee4')) +
         '</div>' +
@@ -1056,25 +1248,31 @@ const EditorUI = {
     const validation = this.validateCurrent(app);
     const flow = item ? renderFlowTree(item.steps || []) : '';
     const variables = VARIABLE_PALETTE.map(variable => '<button class="palette-btn" type="button" data-action="ed-insert-token" data-token="' + attr(variable.token) + '" title="' + attr(variable.hint) + '">' + esc(variable.label) + '<code>' + esc(variable.token) + '</code></button>').join('');
+    const help = L('ui.fb52ff72a21f') +
+      L('ui.f6dfe937aa00') +
+      '<ul>' +
+        L('ui.9afe1406f9f4') +
+        L('ui.bcb8384b7e52') +
+        L('ui.2ee354c6a46c') +
+        L('ui.7a3d2ea7694e') +
+        L('ui.4b78e26fd6f7') +
+        L('ui.1c8cb2a9e315') +
+      '</ul>' +
+      L('ui.724d7fc966fe') +
+      '<ul>' +
+        '<li><code>{target}.atk</code>、<code>.hp</code>、<code>.max_hp</code>、<code>.res</code>、<code>.last_hit_count</code>。</li>' +
+        L('ui.99f907fe8aa4') +
+        L('ui.eba23850a1bc') +
+        L('ui.61c3189e7d57') +
+        L('ui.7f3926af18ab') +
+      '</ul>' +
+      L('ui.426f02826aa2') +
+      L('ui.868a6e971afc') +
+    '</div>';
     return '<aside class="editor-aside">' +
       L('ui.64388ae940d7') +
         L('ui.62feaaa205e4') + variables + L('ui.d63d34238e70') +
-        L('ui.514c600bc741') + EDITOR_STEP_TARGETS.map(target => L('ui.dce534653862') + attr(target.label) + '">' + esc(target.label) + '</span>').join('') + L('ui.a7bf363d0b3e') +
-        L('ui.d451d7ed9601') + EDITOR_CONDITION_OPS.map(op => esc(op.label)).join(' · ') + L('ui.d9b093f49744') +
-        L('ui.bc61bb8db524') +
-          L('ui.68e10b4eb8ee') +
-          '<ul>' +
-            L('ui.349edbbe1b76') +
-            L('ui.166edb32d0f1') +
-            L('ui.68efa8778c0d') +
-            L('ui.ad2f49183057') +
-            L('ui.75e9dcc9ec41') +
-            L('ui.3d1ba8ff3ac8') +
-            L('ui.d78a16cf18fc') +
-            L('ui.6b9d0e98a853') +
-          '</ul>' +
-          L('ui.76d60ca32cc1') +
-        '</div>' +
+        help +
       '</div></section>' +
       L('ui.5aede22d5dcf') + (validation.errors.length ? validation.errors.length + L('ui.c189fab0228a') : L('ui.dcc4233255ab')) + '</span></div><div class="panel-body" id="editor-validation">' + this.renderValidationBox(validation) + '</div></section>' +
       L('ui.ecc45e4b7216') + ((item && item.steps) || []).length + '</span></div><div class="panel-body">' + (flow || L('ui.565968446956')) + '<div class="editor-helper-note mt-2">' + (readOnly ? L('ui.8fa87032da75') : L('ui.90e31a82c675')) + '</div></div></section>' +
@@ -1120,6 +1318,7 @@ const EditorUI = {
             '<div class="editor-side-actions">' +
               '<button class="btn btn-sm btn-primary" type="button" data-action="' + info.newAction + L('ui.0552d39ccd0f') + esc(info.label) + '</button>' +
               '<button class="btn btn-sm" type="button" data-action="ed-copy">' + (readOnly ? L('ui.198a314aa63f') : L('ui.ff28b37bb58f')) + '</button>' +
+              L('ui.96fd39a1ed4d') +
               (isDraftTarget ? L('ui.51cdf6c33786') : '') +
               (isDraftTarget ? L('ui.253166bf81f7') : '') +
             '</div>' +
@@ -1140,24 +1339,45 @@ const EditorUI = {
 
   stepTargetOptions() { return EDITOR_STEP_TARGETS; },
 
+  ensureStepExpressionDefaults(step) {
+    if (!step || HIDDEN_STEP_KINDS.has(step.kind)) return step;
+    const targetKinds = ['damage', 'heal', 'addEffect', 'removeEffect', 'skipAction', 'forceRetreat', 'modifyStat', 'castSkill'];
+    if (targetKinds.includes(step.kind)) {
+      step.expressionMode = step.expressionMode || 'formula';
+      if (!step.targetExpression) step.targetExpression = this.isNewTargetText(step.target) ? step.target : this.formulaTargetValue(step);
+      if (!step.legacyTarget) {
+        const legacyMap = { '{target}': 'chosen', '{self}': 'self', 'all({enemy})': 'allEnemies', 'all({friendly})': 'allAllies', '{unit}': 'item' };
+        step.legacyTarget = legacyMap[step.targetExpression] || this.legacyTargetValue(step);
+      }
+    } else if (step.kind === 'forEach') {
+      step.expressionMode = step.expressionMode || 'formula';
+      if (!step.sourceExpression) step.sourceExpression = this.isNewTargetText(step.source) ? step.source : this.formulaSourceValue(step);
+      if (!step.legacySource) step.legacySource = step.sourceExpression === '{target}' || step.sourceExpression === '{unit}' ? 'chosen' : this.legacySourceValue(step);
+    } else if (step.kind === 'branch') {
+      step.expressionMode = step.expressionMode || 'formula';
+      if (!step.condition) step.condition = '1 == 1';
+    }
+    return step;
+  },
+
   createStep(kind) {
     switch (kind) {
-      case 'damage': return { kind, target: 'chosen', damageType: 'physical', formula: '1', ignoreResistance: false };
-      case 'heal': return { kind, target: 'self', formula: '$hpMax - $hp' };
-      case 'addEffect': return { kind, target: 'chosen', effectId: '', stacks: '1' };
-      case 'removeEffect': return { kind, target: 'self', effectId: '', stacks: '9999' };
+      case 'damage': return { kind, target: '{target}', damageType: 'physical', formula: '1', ignoreResistance: false };
+      case 'heal': return { kind, target: '{self}', formula: '{self}.max_hp - {self}.hp' };
+      case 'addEffect': return { kind, target: '{target}', effectId: '', stacks: '1' };
+      case 'removeEffect': return { kind, target: '{self}', effectId: '', stacks: '9999' };
       case 'modifyCount': return { kind, scope: 'unit', countId: 'sakurafade', mode: 'add', formula: '1' };
       case 'readCount': return { kind, scope: 'unit', countId: 'sakurafade', varName: 'value' };
-      case 'branch': return { kind, left: '$count.ha', op: 'gte', right: '1', then: [], elseSteps: [] };
-      case 'selectTarget': return { kind, mode: 'allEnemies', varName: '' };
-      case 'forEach': return { kind, source: 'chosen', steps: [] };
+      case 'branch': return { kind, condition: '{self}.count[ha] >= 1', then: [], elseSteps: [] };
+      case 'selectTarget': return { kind, mode: 'all({enemy})', varName: '' };
+      case 'forEach': return { kind, source: '{target}', steps: [] };
       case 'loop': return { kind, times: '1', steps: [] };
-      case 'castSkill': return { kind, skillId: '', target: 'chosen' };
-      case 'skipAction': return { kind, target: 'self' };
+      case 'castSkill': return { kind, skillId: '', target: '{target}' };
+      case 'skipAction': return { kind, target: '{self}' };
       case 'immuneDamage': return { kind };
-      case 'forceRetreat': return { kind, target: 'self' };
+      case 'forceRetreat': return { kind, target: '{self}' };
       case 'summon': return { kind, unitId: '', count: '1' };
-      case 'modifyStat': return { kind, stat: 'atkFlat', target: 'self', formula: '1' };
+      case 'modifyStat': return { kind, stat: 'atkFlat', target: '{self}', formula: '1' };
       case 'setVar': return { kind, varName: 'value', formula: '0' };
       default: return { kind };
     }
@@ -1165,7 +1385,7 @@ const EditorUI = {
 
   openStepPicker(app, listPath) {
     const groups = {};
-    STEP_LIBRARY.forEach(step => { (groups[step.group] = groups[step.group] || []).push(step); });
+    STEP_LIBRARY.filter(step => !HIDDEN_STEP_KINDS.has(step.kind)).forEach(step => { (groups[step.group] = groups[step.group] || []).push(step); });
     const body = '<div class="step-picker">' + Object.keys(groups).map(group => '<div class="step-picker-group"><h4>' + esc(group) + '</h4><div class="step-picker-grid">' + groups[group].map(step => '<button class="step-picker-card" type="button" data-action="ed-step-pick" data-kind="' + attr(step.kind) + '" data-list-path="' + attr(listPath) + '"><strong>' + esc(step.name) + '</strong><small>' + esc(step.hint) + '</small></button>').join('') + '</div></div>').join('') + '</div>';
     app.openModal({ title: L('ui.46090df7b8ed'), subtitle: L('ui.76620e08cc1e'), size: 'large', body, foot: L('ui.eb2ea2f437dc') });
   },
@@ -1223,6 +1443,10 @@ const EditorUI = {
       case 'ed-copy':
         this.copyCurrent(app);
         return true;
+      case 'ed-migrate-expressions':
+        if (readOnly) return true;
+        this.migrateLegacyExpressions(app);
+        return true;
       case 'ed-delete':
         this.deleteCurrent(app);
         return true;
@@ -1269,10 +1493,36 @@ const EditorUI = {
         if (readOnly || !item) return true;
         this.openStepPicker(app, data.listPath || 'root');
         return true;
+      case 'ed-step-expression-mode': {
+        const list = this.stepList(item, data.listPath || 'root');
+        const index = Number(data.index);
+        const step = list && list[index];
+        if (readOnly || !step) return true;
+        step.expressionMode = data.mode === 'formula' ? 'formula' : 'legacy';
+        if (step.expressionMode === 'formula') {
+          if (!step.legacyTarget) step.legacyTarget = this.legacyTargetValue(step);
+          if (step.kind === 'forEach') {
+            if (!step.sourceExpression) step.sourceExpression = this.formulaSourceValue(step);
+          } else if (step.kind === 'branch') {
+            if (!step.condition) {
+              const opSymbols = { gt: '>', gte: '>=', lt: '<', lte: '<=', eq: '==', neq: '!=' };
+              step.condition = this.migrateFormulaText(String(step.left == null ? '0' : step.left)) + ' ' + (opSymbols[step.op] || '>=') + ' ' + this.migrateFormulaText(String(step.right == null ? '0' : step.right));
+            }
+          } else if (!step.targetExpression) {
+            step.targetExpression = this.formulaTargetValue(step);
+          }
+        } else {
+          if (step.kind === 'forEach' && !step.legacySource) step.legacySource = this.legacySourceValue(step);
+          else if (step.kind !== 'branch' && !step.legacyTarget) step.legacyTarget = this.legacyTargetValue(step);
+        }
+        this.markDirty();
+        app.render();
+        return true;
+      }
       case 'ed-step-pick': {
         const list = this.stepList(item, data.listPath || 'root');
         if (!list) { app.toast(L('ui.758de6f90c24'), 'error'); return true; }
-        list.push(this.createStep(data.kind));
+        list.push(this.ensureStepExpressionDefaults(this.createStep(data.kind)));
         this.markDirty();
         app.closeModal();
         app.render();
@@ -1412,6 +1662,7 @@ const EditorUI = {
       if (target.type === 'checkbox') list[index][field] = target.checked;
       else list[index][field] = target.value;
       this.markDirty();
+      if (target.tagName === 'SELECT' && ['legacyTarget', 'legacySource', 'op'].includes(field)) app.render();
       return;
     }
   },

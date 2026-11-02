@@ -1856,6 +1856,13 @@ App.battleUncountWarning = function (actor, skill, targetUid) {
   if (!effectIds.size) return '';
   const chosen = battle.resolveChosenTargets(actor, skill, targetUid);
   const targetFor = (mode, step) => {
+    if (battle.isNewTargetExpression && battle.isNewTargetExpression(mode)) {
+      try {
+        return battle.resolveSetExpression(mode, { unit: actor, source: actor, chosen });
+      } catch (error) {
+        return [];
+      }
+    }
     if (mode === 'owner' && step && step.ownerEffectId) {
       const holders = [];
       for (const sideId of ['A', 'B']) {
@@ -1875,7 +1882,7 @@ App.battleUncountWarning = function (actor, skill, targetUid) {
     for (const step of steps) {
       if (!step) continue;
       if (step.kind === 'addEffect' && effectIds.has(step.effectId)) {
-        for (const target of targetFor(step.target || 'chosen', step)) {
+        for (const target of targetFor(battle.stepTargetExpression(step), step)) {
           if (!target || !target.alive || !target.counted) continue;
           const otherCounted = battle.getFieldUnits(target.side).filter(unit => unit !== target && unit.alive && unit.counted).length;
           if (otherCounted === 0) {
