@@ -350,6 +350,10 @@ immuneDamage / forceRetreat / summon / modifyStat / setVar
 
 被动技由事件触发并检查 `trigger.event`、触发条件与释放条件。主动技只在自身行动时可用；附加技不占用行动。
 
+效果触发器选择 `immediate` 后，效果每次成功附加或叠加时会立即执行自身步骤；不可叠加且已存在的效果再次附加时不会重复触发。
+
+效果或被动技触发器选择 `continuous` 后，会在任意单位入场、攻击、受击、效果执行、被动执行、流程步骤或状态变化后触发一次。触发是全局的：场上所有持续触发效果和被动技都会响应。持续触发执行期间产生的新事件和变化不会再次递归触发。
+
 当前触发事件：
 
 ```text
@@ -362,6 +366,8 @@ fatalDamage          受到致命伤害时
 retreat              退场时
 defeated             被击败后
 enterField           入场时
+immediate            效果被附加时立即触发（仅效果）
+continuous           持续触发（任意单位入场 / 事件 / 变化后）
 rule / manual        规则 / 手动
 ```
 
