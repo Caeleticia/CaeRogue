@@ -2,7 +2,7 @@
   "format": "caerogue.expansion",
   "id": "starrail",
   "name": "starrail扩展",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "author": "caeleticia",
   "description": "添加了一些星角色",
   "dependencies": [],
@@ -157,7 +157,8 @@
         "multiplier": 100,
         "description": "全场只能触发一次的名刀",
         "trigger": {
-          "event": "continuous"
+          "event": "continuous",
+          "condition": "<({satisfy({friendly}, {unit}.name==遐蝶)}.effect[castorice_effect_usedblade].count < 1 and {satisfy({friendly}, {unit}.id != deathdragon and {unit}.effect[castorice_effect_mooncocoon].count == 0)}.count > 0) or ({satisfy({friendly}, {unit}.name==遐蝶)}.effect[castorice_effect_usedblade].count >= 1 and {satisfy({friendly}, {unit}.effect[castorice_effect_mooncocoon].count > 0)}.count > 0)>"
         },
         "requirements": [],
         "steps": [
@@ -167,7 +168,7 @@
             "then": [
               {
                 "kind": "branch",
-                "condition": "{satisfy({friendly}, {unit}.effect[castorice_effect_mooncocoon].count == 0)}.count > 0",
+                "condition": "{satisfy({friendly}, {unit}.id != deathdragon and {unit}.effect[castorice_effect_mooncocoon].count == 0)}.count > 0",
                 "then": [
                   {
                     "kind": "addEffect",
@@ -175,7 +176,7 @@
                     "effectId": "castorice_effect_mooncocoon",
                     "stacks": "1",
                     "expressionMode": "formula",
-                    "targetExpression": "{satisfy({friendly}, {unit}.id != deathdragon)}",
+                    "targetExpression": "{satisfy({friendly}, {unit}.id != deathdragon and {unit}.effect[castorice_effect_mooncocoon].count == 0)}",
                     "legacyTarget": "chosen"
                   }
                 ],
