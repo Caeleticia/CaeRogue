@@ -1,0 +1,477 @@
+{
+  "format": "caerogue.expansion",
+  "id": "starrail",
+  "name": "starrail扩展",
+  "version": "0.2.2",
+  "author": "caeleticia",
+  "description": "添加了一些星角色",
+  "dependencies": [],
+  "countDefs": {},
+  "content": {
+    "units": [
+      {
+        "id": "castorice",
+        "packId": "starrail",
+        "name": "遐蝶",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "starrail",
+        "counted": true,
+        "hp": 32,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "castorice_wail",
+          "castorice_silence",
+          "castorice_mooncocoon",
+          "castorice_wither",
+          "castorice_summons"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/starrail/castorice.png",
+        "flavor": "再寒冷的彼岸，也会有花香"
+      },
+      {
+        "id": "deathdragon",
+        "packId": "starrail",
+        "name": "死龙",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 42,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 2
+        },
+        "skills": [
+          "deathdragon_flame",
+          "deathdragon_reset"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "description": "其实是遐蝶的妹妹来着("
+      },
+      {
+        "id": "trainingdummy",
+        "packId": "starrail",
+        "name": "木头人",
+        "quality": "white",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 96,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "slime_strike"
+        ],
+        "equip": [],
+        "autoAttack": true,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": ""
+      }
+    ],
+    "skills": [
+      {
+        "id": "castorice_wail",
+        "packId": "starrail",
+        "name": "哀悼，死海之涟漪",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "造成15%自身生命上限的精神伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "({self}.maxHp)*0.15",
+            "ignoreResistance": false
+          }
+        ]
+      },
+      {
+        "id": "castorice_silence",
+        "packId": "starrail",
+        "name": "缄默，幽蝶之轻抚",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "消耗我方全体当前30%的生命值，群攻相当于自己12%生命上限的角色伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "({target}.hp)*0.3",
+            "ignoreResistance": true,
+            "expressionMode": "formula",
+            "targetExpression": "all({friendly})",
+            "legacyTarget": "chosen",
+            "bonus": true
+          },
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "({self}.maxHp)*0.12",
+            "ignoreResistance": false,
+            "bonus": false
+          }
+        ]
+      },
+      {
+        "id": "castorice_mooncocoon",
+        "packId": "starrail",
+        "name": "月茧之庇",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "全场只能触发一次的名刀",
+        "trigger": {
+          "event": "continuous"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "branch",
+            "condition": "{satisfy({friendly}, {unit}.name==遐蝶)}.effect[castorice_effect_usedblade].count < 1",
+            "then": [
+              {
+                "kind": "branch",
+                "condition": "{satisfy({friendly}, {unit}.effect[castorice_effect_mooncocoon].count == 0)}.count > 0",
+                "then": [
+                  {
+                    "kind": "addEffect",
+                    "target": "{target}",
+                    "effectId": "castorice_effect_mooncocoon",
+                    "stacks": "1",
+                    "expressionMode": "formula",
+                    "targetExpression": "{satisfy({friendly}, {unit}.id != deathdragon)}",
+                    "legacyTarget": "chosen"
+                  }
+                ],
+                "elseSteps": [],
+                "expressionMode": "formula"
+              }
+            ],
+            "elseSteps": [
+              {
+                "kind": "removeEffect",
+                "target": "{self}",
+                "effectId": "castorice_effect_mooncocoon",
+                "stacks": "9999",
+                "force": true,
+                "expressionMode": "formula",
+                "targetExpression": "{friendly}",
+                "legacyTarget": "self"
+              }
+            ],
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "castorice_wither",
+        "packId": "starrail",
+        "name": "掌心淌过的荒芜",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "记录我方生命值变动，附加等量新蕊；死龙在场或死龙治疗时不记录。",
+        "trigger": {
+          "event": "allyHpChange",
+          "condition": "<{{child}.id[deathdragon]}.count == 0 and $event.sourceId != deathdragon>"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "{self}",
+            "effectId": "castorice_effect_nectar",
+            "stacks": "$event.amount",
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          }
+        ]
+      },
+      {
+        "id": "castorice_summons",
+        "packId": "starrail",
+        "name": "亡喉怒哮，苏生之颂铃",
+        "type": "active",
+        "op": "special",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "消耗 42 层新蕊，召唤子单位「死龙」；死龙在场时无法再次召唤。",
+        "trigger": {
+          "event": "manual",
+          "condition": "<{self}.effect[castorice_effect_nectar].count == 42 and {self}.effect[castorice_effect_netherrealm].count == 0>"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "castorice_effect_nectar",
+            "stacks": "9999",
+            "force": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          },
+          {
+            "kind": "addEffect",
+            "target": "{target}",
+            "effectId": "castorice_effect_netherrealm",
+            "stacks": "1",
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen"
+          },
+          {
+            "kind": "summon",
+            "unitId": "deathdragon",
+            "count": "1",
+            "ignoreFieldLimit": true,
+            "summonAsChild": true,
+            "childId": "deathdragon",
+            "childTag": "summon"
+          }
+        ]
+      },
+      {
+        "id": "deathdragon_flame",
+        "packId": "starrail",
+        "name": "燎尽黯泽的焰息",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "消耗14点生命，群攻6点精神伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "6",
+            "ignoreResistance": false,
+            "bonus": false
+          },
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "true",
+            "formula": "14",
+            "ignoreResistance": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen",
+            "bonus": true
+          }
+        ]
+      },
+      {
+        "id": "deathdragon_reset",
+        "packId": "starrail",
+        "name": "死龙退场·遗世冥域解除",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "死龙退场时解除遐蝶的遗世冥域，并为其他我方单位回复各自 50% 生命上限。",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "heal",
+            "target": "{target}",
+            "expressionMode": "formula",
+            "targetExpression": "diff({friendly}, {self})",
+            "legacyTarget": "self",
+            "formula": "{target}.max_hp * 0.5"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "{parent}",
+            "effectId": "castorice_effect_netherrealm",
+            "stacks": "9999",
+            "force": true,
+            "expressionMode": "formula",
+            "targetExpression": "{parent}",
+            "legacyTarget": "self"
+          }
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "id": "castorice_effect_silence",
+        "packId": "starrail",
+        "name": "缄默，幽蝶之轻抚",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "rule"
+        },
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "({self}.hp)*0.3",
+            "ignoreResistance": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen",
+            "bonus": true
+          },
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "castorice_effect_silence",
+            "stacks": "9999",
+            "force": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          }
+        ],
+        "description": "消耗自身30%生命值"
+      },
+      {
+        "id": "castorice_effect_mooncocoon",
+        "packId": "starrail",
+        "name": "月茧之庇",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "fatalDamage"
+        },
+        "steps": [
+          {
+            "kind": "immuneDamage"
+          },
+          {
+            "kind": "heal",
+            "target": "{self}",
+            "formula": "1-{self}.hp",
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          },
+          {
+            "kind": "addEffect",
+            "target": "{target}",
+            "effectId": "castorice_effect_usedblade",
+            "stacks": "1",
+            "expressionMode": "formula",
+            "targetExpression": "{satisfy({friendly}, {unit}.name==遐蝶)}",
+            "legacyTarget": "chosen"
+          }
+        ],
+        "description": ""
+      },
+      {
+        "id": "castorice_effect_usedblade",
+        "packId": "starrail",
+        "name": "用掉了名刀",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      },
+      {
+        "id": "castorice_effect_nectar",
+        "packId": "starrail",
+        "name": "新蕊",
+        "type": "special",
+        "removable": false,
+        "stackable": true,
+        "stackMax": 42,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      },
+      {
+        "id": "castorice_effect_netherrealm",
+        "packId": "starrail",
+        "name": "遗世冥域",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      }
+    ],
+    "equipment": [],
+    "runes": []
+  },
+  "rogueEvents": [],
+  "rogueConfig": null
+}
