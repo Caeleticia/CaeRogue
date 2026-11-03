@@ -2307,7 +2307,7 @@ class Battle {
     }
 
     if (actualAmount > 0) {
-      this.triggerEvent('allyHpChange', { target, unit: target, amount: actualAmount, changeType: 'damage', beforeHp, afterHp: target.hp, source, isAttack }, {});
+      this.triggerEvent('allyHpChange', { target, unit: target, amount: actualAmount, changeType: 'damage', beforeHp, afterHp: target.hp, source, sourceId: source ? source.cardId : '', isAttack }, {});
     }
 
     let immune = false;
@@ -2391,7 +2391,7 @@ class Battle {
         maxHp: target.maxHp,
         self: !!source && source === target
       });
-      this.triggerEvent('allyHpChange', { target, unit: target, amount: healed, changeType: 'heal', beforeHp: before, afterHp: target.hp, source, isAttack: false }, {});
+      this.triggerEvent('allyHpChange', { target, unit: target, amount: healed, changeType: 'heal', beforeHp: before, afterHp: target.hp, source, sourceId: source ? source.cardId : '', isAttack: false }, {});
       this.notifyUnitChanged(target, 'heal', { source, beforeHp: before, afterHp: target.hp, amount: healed });
     }
     return healed;
