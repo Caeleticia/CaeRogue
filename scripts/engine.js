@@ -936,6 +936,28 @@ class Battle {
       return { kind: 'side', side: text };
     }
     const actor = ctx.unit || ctx.source;
+    const childOwner = ctx.item || actor;
+    if (text === 'parent') {
+      const parent = childOwner ? this.getParentUnit(childOwner) : null;
+      return { kind: 'units', units: parent && parent.alive ? [parent] : [] };
+    }
+    if (text === 'child') {
+      return { kind: 'units', units: childOwner ? this.getChildUnits(childOwner) : [] };
+    }
+    const childIdMatch = /^\{child\}\.id\[([\s\S]+)\]\s*$/.exec(text);
+    if (childIdMatch) {
+      const id = childIdMatch[1].trim();
+      const children = childOwner ? this.getChildUnits(childOwner) : [];
+      return { kind: 'units', units: children.filter(unit => unit.childId === id) };
+    }
+    const childTagMatch = /^\{child\}\.tag\[([\s\S]+?)\](?:\.\((\d+)\))?\s*$/.exec(text);
+    if (childTagMatch) {
+      const tag = childTagMatch[1].trim();
+      const children = (childOwner ? this.getChildUnits(childOwner) : []).filter(unit => unit.childTag === tag);
+      const index = childTagMatch[2] ? Number(childTagMatch[2]) : 0;
+      if (index > 0) return { kind: 'units', units: children[index - 1] ? [children[index - 1]] : [] };
+      return { kind: 'units', units: children };
+    }
     if (text === 'target') {
       if (ctx.target && !ctx.__setResolution) return { kind: 'units', units: [ctx.target] };
       const chosen = Array.isArray(ctx.chosen) ? ctx.chosen.slice() : [];
@@ -1486,6 +1508,10 @@ class Battle {
     const side = this.getSideOf(unit);
     side.units = side.units.filter(item => item !== unit);
     this.recalcSide(unit.side);
+    const children = this.getChildUnits(unit, true).slice();
+    for (const child of children) {
+      if (child && child.alive) this.removeUnit(child, 'retreat', { force: true });
+    }
     this.log('defeat', unit.name + (reason === 'retreat' ? L('ui.cd7e8d1e52bf') : L('ui.2bbd49a1eca3')), { side: unit.side });
     const equipmentSnapshot = { weapon: unit.equipment.weapon, accessory: unit.equipment.accessory };
     this.triggerDefeated(unit);
@@ -1963,6 +1989,10 @@ class Battle {
             }
             const summoned = this.deploySummon(sideId, step.unitId, {
               ignoreFieldLimit,
+              asChild: !!step.summonAsChild,
+              parentUid: ctx.unit ? ctx.unit.battleId : null,
+              childId: step.childId || '',
+              childTag: step.childTag || '',
               sourceUid: ctx.unit ? ctx.unit.battleId : null,
               sourceName: ctx.unit ? ctx.unit.name : side.name,
               summonIndex: i,
@@ -2000,6 +2030,24 @@ class Battle {
     }
   }
 
+  getChildUnits(parent, includeAll) {
+    if (!parent) return [];
+    return this.getSideOf(parent).units.filter(unit => unit.parentBattleId === parent.battleId && (includeAll || (unit.alive && unit.onField)));
+  }
+
+  getParentUnit(unit) {
+    return unit && unit.parentBattleId ? this.getUnit(unit.parentBattleId) : null;
+  }
+
+  uniqueChildId(parent, base) {
+    const used = new Set(this.getChildUnits(parent, true).map(unit => unit.childId).filter(Boolean));
+    let candidate = String(base || '').trim() || ('child-' + (used.size + 1));
+    if (!used.has(candidate)) return candidate;
+    let n = 2;
+    while (used.has(candidate + '#' + n)) n += 1;
+    return candidate + '#' + n;
+  }
+
   deploySummon(sideId, unitId, options) {
     options = options || {};
     const card = this.maps.units.get(unitId);
@@ -2008,6 +2056,17 @@ class Battle {
     if (!options.ignoreFieldLimit && side.units.length >= this.rules.maxField) return null;
     const unit = this.createBattleUnit(card);
     unit.side = sideId;
+    let parent = null;
+    let childId = '';
+    if (options.asChild && options.parentUid) {
+      parent = this.getUnit(options.parentUid);
+      if (parent && parent.alive) childId = this.uniqueChildId(parent, options.childId);
+    }
+    if (parent && childId) {
+      unit.parentBattleId = parent.battleId;
+      unit.childId = childId;
+      unit.childTag = String(options.childTag || '');
+    }
     side.units.push(unit);
     this.recalcUnit(unit);
     unit.hp = unit.maxHp;

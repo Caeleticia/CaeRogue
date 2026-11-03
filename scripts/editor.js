@@ -847,6 +847,9 @@ const EditorUI = {
         return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + '</div>';
       case 'summon':
         return '<div class="step-fields">' + this.fieldRow(L('ui.5faece5e0845'), this.stepInput(listPath, index, 'unitId', step.unitId || '', { type: 'select', options: unitOptions, placeholder: L('ui.2150939fb166'), disabled })) + this.fieldRow(L('ui.d4d8e09af202'), this.stepInput(listPath, index, 'count', step.count || '1', { mono: true, disabled })) +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'summonAsChild', !!step.summonAsChild, L('ui.1aac6ae98de5'), disabled) + L('ui.d77c5d6c6eb5') +
+          this.fieldRow(L('ui.8b67957918c9'), this.stepInput(listPath, index, 'childId', step.childId || '', { mono: true, disabled }), L('ui.6dbe195b4718')) +
+          this.fieldRow(L('ui.eabd1258ddc3'), this.stepInput(listPath, index, 'childTag', step.childTag || '', { mono: true, disabled }), L('ui.a9d3a94c8b8b')) +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'ignoreFieldLimit', !!step.ignoreFieldLimit, L('ui.691e0721d2df'), disabled) + L('ui.25a490af5686') +
         '</div>';
       case 'modifyStat':
@@ -1261,6 +1264,7 @@ const EditorUI = {
         L('ui.7a3d2ea7694e') +
         L('ui.4b78e26fd6f7') +
         L('ui.1c8cb2a9e315') +
+        L('ui.c4967af2adaf') +
       '</ul>' +
       L('ui.724d7fc966fe') +
       '<ul>' +
@@ -1380,7 +1384,7 @@ const EditorUI = {
       case 'skipAction': return { kind, target: '{self}' };
       case 'immuneDamage': return { kind };
       case 'forceRetreat': return { kind, target: '{self}' };
-      case 'summon': return { kind, unitId: '', count: '1', ignoreFieldLimit: false };
+      case 'summon': return { kind, unitId: '', count: '1', ignoreFieldLimit: false, summonAsChild: false, childId: '', childTag: '' };
       case 'modifyStat': return { kind, stat: 'atkFlat', target: '{self}', formula: '1' };
       case 'setVar': return { kind, varName: 'value', formula: '0' };
       default: return { kind };
