@@ -242,6 +242,8 @@ all({enemy})          自动选中集合中的所有单位
 {target}.max_hp
 {target}.res
 {target}.last_hit_count
+{target}.name                   目标名字
+{target}.id                     目标单位 ID
 {target}.count                  目标数量
 {target}.effect[love].count     指定效果层数
 {target}.count[ha]              对象计数
@@ -257,6 +259,8 @@ all({enemy})          自动选中集合中的所有单位
 - 常数 `\pi`、`\e`
 - 字符串 `[id]`
 - 条件：`==`、`!=`、`<=`、`>=`、`<`、`>`，以及 `and`、`or`、`not`
+- 条件可以写成 `<...>` 包裹的完整布尔表达式，例如 `<{target}.name==遐蝶>`
+- 字符串可以写成 `[遐蝶]`，也可以在条件中直接写不含空格的裸字符串 `遐蝶`
 - 非法对数、除零或非有限结果按 0 处理
 
 ### 旧版兼容与迁移
@@ -295,6 +299,47 @@ all({enemy})          自动选中集合中的所有单位
 - 普通「移除效果」只能移除 `removable !== false` 的效果；步骤中勾选「强制移除」后可以移除任何效果，包括不死诅咒。
 - 「召唤单位」默认只补齐场上空位，达到单位上限后不会继续召唤；勾选「允许超过单位上限」后才允许突破上限。
 - 编辑器中的 `retreat` 触发事件可用于自定义退场保护效果。
+
+
+### 名字 / ID 判断
+
+```text
+{target}.name                 目标名字
+{target}.id                   目标单位 ID
+<{target}.name==遐蝶>          当前目标名字是遐蝶
+<{target}.id==catgirl_jk>      当前目标 ID 是 catgirl_jk
+```
+
+若要判断「我方存在名为遐蝶的单位」：
+
+```text
+<{satisfy({friendly}, {unit}.name==遐蝶)}.count > 0>
+```
+
+不写外层尖括号也可以：
+
+```text
+{satisfy({friendly}, {unit}.name==遐蝶)}.count > 0
+```
+
+若要直接取得所有符合条件的我方单位，可作为目标表达式：
+
+```text
+{satisfy({friendly}, {unit}.name==遐蝶)}
+```
+
+按单位 ID 判断：
+
+```text
+<{satisfy({friendly}, {unit}.id==catgirl_jk)}.count > 0>
+```
+
+说明：
+
+- `{friendly}` 包含我方所有存活单位。
+- `{unit}` 在 `satisfy` 条件内表示当前被检查的单位。
+- `.name` / `.id` 作用于多个单位时返回其中第一个；判断“是否存在”应使用 `satisfy(...).count > 0`。
+- 名字包含空格或运算符时，用 `[名字]` 包裹。
 
 
 ### 子单位
