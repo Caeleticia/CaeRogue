@@ -784,8 +784,18 @@ class Battle {
     return this.sides[sideId].units.filter(unit => unit.alive && unit.onField && (!options || options.includePending || !unit.pendingDefeat));
   }
 
-  getEnemies(unit) { return this.getFieldUnits(unit.side === 'A' ? 'B' : 'A'); }
-  getLivingAllies(unit) { return this.getFieldUnits(unit.side); }
+  isUntargetable(unit) {
+    if (!unit) return false;
+    if (unit.untargetable) return true;
+    return this.getUnitSkills(unit).some(skill => skill.untargetable);
+  }
+
+  isTargetable(unit, actor) {
+    return !!unit && (!this.isUntargetable(unit) || unit === actor);
+  }
+
+  getEnemies(unit) { return this.getFieldUnits(unit.side === 'A' ? 'B' : 'A').filter(item => this.isTargetable(item, unit)); }
+  getLivingAllies(unit) { return this.getFieldUnits(unit.side).filter(item => this.isTargetable(item, unit)); }
 
   getAutoUnits(sideId) {
     return this.getFieldUnits(sideId).filter(unit => !unit.acted && unit.card && unit.card.autoAttack);
@@ -1083,7 +1093,7 @@ class Battle {
     const targets = [];
     const add = (list) => {
       for (const item of list || []) {
-        if (item && item.alive && item.onField && !targets.includes(item)) targets.push(item);
+        if (item && item.alive && item.onField && this.isTargetable(item, unit) && !targets.includes(item)) targets.push(item);
       }
     };
     const mode = this.stepTargetExpression(step);
@@ -1869,9 +1879,10 @@ class Battle {
             });
             if (result.hit) {
               hit += 1;
-              hitTargets.push(target);
+              const actualTarget = result.target || target;
+              hitTargets.push(actualTarget);
               if (result.amount > 0) {
-                ctx.damageByTarget[target.battleId] = (ctx.damageByTarget[target.battleId] || 0) + result.amount;
+                ctx.damageByTarget[actualTarget.battleId] = (ctx.damageByTarget[actualTarget.battleId] || 0) + result.amount;
               }
             }
           }
@@ -2224,9 +2235,43 @@ class Battle {
     return !!ctx.immune;
   }
 
+  getDamageRedirectProtector(target) {
+    if (!target || !target.alive || !target.onField) return null;
+    const side = this.sides[target.side];
+    if (!side) return null;
+    for (const unit of side.units) {
+      if (unit === target || !unit.alive || !unit.onField) continue;
+      if (this.getUnitSkills(unit).some(skill => skill.damageRedirect)) return unit;
+    }
+    return null;
+  }
+
+  dealProtectedDamage(source, target, protector, baseAmount, damageType, options) {
+    const redirectSkill = this.getUnitSkills(protector).find(skill => skill.damageRedirect) || {};
+    const ratio = Math.max(1, Number(redirectSkill.damageRedirectRatio) || 5);
+    const floor = Math.max(0, Number(redirectSkill.damageRedirectFloor) || 1);
+    const first = this.dealDamage(source, target, baseAmount, damageType, Object.assign({}, options, { skipIntercept: true, hpFloor: floor }));
+    if (!first.hit) return first;
+    const cost = Math.max(0, Math.round(first.amount * ratio));
+    let protectorResult = null;
+    if (cost > 0 && protector.alive && protector.onField) {
+      this.log('effect', protector.name + L('ui.84b0a0e5244a') + target.name + L('ui.c60b211a9036') + cost + L('ui.b0e9f94aada5'), { side: protector.side });
+      protectorResult = this.dealDamage(source, protector, cost, 'true', { skipIntercept: true, ignoreResistance: true, isAttack: false, bonus: false, interceptCost: true });
+    }
+    first.intercepted = true;
+    first.protector = protector;
+    first.protectorCost = cost;
+    first.protectorResult = protectorResult;
+    return first;
+  }
+
   dealDamage(source, target, baseAmount, damageType, options) {
     options = options || {};
     if (!target || !target.alive || !target.onField) return { hit: false, amount: 0 };
+    if (!options.skipIntercept) {
+      const protector = this.getDamageRedirectProtector(target);
+      if (protector) return this.dealProtectedDamage(source, target, protector, baseAmount, damageType, options);
+    }
     const type = DAMAGE_TYPES[damageType] ? damageType : 'physical';
     const isBonus = !!options.bonus;
     const isAttack = !!options.isAttack && !isBonus;
@@ -2250,7 +2295,8 @@ class Battle {
 
     // Apply the hit first so hits on fatal-guard units still produce a visible
     // damage number and HP drop before the guard heals them back.
-    target.hp = Math.max(0, target.hp - finalAmount);
+    const hpFloor = Math.max(0, Number(options.hpFloor) || 0);
+    target.hp = Math.min(target.hp, Math.max(hpFloor, Math.max(0, target.hp - finalAmount)));
     const afterDamageHp = target.hp;
     const actualAmount = Math.max(0, beforeHp - afterDamageHp);
     const targetSide = this.sides[target.side];
@@ -2362,7 +2408,7 @@ class Battle {
       this.damageFeed[0].guarded = visual.guarded;
       this.damageFeed[0].afterHp = visual.afterHp;
     }
-    return { hit: true, amount: finalAmount, actualAmount, beforeHp, afterHp: target.hp, bonus: isBonus, defeated: visual.defeated, guarded: visual.guarded };
+    return { hit: true, target, amount: finalAmount, actualAmount, beforeHp, afterHp: target.hp, bonus: isBonus, defeated: visual.defeated, guarded: visual.guarded };
   }
 
   healUnit(source, target, baseAmount) {
