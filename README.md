@@ -356,6 +356,7 @@ $event.beforeHp      变动前生命
 $event.afterHp       变动后生命
 $event.target        发生变动的单位
 $event.source        造成变动的单位
+$event.sourceId      造成变动的单位 ID
 ```
 
 目标选择器：
@@ -390,6 +391,8 @@ $event.source        造成变动的单位
 - 我方任意单位（包括自己）受伤或回复都会触发。
 - 每次变动独立触发一次；一次伤害造成 3 点损失，就附加 3 层。
 - 如果需要给发生变动的单位附加，而不是给自己，目标改为 `{eventTarget}`。
+- 如果某次治疗不应累计新蕊，可在触发条件中加入来源过滤，例如：
+  `<{{child}.id[deathdragon]}.count == 0 and $event.sourceId != deathdragon>`
 
 
 ### 子单位
