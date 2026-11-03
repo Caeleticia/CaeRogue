@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.9.4';
+const APP_VERSION = '1.9.9';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -56,6 +56,8 @@ const TRIGGER_EVENTS = {
   retreat:     { label: L('ui.7d55cb7a726e'), group: L('ui.bc5a114f901a') },
   defeated:    { label: L('ui.3751b56658a3'), group: L('ui.bc5a114f901a') },
   enterField:  { label: L('ui.f483f683eb02'), group: L('ui.bc5a114f901a') },
+  immediate:   { label: L('ui.38876210d69c'), group: L('ui.151ddd4f1f9f') },
+  continuous:  { label: L('ui.ca98a94869b9'), group: L('ui.151ddd4f1f9f') },
   rule:        { label: L('ui.8518fa33bbf3'), group: L('ui.1a26edf94a81') },
   manual:      { label: L('ui.d832a9f5153a'), group: L('ui.1a26edf94a81') }
 };

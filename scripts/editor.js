@@ -923,7 +923,7 @@ const EditorUI = {
 
   renderMetadata(app, item, readOnly) {
     const skill = this.mode === 'skills';
-    const triggerOptions = [{ value: 'none', label: L('ui.15fe152362b1') }].concat(Object.keys(TRIGGER_EVENTS).filter(key => key !== 'none').map(key => ({ value: key, label: TRIGGER_EVENTS[key].label })));
+    const triggerOptions = [{ value: 'none', label: L('ui.15fe152362b1') }].concat(Object.keys(TRIGGER_EVENTS).filter(key => key !== 'none' && !(skill && key === 'immediate')).map(key => ({ value: key, label: TRIGGER_EVENTS[key].label })));
     return '<div class="form-grid">' +
       L('ui.9d9af6dca809') + attr(item.name || '') + '" data-meta-field="name"' + (readOnly ? ' disabled' : '') + L('ui.34892b0d0d8f') +
       '<div class="form-row"><label class="field-label">ID</label><input class="input mono" value="' + attr(item.id) + L('ui.2697ab3b3046') +

@@ -524,6 +524,8 @@ class Battle {
     this.pendingDefeats = [];
     this.batchDepth = 0;
     this.triggerDepth = 0;
+    this.inChangeTrigger = false;
+    this.stepEventNotified = false;
     this.stepDepth = 0;
     this.damageFeed = [];
     this.damageSeq = 0;
@@ -1371,6 +1373,7 @@ class Battle {
     const gearNames = ['weapon', 'accessory'].map(slot => unit.equipment[slot]).filter(Boolean).map(item => item.name);
     this.log('entry', side.name + L('ui.a9d0024d5701') + card.name + '」' + (gearNames.length ? L('ui.a4932f828552') + gearNames.join('、') : '') + '。', { side: sideId });
     this.triggerEvent('enterField', { unit }, { ownerOnly: true });
+    this.notifyUnitChanged(unit, 'enter');
     return unit;
   }
 
@@ -1495,9 +1498,10 @@ class Battle {
     return { ok: true };
   }
 
-  removeUnit(unit, reason) {
+  removeUnit(unit, reason, options) {
+    options = options || {};
     if (!unit || !unit.alive) return;
-    if (this.runRetreatGuards(unit, null)) {
+    if (!options.force && this.runRetreatGuards(unit, null)) {
       unit.pendingDefeat = false;
       this.log('effect', unit.name + L('ui.a324f653ff74'), { side: unit.side });
       return;
@@ -1536,6 +1540,7 @@ class Battle {
         const visualStart = this.visualSeq;
         const ctx = this.createContext(unit, skill, [], { eventData: { target: unit }, allowDeadSource: true, eventName: 'defeated' });
         this.executeSteps(skill.steps || [], ctx);
+        this.notifyGlobalEvent('passive', { unit, skillId: skill.id, sourceEvent: 'defeated' });
         if (this.visualSeq === visualStart) {
           this.recordVisual({
             kind: 'skill', sourceUid: unit.battleId, targetUid: unit.battleId,
@@ -1552,6 +1557,7 @@ class Battle {
         const visualStart = this.visualSeq;
         const ctx = this.createContext(unit, null, [], { eventData: { target: unit }, allowDeadSource: true, effectId: def.id, eventName: 'defeated' });
         this.executeSteps(def.steps || [], ctx);
+        this.notifyGlobalEvent('effect', { unit, effectId: def.id, sourceEvent: 'defeated' });
         if (this.visualSeq === visualStart) {
           this.recordVisual({
             kind: 'effect', action: 'trigger', sourceUid: unit.battleId, targetUid: unit.battleId,
@@ -1564,6 +1570,23 @@ class Battle {
     } finally {
       this.triggerDepth -= 1;
     }
+  }
+
+  notifyGlobalEvent(eventName, detail) {
+    if (this.inChangeTrigger) return;
+    if (this.triggerDepth >= ENGINE_LIMITS.triggerDepth) return;
+    this.stepEventNotified = true;
+    this.inChangeTrigger = true;
+    try {
+      this.triggerEvent('continuous', Object.assign({ eventName }, detail || {}), {});
+    } finally {
+      this.inChangeTrigger = false;
+    }
+  }
+
+  notifyUnitChanged(unit, changeType, detail) {
+    if (!unit || !unit.alive || !unit.onField) return;
+    this.notifyGlobalEvent('change', Object.assign({ unit, changeType }, detail || {}));
   }
 
   triggerEvent(eventName, eventData, options) {
@@ -1613,6 +1636,7 @@ class Battle {
           const visualStart = this.visualSeq;
           const ctx = this.createContext(candidate.unit, skill, eventData.targets || [], { eventData, eventName });
           this.executeSteps(skill.steps || [], ctx);
+          this.notifyGlobalEvent('passive', { unit: candidate.unit, skillId: skill.id, sourceEvent: eventName });
           if (this.visualSeq === visualStart) {
             this.recordVisual({
               kind: 'skill',
@@ -1635,6 +1659,7 @@ class Battle {
           const visualStart = this.visualSeq;
           const ctx = this.createContext(candidate.unit, null, eventData.targets || [], { eventData, eventName, effectId: def.id });
           this.executeSteps(def.steps || [], ctx);
+          this.notifyGlobalEvent('effect', { unit: candidate.unit, effectId: def.id, sourceEvent: eventName });
           if (this.visualSeq === visualStart) {
             this.recordVisual({
               kind: 'effect',
@@ -1714,6 +1739,7 @@ class Battle {
       if (livingTargets.length) {
         this.triggerEvent('selfAttack', { attacker: unit, targets: livingTargets.slice() });
         this.triggerEvent('allyAttack', { attacker: unit, targets: livingTargets.slice() });
+        this.notifyGlobalEvent('attack', { unit, attacker: unit, skill, targets: livingTargets.slice() });
       }
     }
     if (this.visualSeq === visualStart) {
@@ -1782,6 +1808,8 @@ class Battle {
   }
 
   executeStep(step, ctx) {
+    const priorStepEvent = this.stepEventNotified;
+    this.stepEventNotified = false;
     try {
       switch (step.kind) {
         case 'damage': {
@@ -1887,7 +1915,9 @@ class Battle {
           const next = step.mode === 'set' ? value : current + value;
           const before = current;
           this.setCount(ctx.unit, step.scope || 'unit', step.countId, next);
+          const actual = this.getCount(ctx.unit, step.scope || 'unit', step.countId);
           this.log('count', ctx.unit.name + L('ui.4ac21152b1ea') + this.countLabel(step.countId) + L('ui.5dadd90a0d00') + before + L('ui.94e935dbc13d') + Math.max(0, next) + '。', { side: ctx.unit.side });
+          if (actual !== before) this.notifyUnitChanged(ctx.unit, 'count', { scope: step.scope || 'unit', countId: step.countId, before, after: actual });
           break;
         }
         case 'readCount': {
@@ -2011,6 +2041,7 @@ class Battle {
             target.tempMods[stat] = (target.tempMods[stat] || 0) + amount;
             this.recalcUnit(target);
             this.log('effect', target.name + L('ui.9718591ae2b7') + (STAT_KEYS[stat] || stat) + L('ui.94e935dbc13d') + target.tempMods[stat] + '。', { side: target.side });
+            if (Number(amount) !== 0) this.notifyUnitChanged(target, 'stat', { stat, amount });
           }
           break;
         }
@@ -2028,6 +2059,9 @@ class Battle {
       this.log('system', L('ui.1b71939b72ca') + step.kind + '）：' + error.message);
       console.error(error);
     }
+    const notified = this.stepEventNotified;
+    this.stepEventNotified = priorStepEvent || notified;
+    if (!notified) this.notifyGlobalEvent('step', { unit: ctx.unit, stepKind: step.kind, step });
   }
 
   getChildUnits(parent, includeAll) {
@@ -2089,6 +2123,7 @@ class Battle {
       targetSide: sideId
     });
     this.triggerEvent('enterField', { unit }, { ownerOnly: true });
+    this.notifyUnitChanged(unit, 'enter');
     return unit;
   }
 
@@ -2136,6 +2171,7 @@ class Battle {
       const ctx = this.createContext(unit, candidate.skill, [unit], { eventData: { target: unit, source }, fatalGuard: true, eventName });
       ctx.fatalGuard = true;
       this.executeSteps(candidate.skill.steps || [], ctx);
+      this.notifyGlobalEvent('passive', { unit, skillId: candidate.skill.id, sourceEvent: eventName });
       return !!ctx.immune;
     }
     this.pushTrigger(unit, L('ui.151ddd4f1f9f'), candidate.def.name, eventName);
@@ -2143,6 +2179,7 @@ class Battle {
     const ctx = this.createContext(unit, null, [unit], { eventData: { target: unit, source }, effectId: candidate.def.id, fatalGuard: true, eventName });
     ctx.fatalGuard = true;
     this.executeSteps(candidate.def.steps || [], ctx);
+    this.notifyGlobalEvent('effect', { unit, effectId: candidate.def.id, sourceEvent: eventName });
     return !!ctx.immune;
   }
 
@@ -2263,6 +2300,8 @@ class Battle {
     if (isAttack && target.alive && target.hp > 0 && !target.pendingDefeat) {
       this.triggerEvent('selfAttacked', { target, source, damage: finalAmount, isAttack: true, targets: [source].filter(Boolean) });
     }
+    if (isAttack) this.notifyGlobalEvent('attacked', { unit: target, source, damage: finalAmount, targets: [source].filter(Boolean) });
+    if (target.hp !== beforeHp) this.notifyUnitChanged(target, 'damage', { source, beforeHp, afterHp: target.hp, amount: actualAmount });
     if (target.hp <= 0) this.markPendingDefeat(target);
     visual.finalHp = target.hp;
     visual.defeated = target.hp <= 0;
@@ -2307,6 +2346,7 @@ class Battle {
         maxHp: target.maxHp,
         self: !!source && source === target
       });
+      this.notifyUnitChanged(target, 'heal', { source, beforeHp: before, afterHp: target.hp, amount: healed });
     }
     return healed;
   }
@@ -2334,7 +2374,39 @@ class Battle {
       this.log('effect', target.name + L('ui.41f075bb5295') + def.name + L('ui.3c3304162289'), { side: target.side });
     }
     if (!options.silent) this.log('effect', target.name + L('ui.c381f23de046') + def.name + '」' + (def.stackable ? ' ×' + inst.stacks : '') + '。', { side: target.side });
+    this.triggerImmediateEffect(target, def, sourceUnit || target);
+    this.notifyUnitChanged(target, 'effect', { effectId: def.id, source: sourceUnit || target, stacks: inst.stacks });
     return inst;
+  }
+
+  triggerImmediateEffect(target, def, sourceUnit) {
+    if (!def || !def.trigger || def.trigger.event !== 'immediate') return;
+    if (!target || !target.alive) return;
+    if (this.triggerDepth >= ENGINE_LIMITS.triggerDepth) return;
+    const ctx = this.createContext(target, null, [target], {
+      eventData: { target, source: sourceUnit || target, effectId: def.id },
+      effectId: def.id,
+      eventName: 'immediate'
+    });
+    if (def.trigger.condition && !this.evalFormula(def.trigger.condition, ctx)) return;
+    this.triggerDepth += 1;
+    try {
+      this.pushTrigger(target, L('ui.151ddd4f1f9f'), def.name, 'immediate');
+      this.log('trigger', target.name + L('ui.ac2c192ca1de') + def.name + '」。', { side: target.side });
+      const visualStart = this.visualSeq;
+      this.executeSteps(def.steps || [], ctx);
+      this.notifyGlobalEvent('effect', { unit: target, effectId: def.id, sourceEvent: 'immediate' });
+      if (this.visualSeq === visualStart) {
+        this.recordVisual({
+          kind: 'effect', action: 'trigger', sourceUid: target.battleId, targetUid: target.battleId,
+          sourceName: target.name, targetName: target.name, self: true,
+          name: def.name, effectType: def.type || 'special',
+          sourceSide: target.side, targetSide: target.side
+        });
+      }
+    } finally {
+      this.triggerDepth -= 1;
+    }
   }
 
   removeEffect(target, effectId, amount, force) {
@@ -2355,6 +2427,7 @@ class Battle {
       this.log('effect', target.name + L('ui.cfb26dec4e12') + def.name + L('ui.80595da7dc75') + inst.stacks + L('ui.2a5cc5eb3fb6'), { side: target.side });
     }
     this.recalcUnit(target);
+    if (Math.max(0, Number(amount) || 0) > 0) this.notifyUnitChanged(target, 'effect', { effectId, removed: inst.stacks <= 0 });
     return true;
   }
 
