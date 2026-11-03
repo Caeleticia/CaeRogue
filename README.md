@@ -395,6 +395,31 @@ $event.sourceId      造成变动的单位 ID
   `<{{child}.id[deathdragon]}.count == 0 and $event.sourceId != deathdragon>`
 
 
+### 伤害承担与无法选中
+
+被动技可以设置：
+
+```text
+untargetable: true
+damageRedirect: true
+damageRedirectRatio: 5
+damageRedirectFloor: 1
+```
+
+- `untargetable`：该单位不会出现在普通目标选择、AI 目标和技能预览中；自己的 `{self}` 目标仍可用
+- `damageRedirect`：其他同阵营单位受到伤害或消耗生命时，由承担者代替
+- `damageRedirectFloor`：被保护单位的生命值最低保留值
+- `damageRedirectRatio`：承担者消耗的生命为原始伤害/消耗值的倍数
+
+死龙通过 `deathdragon_guard` 获得此能力：
+
+- 死龙无法被选中
+- 其他我方单位生命最多降至 1
+- 死龙消耗原始数值 500% 的生命
+- 死龙自己技能的生命消耗不会被再次转移
+- 死龙退场时，对敌方全体造成 6 点无视抗性精神伤害，并继续执行治疗与遗世冥域解除
+
+
 ### 子单位
 
 「召唤单位」步骤新增「召唤为子单位」：
