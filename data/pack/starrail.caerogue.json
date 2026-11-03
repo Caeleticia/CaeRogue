@@ -2,7 +2,7 @@
   "format": "caerogue.expansion",
   "id": "starrail",
   "name": "starrail扩展",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "author": "caeleticia",
   "description": "添加了一些星角色",
   "dependencies": [],
@@ -52,6 +52,7 @@
         },
         "skills": [
           "deathdragon_flame",
+          "deathdragon_guard",
           "deathdragon_reset"
         ],
         "equip": [],
@@ -312,18 +313,29 @@
       {
         "id": "deathdragon_reset",
         "packId": "starrail",
-        "name": "死龙退场·遗世冥域解除",
+        "name": "灼掠幽墟的晦翼",
         "type": "passive",
         "op": "special",
         "quality": "white",
         "targetMode": "none",
         "multiplier": 100,
-        "description": "死龙退场时解除遐蝶的遗世冥域，并为其他我方单位回复各自 50% 生命上限。",
+        "description": "死龙退场时，对敌方全体造成 6 点无视抗性的精神伤害，解除遗世冥域，并为其他我方单位回复各自 50% 生命上限。",
         "trigger": {
           "event": "defeated"
         },
         "requirements": [],
         "steps": [
+          {
+            "kind": "damage",
+            "target": "{enemy}",
+            "expressionMode": "formula",
+            "targetExpression": "{enemy}",
+            "legacyTarget": "allEnemies",
+            "damageType": "mental",
+            "formula": "6",
+            "ignoreResistance": true,
+            "bonus": false
+          },
           {
             "kind": "heal",
             "target": "{target}",
@@ -343,6 +355,26 @@
             "legacyTarget": "self"
           }
         ]
+      },
+      {
+        "id": "deathdragon_guard",
+        "packId": "starrail",
+        "name": "代罪",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "死龙无法被选中；其他我方单位受到伤害或消耗生命时，生命最多降至 1，死龙代替承受并消耗原数值 500% 的生命。",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": [],
+        "damageRedirect": true,
+        "untargetable": true,
+        "damageRedirectRatio": 5,
+        "damageRedirectFloor": 1
       }
     ],
     "effects": [
