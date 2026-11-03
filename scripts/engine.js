@@ -198,9 +198,7 @@ class FormulaParser {
 
 class FormulaParser2 {
   constructor(text, battle, ctx) {
-    let source = String(text || '').trim();
-    if (source.length >= 2 && source[0] === '<' && source[source.length - 1] === '>') source = source.slice(1, -1).trim();
-    this.text = source;
+    this.text = String(text || '').trim();
     this.battle = battle;
     this.ctx = ctx || {};
     this.pos = 0;
@@ -385,6 +383,7 @@ class FormulaParser2 {
     this.skip();
     const ch = this.peek();
     if (ch === undefined) this.fail(L('ui.9493ec599c15'));
+    if (ch === '<') return this.readAngleCondition();
     if (/[0-9]/.test(ch) || (ch === '.' && /[0-9]/.test(this.text[this.pos + 1] || ''))) {
       let end = this.pos;
       while (end < this.text.length && /[0-9.]/.test(this.text[end])) end += 1;
@@ -451,6 +450,32 @@ class FormulaParser2 {
     if (this.pos > bareStart) return this.text.slice(bareStart, this.pos);
     this.fail(L('ui.367ce0b08f68') + ch);
   }
+  readAngleCondition() {
+    this.skip();
+    if (this.peek() !== '<') this.fail(L('ui.104a5c5ee326') + '<');
+    const start = this.pos + 1;
+    let brace = 0, paren = 0, bracket = 0;
+    for (let i = start; i < this.text.length; i += 1) {
+      const ch = this.text[i];
+      if (ch === '{') brace += 1;
+      else if (ch === '}') brace -= 1;
+      else if (ch === '(') paren += 1;
+      else if (ch === ')') paren -= 1;
+      else if (ch === '[') bracket += 1;
+      else if (ch === ']') bracket -= 1;
+      else if (ch === '>' && brace === 0 && paren === 0 && bracket === 0) {
+        const rest = this.text.slice(i + 1).trimStart();
+        const closes = !rest || /^(and|or)\b/i.test(rest) || /^[),}]/.test(rest);
+        if (closes) {
+          const inner = this.text.slice(start, i);
+          this.pos = i + 1;
+          return new FormulaParser2(inner, this.battle, this.ctx).parse();
+        }
+      }
+    }
+    this.fail(L('ui.104a5c5ee326') + '>');
+  }
+
   parseSelectorValue(content) {
     const marker = this.battle.resolveSelectorMarker(content, this.ctx);
     this.skip();
@@ -966,6 +991,14 @@ class Battle {
       const index = childTagMatch[2] ? Number(childTagMatch[2]) : 0;
       if (index > 0) return { kind: 'units', units: children[index - 1] ? [children[index - 1]] : [] };
       return { kind: 'units', units: children };
+    }
+    if (text === 'eventTarget') {
+      const target = ctx.eventData && ctx.eventData.target;
+      return { kind: 'units', units: target && target.alive ? [target] : [] };
+    }
+    if (text === 'eventTargets') {
+      const targets = (ctx.eventData && ctx.eventData.targets) || [];
+      return { kind: 'units', units: targets.filter(unit => unit && unit.alive) };
     }
     if (text === 'target') {
       if (ctx.target && !ctx.__setResolution) return { kind: 'units', units: [ctx.target] };
@@ -1612,6 +1645,7 @@ class Battle {
           if (!unit.alive) continue;
           if (options.ownerOnly && eventData.unit && unit !== eventData.unit) continue;
           if (eventName === 'allyAttack' && unit.side !== eventData.attacker.side) continue;
+          if (eventName === 'allyHpChange' && eventData.target && unit.side !== eventData.target.side) continue;
           if (eventName === 'selfAttack' && eventData.attacker && unit !== eventData.attacker) continue;
           if (eventName === 'selfAttacked' && eventData.target && unit !== eventData.target) continue;
           if (eventName === 'actionStart' && eventData.unit && unit !== eventData.unit) continue;
@@ -2272,6 +2306,10 @@ class Battle {
       }
     }
 
+    if (actualAmount > 0) {
+      this.triggerEvent('allyHpChange', { target, unit: target, amount: actualAmount, changeType: 'damage', beforeHp, afterHp: target.hp, source, isAttack }, {});
+    }
+
     let immune = false;
     if (afterDamageHp <= 0 && !target.pendingDefeat && target.alive) {
       // Every fatal trigger on the same hit is evaluated. The unit's own
@@ -2353,6 +2391,7 @@ class Battle {
         maxHp: target.maxHp,
         self: !!source && source === target
       });
+      this.triggerEvent('allyHpChange', { target, unit: target, amount: healed, changeType: 'heal', beforeHp: before, afterHp: target.hp, source, isAttack: false }, {});
       this.notifyUnitChanged(target, 'heal', { source, beforeHp: before, afterHp: target.hp, amount: healed });
     }
     return healed;

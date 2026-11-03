@@ -1269,6 +1269,7 @@ const EditorUI = {
       L('ui.724d7fc966fe') +
       '<ul>' +
         '<li><code>{target}.atk</code>、<code>.hp</code>、<code>.max_hp</code>、<code>.res</code>、<code>.last_hit_count</code>、<code>.name</code>、<code>.id</code>。</li>' +
+        L('ui.a8f8570f5a23') +
         L('ui.cb948a6aa1cd') +
         L('ui.99f907fe8aa4') +
         L('ui.eba23850a1bc') +

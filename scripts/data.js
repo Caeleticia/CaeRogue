@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.9.10';
+const APP_VERSION = '1.9.13';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -58,6 +58,7 @@ const TRIGGER_EVENTS = {
   enterField:  { label: L('ui.f483f683eb02'), group: L('ui.bc5a114f901a') },
   immediate:   { label: L('ui.38876210d69c'), group: L('ui.151ddd4f1f9f') },
   continuous:  { label: L('ui.ca98a94869b9'), group: L('ui.151ddd4f1f9f') },
+  allyHpChange: { label: L('ui.0e2ce7f5ff3c'), group: L('ui.bc5a114f901a') },
   rule:        { label: L('ui.8518fa33bbf3'), group: L('ui.1a26edf94a81') },
   manual:      { label: L('ui.d832a9f5153a'), group: L('ui.1a26edf94a81') }
 };
@@ -123,6 +124,8 @@ const VARIABLE_PALETTE = [
   { token: '$lastHitCount', label: L('ui.fcd9aa7f6568'), hint: L('ui.9222edcb9382') },
   { token: '$multiplier', label: L('ui.7fd7f5dcb8e6'), hint: L('ui.db2c43d5d869') },
   { token: '$targetCount', label: L('ui.41162519d223'), hint: L('ui.84ba22780f49') },
+  { token: '$event.amount', label: L('ui.335ab62809a4'), hint: L('ui.76389d13b36b') },
+  { token: '$event.changeType', label: L('ui.5b2d75aa54d1'), hint: L('ui.e3dda53bb2af') },
   { token: '$target.hp', label: L('ui.64f3491b3ab6'), hint: L('ui.a8ab4fb9c7d4') },
   { token: '$target.hpMax', label: L('ui.df11866f9c88'), hint: L('ui.14437e721521') },
   { token: '$target.missingHp', label: L('ui.f74648f58960'), hint: L('ui.e59ffd75eda3') },
