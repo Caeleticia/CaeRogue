@@ -807,7 +807,9 @@ const EditorUI = {
       case 'addEffect':
         return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.6a4f4be10d6e'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5fd18d1eb114'), disabled })) + this.fieldRow(L('ui.15e4c563f602'), this.stepInput(listPath, index, 'stacks', step.stacks || '1', { mono: true, disabled })) + '</div>';
       case 'removeEffect':
-        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.151ddd4f1f9f'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5ac431ae3fea'), disabled })) + this.fieldRow(L('ui.90a0885a60a9'), this.stepInput(listPath, index, 'stacks', step.stacks || '9999', { mono: true, disabled })) + '</div>';
+        return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.151ddd4f1f9f'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5ac431ae3fea'), disabled })) + this.fieldRow(L('ui.90a0885a60a9'), this.stepInput(listPath, index, 'stacks', step.stacks || '9999', { mono: true, disabled })) +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'force', !!step.force, L('ui.b778a2bd7c51'), disabled) + L('ui.d93883627dab') +
+        '</div>';
       case 'modifyCount':
         return '<div class="step-fields">' +
           this.fieldRow(L('ui.31618e13034d'), this.stepInput(listPath, index, 'scope', step.scope || 'unit', { type: 'select', options: Object.keys(COUNT_SCOPES).map(key => ({ value: key, label: COUNT_SCOPES[key].label })), disabled })) +
@@ -844,7 +846,9 @@ const EditorUI = {
       case 'forceRetreat':
         return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + '</div>';
       case 'summon':
-        return '<div class="step-fields">' + this.fieldRow(L('ui.5faece5e0845'), this.stepInput(listPath, index, 'unitId', step.unitId || '', { type: 'select', options: unitOptions, placeholder: L('ui.2150939fb166'), disabled })) + this.fieldRow(L('ui.d4d8e09af202'), this.stepInput(listPath, index, 'count', step.count || '1', { mono: true, disabled })) + '</div>';
+        return '<div class="step-fields">' + this.fieldRow(L('ui.5faece5e0845'), this.stepInput(listPath, index, 'unitId', step.unitId || '', { type: 'select', options: unitOptions, placeholder: L('ui.2150939fb166'), disabled })) + this.fieldRow(L('ui.d4d8e09af202'), this.stepInput(listPath, index, 'count', step.count || '1', { mono: true, disabled })) +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'ignoreFieldLimit', !!step.ignoreFieldLimit, L('ui.691e0721d2df'), disabled) + L('ui.25a490af5686') +
+        '</div>';
       case 'modifyStat':
         return '<div class="step-fields">' +
           this.fieldRow(L('ui.7d3c35c29be1'), this.stepInput(listPath, index, 'stat', step.stat || 'atkFlat', { type: 'select', options: Object.keys(STAT_KEYS).map(key => ({ value: key, label: STAT_KEYS[key] })), disabled })) +
@@ -1365,7 +1369,7 @@ const EditorUI = {
       case 'damage': return { kind, target: '{target}', damageType: 'physical', formula: '1', ignoreResistance: false };
       case 'heal': return { kind, target: '{self}', formula: '{self}.max_hp - {self}.hp' };
       case 'addEffect': return { kind, target: '{target}', effectId: '', stacks: '1' };
-      case 'removeEffect': return { kind, target: '{self}', effectId: '', stacks: '9999' };
+      case 'removeEffect': return { kind, target: '{self}', effectId: '', stacks: '9999', force: false };
       case 'modifyCount': return { kind, scope: 'unit', countId: 'sakurafade', mode: 'add', formula: '1' };
       case 'readCount': return { kind, scope: 'unit', countId: 'sakurafade', varName: 'value' };
       case 'branch': return { kind, condition: '{self}.count[ha] >= 1', then: [], elseSteps: [] };
@@ -1376,7 +1380,7 @@ const EditorUI = {
       case 'skipAction': return { kind, target: '{self}' };
       case 'immuneDamage': return { kind };
       case 'forceRetreat': return { kind, target: '{self}' };
-      case 'summon': return { kind, unitId: '', count: '1' };
+      case 'summon': return { kind, unitId: '', count: '1', ignoreFieldLimit: false };
       case 'modifyStat': return { kind, stat: 'atkFlat', target: '{self}', formula: '1' };
       case 'setVar': return { kind, varName: 'value', formula: '0' };
       default: return { kind };

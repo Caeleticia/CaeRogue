@@ -1475,6 +1475,11 @@ class Battle {
 
   removeUnit(unit, reason) {
     if (!unit || !unit.alive) return;
+    if (this.runRetreatGuards(unit, null)) {
+      unit.pendingDefeat = false;
+      this.log('effect', unit.name + L('ui.a324f653ff74'), { side: unit.side });
+      return;
+    }
     unit.alive = false;
     unit.onField = false;
     unit.pendingDefeat = false;
@@ -1657,6 +1662,10 @@ class Battle {
     this.lastSkill = { unitId: unit.battleId, skillId: skill.id };
     const visualStart = this.visualSeq;
     const ctx = this.createContext(unit, skill, chosen, options);
+    if (skill.type === 'active' && unit.alive) {
+      this.triggerEvent('selfActiveSkill', { unit, skill, targets: (chosen || []).slice() }, { ownerOnly: true });
+      if (!unit.alive) return ctx;
+    }
     if ((skill.type === 'active' || skill.type === 'extra') && skill.op === 'support') {
       const supportTargets = (chosen || []).filter(item => item && item.side === unit.side);
       const visualTargets = supportTargets.length ? supportTargets : [unit];
@@ -1918,7 +1927,7 @@ class Battle {
           break;
         }
         case 'skipAction': {
-          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self', ownerEffectId: step.ownerEffectId }, ctx);
+          const targets = this.getTargetsForStep(ctx.unit, { target: this.stepTargetExpression(step), ownerEffectId: step.ownerEffectId }, ctx);
           for (const target of targets) {
             target.acted = true;
             this.log('effect', target.name + L('ui.24aa02f4b605'), { side: target.side });
@@ -1931,7 +1940,7 @@ class Battle {
           break;
         }
         case 'forceRetreat': {
-          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self', ownerEffectId: step.ownerEffectId }, ctx);
+          const targets = this.getTargetsForStep(ctx.unit, { target: this.stepTargetExpression(step), ownerEffectId: step.ownerEffectId }, ctx);
           for (const target of targets) {
             if (!target.alive) continue;
             const guards = this.getFatalGuardCandidates(target);
@@ -1965,7 +1974,7 @@ class Battle {
           break;
         }
         case 'modifyStat': {
-          const targets = this.getTargetsForStep(ctx.unit, { target: step.target || 'self', ownerEffectId: step.ownerEffectId }, ctx);
+          const targets = this.getTargetsForStep(ctx.unit, { target: this.stepTargetExpression(step), ownerEffectId: step.ownerEffectId }, ctx);
           const stat = step.stat || 'atkFlat';
           for (const target of targets) {
             const amount = this.evalFormula(step.formula || '0', Object.assign({}, ctx, { target }));
@@ -2024,6 +2033,28 @@ class Battle {
     return unit;
   }
 
+  getRetreatGuardCandidates(unit) {
+    const candidates = [];
+    for (const skill of this.getUnitSkills(unit)) {
+      if (skill.type === 'passive' && skill.trigger && skill.trigger.event === 'retreat') candidates.push({ kind: 'skill', skill });
+    }
+    for (const inst of unit.effects) {
+      const def = this.maps.effects.get(inst.effectId);
+      if (def && def.trigger && def.trigger.event === 'retreat') candidates.push({ kind: 'effect', def });
+    }
+    return candidates;
+  }
+
+  runRetreatGuards(unit, source) {
+    const guards = this.getRetreatGuardCandidates(unit);
+    if (!guards.length) return false;
+    let immune = false;
+    for (const guard of guards) {
+      if (this.runFatalGuard(guard, unit, source, { eventName: 'retreat', retreat: true })) immune = true;
+    }
+    return immune && unit.alive && unit.hp > 0;
+  }
+
   getFatalGuardCandidates(unit) {
     const candidates = [];
     for (const skill of this.getUnitSkills(unit)) {
@@ -2039,17 +2070,18 @@ class Battle {
   runFatalGuard(candidate, unit, source, options) {
     options = options || {};
     if (!unit.alive) return false;
+    const eventName = options.eventName || 'fatalDamage';
     if (candidate.kind === 'skill') {
-      this.pushTrigger(unit, L('ui.53da139b6a5c'), candidate.skill.name, 'fatalDamage');
+      this.pushTrigger(unit, L('ui.53da139b6a5c'), candidate.skill.name, eventName);
       this.log('passive', unit.name + L('ui.33bd881406f7') + candidate.skill.name + '」。', { side: unit.side });
-      const ctx = this.createContext(unit, candidate.skill, [unit], { eventData: { target: unit, source }, fatalGuard: true, eventName: 'fatalDamage' });
+      const ctx = this.createContext(unit, candidate.skill, [unit], { eventData: { target: unit, source }, fatalGuard: true, eventName });
       ctx.fatalGuard = true;
       this.executeSteps(candidate.skill.steps || [], ctx);
       return !!ctx.immune;
     }
-    this.pushTrigger(unit, L('ui.151ddd4f1f9f'), candidate.def.name, 'fatalDamage');
+    this.pushTrigger(unit, L('ui.151ddd4f1f9f'), candidate.def.name, eventName);
     this.log('trigger', unit.name + L('ui.cfb26dec4e12') + candidate.def.name + L('ui.b76289a5db6d'), { side: unit.side });
-    const ctx = this.createContext(unit, null, [unit], { eventData: { target: unit, source }, effectId: candidate.def.id, fatalGuard: true, eventName: 'fatalDamage' });
+    const ctx = this.createContext(unit, null, [unit], { eventData: { target: unit, source }, effectId: candidate.def.id, fatalGuard: true, eventName });
     ctx.fatalGuard = true;
     this.executeSteps(candidate.def.steps || [], ctx);
     return !!ctx.immune;

@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.8.9';
+const APP_VERSION = '1.9.2';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -46,12 +46,14 @@ const EFFECT_TYPES = {
 
 const TRIGGER_EVENTS = {
   actionStart: { label: L('ui.d72893e5f444'), group: L('ui.52d27a21f811') },
+  selfActiveSkill: { label: L('ui.8bbfe76b5100'), group: L('ui.bc5a114f901a') },
   roundStart:  { label: L('ui.c9a4a17b9f70'), group: L('ui.52d27a21f811') },
   roundEnd:    { label: L('ui.1b613f8749a8'), group: L('ui.52d27a21f811') },
   allyAttack:  { label: L('ui.35d87db58140'), group: L('ui.bc5a114f901a') },
   selfAttack:  { label: L('ui.a2549b10937e'), group: L('ui.bc5a114f901a') },
   selfAttacked:{ label: L('ui.7b59ce197589'), group: L('ui.bc5a114f901a') },
   fatalDamage: { label: L('ui.0e0bab6c558b'), group: L('ui.bc5a114f901a') },
+  retreat:     { label: L('ui.7d55cb7a726e'), group: L('ui.bc5a114f901a') },
   defeated:    { label: L('ui.3751b56658a3'), group: L('ui.bc5a114f901a') },
   enterField:  { label: L('ui.f483f683eb02'), group: L('ui.bc5a114f901a') },
   rule:        { label: L('ui.8518fa33bbf3'), group: L('ui.1a26edf94a81') },
