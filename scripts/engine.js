@@ -198,7 +198,9 @@ class FormulaParser {
 
 class FormulaParser2 {
   constructor(text, battle, ctx) {
-    this.text = String(text || '');
+    let source = String(text || '').trim();
+    if (source.length >= 2 && source[0] === '<' && source[source.length - 1] === '>') source = source.slice(1, -1).trim();
+    this.text = source;
     this.battle = battle;
     this.ctx = ctx || {};
     this.pos = 0;
@@ -442,8 +444,11 @@ class FormulaParser2 {
         if (name === 'round') return Math.round(values[0] || 0);
         return Math.abs(values[0] || 0);
       }
-      this.fail(L('ui.656cd97bdd3b') + name);
+      return name;
     }
+    const bareStart = this.pos;
+    while (this.pos < this.text.length && !/[\s()+\-*\/%,<>=!&|\[\]{}]/.test(this.text[this.pos])) this.pos += 1;
+    if (this.pos > bareStart) return this.text.slice(bareStart, this.pos);
     this.fail(L('ui.367ce0b08f68') + ch);
   }
   parseSelectorValue(content) {
@@ -477,6 +482,8 @@ class FormulaParser2 {
       if (suffix !== 'count') this.fail(L('ui.9497dbb49ae2'));
       return units.reduce((sum, unit) => sum + this.battle.getEffectStacks(unit, id), 0);
     }
+    if (property === 'name') return units.length ? String(units[0].name || (units[0].card && units[0].card.name) || '') : '';
+    if (property === 'id') return units.length ? String(units[0].cardId || (units[0].card && units[0].card.id) || '') : '';
     if (property === 'last_hit_count') return this.ctx.lastHitCount || 0;
     if (property === 'atk') return units.reduce((sum, unit) => sum + (unit.atk || 0), 0);
     if (property === 'hp') return units.reduce((sum, unit) => sum + (unit.hp || 0), 0);
@@ -862,7 +869,7 @@ class Battle {
 
   looksLikeNewExpression(formula) {
     if (typeof formula !== 'string') return false;
-    return /[{}\\]/.test(formula) || /\[[^\]]+\]/.test(formula) || /\b(and|or|not)\b/.test(formula) || /^\s*(choose|all|in|un|diff)\s*\(/.test(formula);
+    return /[{}\\]/.test(formula) || /\[[^\]]+\]/.test(formula) || /\b(and|or|not)\b/.test(formula) || /^\s*(choose|all|in|un|diff)\s*\(/.test(formula) || /^\s*<[\s\S]+>\s*$/.test(formula);
   }
 
   evalNewExpression(expression, ctx) {
