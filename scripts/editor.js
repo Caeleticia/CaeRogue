@@ -827,8 +827,8 @@ const EditorUI = {
           return '<div class="step-fields">' +
             this.stepTargetField(step, listPath, index, readOnly) +
             damageTypeField +
-            this.fieldRow(L('ui.c5238fc3e9de'), this.stepInput(listPath, index, 'fixedValue', step.fixedValue == null ? '0' : step.fixedValue, { type: 'number', disabled }), L('ui.b20ea152e534')) +
-            L('ui.a95a08e32326') +
+            this.fieldRow(L('ui.1bc57d8190dc'), this.stepInput(listPath, index, 'formula', step.formula == null ? '0' : step.formula, { mono: true, disabled }), L('ui.628a66bc9b46')) +
+            L('ui.75e7426ef98c') +
           '</div>';
         }
         return '<div class="step-fields">' +
@@ -1465,7 +1465,7 @@ const EditorUI = {
 
   createStep(kind) {
     switch (kind) {
-      case 'damage': return { kind, target: '{target}', damageType: 'physical', formula: '{self}.atk', useSkillValue: true, rawDamage: false, valueFormula: '{self}.atk', ignoreResistance: false };
+      case 'damage': return { kind, target: '{target}', damageType: 'physical', formula: '0', useSkillValue: true, rawDamage: false, valueFormula: '{self}.atk', ignoreResistance: false };
       case 'heal': return { kind, target: '{self}', formula: '{self}.max_hp - {self}.hp' };
       case 'addEffect': return { kind, target: '{target}', effectId: '', stacks: '1' };
       case 'removeEffect': return { kind, target: '{self}', effectId: '', stacks: '9999', force: false };

@@ -1929,8 +1929,8 @@ class Battle {
             let formulaValue;
             const damageType = step.damageType || (ctx.skill && ctx.skill.element) || 'physical';
             if (damageType === 'true') {
-              formulaValue = Number(step.fixedValue);
-              if (!Number.isFinite(formulaValue)) formulaValue = this.evalFormula(step.formula || '0', Object.assign({}, ctx, { target }));
+              const trueFormula = step.formula != null ? step.formula : (step.fixedValue != null ? String(step.fixedValue) : '0');
+              formulaValue = this.evalFormula(trueFormula, Object.assign({}, ctx, { target }));
             } else if (step.useSkillValue) {
               const skill = ctx.skill || {};
               const valueFormula = step.valueFormula || skill.valueFormula || '{self}.atk';

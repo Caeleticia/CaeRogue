@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.9.28';
+const APP_VERSION = '1.9.31';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
