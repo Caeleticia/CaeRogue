@@ -2,7 +2,7 @@
   "format": "caerogue.expansion",
   "id": "starrail",
   "name": "starrail扩展",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "author": "caeleticia",
   "description": "添加了一些星角色",
   "dependencies": [],
@@ -17,7 +17,7 @@
         "type": "unit",
         "faction": "starrail",
         "counted": true,
-        "hp": 180,
+        "hp": 170,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -64,7 +64,11 @@
         "defensePen": 0,
         "resistanceReduction": 0,
         "damageTakenBonus": 0,
-        "vulnerability": 0
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
       },
       {
         "id": "deathdragon",
@@ -74,7 +78,7 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 220,
+        "hp": 670,
         "attack": 14,
         "resistance": {
           "type": "general",
@@ -83,7 +87,8 @@
         "skills": [
           "deathdragon_flame",
           "deathdragon_guard",
-          "deathdragon_reset"
+          "deathdragon_reset",
+          "starrail_skill_1"
         ],
         "equip": [],
         "autoAttack": false,
@@ -120,32 +125,24 @@
         "defensePen": 0,
         "resistanceReduction": 0,
         "damageTakenBonus": 0,
-        "vulnerability": 0
+        "vulnerability": 0,
+        "obtainable": false,
+        "untargetable": true,
+        "noFieldSlot": true,
+        "invincible": false
       },
       {
-        "id": "trainingdummy",
+        "id": "starrail_unit_1",
         "packId": "starrail",
-        "name": "木头人",
-        "quality": "white",
+        "name": "风堇",
+        "quality": "gold",
         "type": "unit",
-        "faction": "general",
+        "faction": "starrail",
         "counted": true,
-        "hp": 140,
-        "attack": 7,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "slime_strike"
-        ],
-        "equip": [],
-        "autoAttack": true,
-        "maxHpCap": 0,
-        "art": "assets/pictures/brand-mark.svg",
-        "flavor": "",
         "level": 90,
-        "defense": 8,
+        "hp": 160,
+        "attack": 10,
+        "defense": 10,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -163,8 +160,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 3,
-          "mental": 3
+          "physical": 5,
+          "mental": 5
         },
         "penetration": {
           "physical": 0,
@@ -173,7 +170,85 @@
         "defensePen": 0,
         "resistanceReduction": 0,
         "damageTakenBonus": 0,
-        "vulnerability": 0
+        "vulnerability": 0,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "hyacine_breeze",
+          "hyacine_rainbow",
+          "hyacine_dawn"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true,
+        "maxHpCap": 0,
+        "art": "assets/pictures/starrail/hyacine.png",
+        "flavor": "如今永夜已至，我也想成为一丝微光，尽力疗愈世人的伤痛——静候黎明再次盛放的那一天，我们共同沐浴在光芒之下\n非常强力的奶妈"
+      },
+      {
+        "id": "starrail_unit_2",
+        "packId": "starrail",
+        "name": "小伊卡",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "starrail",
+        "counted": false,
+        "level": 90,
+        "hp": 100,
+        "attack": 10,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ica_rain_soft",
+          "ica_cloud_smile",
+          "ica_clear_hand",
+          "ica_cloud_burst"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "noFieldSlot": true,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "嘟噜——"
       }
     ],
     "skills": [
@@ -343,10 +418,10 @@
         "quality": "gold",
         "targetMode": "none",
         "multiplier": 100,
-        "description": "消耗 42 层新蕊，召唤子单位「死龙」；死龙在场时无法再次召唤。",
+        "description": "消耗 340 层新蕊，召唤子单位「死龙」；死龙在场时无法再次召唤。",
         "trigger": {
           "event": "manual",
-          "condition": "<{self}.effect[castorice_effect_nectar].count == 42 and {self}.effect[castorice_effect_netherrealm].count == 0>"
+          "condition": "<{self}.effect[castorice_effect_nectar].count == 340 and {self}.effect[castorice_effect_netherrealm].count == 0>"
         },
         "requirements": [],
         "steps": [
@@ -390,7 +465,7 @@
         "quality": "white",
         "targetMode": "allEnemies",
         "multiplier": 150,
-        "description": "消耗14点生命，群攻6点精神伤害",
+        "description": "消耗40%生命，群攻15%生命上限精神伤害",
         "trigger": {
           "event": "manual"
         },
@@ -400,19 +475,19 @@
             "kind": "damage",
             "target": "{target}",
             "damageType": "mental",
-            "formula": "6",
+            "formula": "",
             "ignoreResistance": false,
             "bonus": false,
             "useSkillValue": true,
             "rawDamage": false,
-            "valueFormula": "6",
-            "multiplier": 100
+            "valueFormula": "{self}.maxHp",
+            "multiplier": "15"
           },
           {
             "kind": "damage",
             "target": "{target}",
             "damageType": "true",
-            "formula": "14",
+            "formula": "{self}.maxHp",
             "ignoreResistance": true,
             "expressionMode": "formula",
             "targetExpression": "{self}",
@@ -448,13 +523,13 @@
             "targetExpression": "{enemy}",
             "legacyTarget": "allEnemies",
             "damageType": "mental",
-            "formula": "6",
+            "formula": "",
             "ignoreResistance": true,
             "bonus": false,
-            "useSkillValue": true,
+            "useSkillValue": false,
             "rawDamage": false,
-            "valueFormula": "6",
-            "multiplier": 100
+            "valueFormula": "{self}.maxHp",
+            "multiplier": "15"
           },
           {
             "kind": "heal",
@@ -498,6 +573,302 @@
         "untargetable": true,
         "damageRedirectRatio": 5,
         "damageRedirectFloor": 1
+      },
+      {
+        "id": "starrail_skill_1",
+        "packId": "starrail",
+        "name": "震彻寂壤的怒啸",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "allEnemies",
+        "multiplier": 250,
+        "element": "physical",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "description": "自爆，群攻30%生命上限",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "{self}.maxHp*0.3",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.maxHp",
+            "multiplier": "30",
+            "ignoreResistance": false
+          },
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "true",
+            "formula": "0",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.maxHp",
+            "ignoreResistance": false,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen",
+            "bonus": true,
+            "multiplier": "100"
+          }
+        ]
+      },
+      {
+        "id": "hyacine_breeze",
+        "packId": "starrail",
+        "name": "当微风轻吻云沫",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "对指定敌方单体造成相当于自身生命上限 15% 的物理伤害。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "{self}.max_hp*0.15",
+            "useSkillValue": false,
+            "rawDamage": false,
+            "ignoreResistance": false,
+            "bonus": false
+          }
+        ],
+        "element": "physical",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk"
+      },
+      {
+        "id": "hyacine_rainbow",
+        "packId": "starrail",
+        "name": "爱在虹光洒落时",
+        "type": "active",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "若自身没有子单位，召唤小伊卡；为我方全体回复相当于自身生命上限 30% 的生命值；为小伊卡附加一层不可解除的「马头车就绪」。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "branch",
+            "condition": "<{{child}.id[starrail_unit_2]}.count == 0>",
+            "then": [
+              {
+                "kind": "summon",
+                "unitId": "starrail_unit_2",
+                "count": "1",
+                "ignoreFieldLimit": true,
+                "summonAsChild": true,
+                "childTag": "summon",
+                "childId": "starrail_unit_2",
+                "notActed": true
+              }
+            ],
+            "elseSteps": [],
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "heal",
+            "target": "allAllies",
+            "formula": "{self}.max_hp*0.3"
+          },
+          {
+            "kind": "addEffect",
+            "target": "{child}",
+            "effectId": "ica_horse_ready",
+            "stacks": "1"
+          }
+        ],
+        "element": "mental",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk"
+      },
+      {
+        "id": "hyacine_dawn",
+        "packId": "starrail",
+        "name": "飞入晨昏的我们",
+        "type": "active",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "若自身没有子单位，召唤小伊卡；解除我方全体全部负面效果。",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "branch",
+            "condition": "<{{child}.id[starrail_unit_2]}.count == 0>",
+            "then": [
+              {
+                "kind": "summon",
+                "unitId": "starrail_unit_2",
+                "count": "1",
+                "ignoreFieldLimit": true,
+                "summonAsChild": true,
+                "childTag": "summon",
+                "childId": "starrail_unit_2",
+                "notActed": true
+              }
+            ],
+            "elseSteps": [],
+            "expressionMode": "formula"
+          },
+          {
+            "kind": "removeNegativeAll",
+            "target": "allAllies",
+            "force": true
+          }
+        ],
+        "element": "physical",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk"
+      },
+      {
+        "id": "ica_rain_soft",
+        "packId": "starrail",
+        "name": "雷雨轻柔",
+        "type": "passive",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "小伊卡免疫负面效果。",
+        "trigger": {
+          "event": "rule"
+        },
+        "requirements": [],
+        "steps": [],
+        "element": "mental",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "negativeImmune": true
+      },
+      {
+        "id": "ica_cloud_smile",
+        "packId": "starrail",
+        "name": "阴云莞尔",
+        "type": "passive",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "我方单位回复生命时，每回复一点生命，为自身附加一层不可解除的「云彩」，上限 2147483647 层。",
+        "trigger": {
+          "event": "allyHpChange",
+          "condition": "< $event.changeType == heal >"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "{self}",
+            "effectId": "ica_cloud",
+            "stacks": "$event.amount"
+          }
+        ],
+        "element": "mental",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk"
+      },
+      {
+        "id": "ica_clear_hand",
+        "packId": "starrail",
+        "name": "牵起晴空的手",
+        "type": "passive",
+        "op": "support",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "我方单位受击时，消耗自身 10% 生命上限的生命，为其回复相当于自身 10% 生命上限的生命。",
+        "trigger": {
+          "event": "allyHpChange",
+          "condition": "< $event.changeType == damage and $event.isAttack >"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{self}",
+            "damageType": "true",
+            "formula": "{self}.max_hp*0.1",
+            "useSkillValue": false,
+            "rawDamage": false,
+            "ignoreResistance": false,
+            "bonus": false
+          },
+          {
+            "kind": "heal",
+            "target": "eventTarget",
+            "formula": "{self}.max_hp*0.1"
+          }
+        ],
+        "element": "physical",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk"
+      },
+      {
+        "id": "ica_cloud_burst",
+        "packId": "starrail",
+        "name": "乌云乌云快走开！",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "持有「马头车就绪」时，强制移除「马头车就绪」，对敌方全体造成相当于云彩层数 10% 的物理伤害，然后将云彩层数强制减半。",
+        "trigger": {
+          "event": "manual",
+          "condition": "<{self}.effect[ica_horse_ready].count > 0>"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "ica_horse_ready",
+            "stacks": "1",
+            "force": true
+          },
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "physical",
+            "formula": "{self}.effect[ica_cloud].count * 0.1",
+            "useSkillValue": false,
+            "rawDamage": false,
+            "ignoreResistance": false,
+            "bonus": false
+          },
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "ica_cloud",
+            "stacks": "ceil({self}.effect[ica_cloud].count / 2)",
+            "force": true
+          }
+        ],
+        "element": "physical",
+        "valueType": "atk",
+        "valueFormula": "{self}.atk"
       }
     ],
     "effects": [
@@ -599,7 +970,7 @@
         "type": "special",
         "removable": false,
         "stackable": true,
-        "stackMax": 42,
+        "stackMax": 340,
         "mods": {},
         "grantedSkills": [],
         "trigger": {
@@ -623,6 +994,38 @@
         },
         "steps": [],
         "description": ""
+      },
+      {
+        "id": "ica_horse_ready",
+        "packId": "starrail",
+        "name": "马头车就绪",
+        "type": "positive",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": "小伊卡可以发动「乌云乌云快走开！」。"
+      },
+      {
+        "id": "ica_cloud",
+        "packId": "starrail",
+        "name": "云彩",
+        "type": "special",
+        "removable": false,
+        "stackable": true,
+        "stackMax": 2147483647,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": "每回复一点生命获得一层，用于「乌云乌云快走开！」。"
       }
     ],
     "equipment": [],
