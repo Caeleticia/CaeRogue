@@ -31,7 +31,11 @@
         "autoAttack": false,
         "maxHpCap": 32,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": ""
+        "flavor": "",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "zyc.unit.2",
@@ -54,7 +58,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": ""
+        "flavor": "",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "zyc_unit_1",
@@ -78,7 +86,11 @@
         "autoAttack": false,
         "maxHpCap": 40,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": ""
+        "flavor": "",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "zyc_unit_2",
@@ -103,7 +115,11 @@
         "autoAttack": false,
         "maxHpCap": 30,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": ""
+        "flavor": "",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       }
     ],
     "skills": [

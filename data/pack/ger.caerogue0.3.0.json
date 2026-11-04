@@ -46,10 +46,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 7,
-        "critDamage": 60,
-        "luckyRate": 2,
-        "luckyDamage": 120,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 6,
           "mental": 10
@@ -153,10 +153,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 7,
-        "critDamage": 60,
-        "luckyRate": 2,
-        "luckyDamage": 120,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 11,
           "mental": 6
@@ -210,10 +210,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 7,
-        "critDamage": 60,
-        "luckyRate": 2,
-        "luckyDamage": 120,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 8,
           "mental": 8
@@ -266,10 +266,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 7,
-        "critDamage": 60,
-        "luckyRate": 2,
-        "luckyDamage": 120,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 7,
           "mental": 6
@@ -321,10 +321,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 6,
-        "critDamage": 55,
-        "luckyRate": 1,
-        "luckyDamage": 110,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 5,
           "mental": 5
@@ -375,10 +375,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 6,
-        "critDamage": 55,
-        "luckyRate": 1,
-        "luckyDamage": 110,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 6,
           "mental": 7
@@ -428,10 +428,10 @@
           "physical": 0,
           "mental": 0
         },
-        "critRate": 6,
-        "critDamage": 55,
-        "luckyRate": 1,
-        "luckyDamage": 110,
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
         "resistances": {
           "physical": 5,
           "mental": 5

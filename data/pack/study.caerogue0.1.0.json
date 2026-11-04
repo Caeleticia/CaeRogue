@@ -31,7 +31,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "妈妈正在给我煎鸡蛋呢"
+        "flavor": "妈妈正在给我煎鸡蛋呢",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.tang-de-mei-bian",
@@ -55,7 +59,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "予你大唐盛氏"
+        "flavor": "予你大唐盛氏",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.squidward",
@@ -78,7 +86,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "蹦蹦跳跳"
+        "flavor": "蹦蹦跳跳",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.emperor-childhood",
@@ -102,7 +114,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "向量，如此简单"
+        "flavor": "向量，如此简单",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.my-class-representative",
@@ -125,7 +141,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "这是我的课代表……"
+        "flavor": "这是我的课代表……",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.amazing-attention",
@@ -149,7 +169,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "……这个也是我的课代表!"
+        "flavor": "……这个也是我的课代表!",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.ct-mecha",
@@ -173,7 +197,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "超模的存在"
+        "flavor": "超模的存在",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.super-ct-mecha",
@@ -198,7 +226,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "因为机甲太大了，所以会一直踩自己的队友"
+        "flavor": "因为机甲太大了，所以会一直踩自己的队友",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.hao-ge",
@@ -222,7 +254,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "豪哥"
+        "flavor": "豪哥",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.mortal-enemy",
@@ -243,7 +279,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "我和所有人不共戴天"
+        "flavor": "我和所有人不共戴天",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.mutated-chocolate",
@@ -266,7 +306,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "恐怖的污染者"
+        "flavor": "恐怖的污染者",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       },
       {
         "id": "study.unit.hates-homosexuals",
@@ -290,7 +334,11 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "直接让游戏变成星冰乐"
+        "flavor": "直接让游戏变成星冰乐",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
       }
     ],
     "skills": [

@@ -1,0 +1,478 @@
+{
+  "format": "caerogue.expansion",
+  "id": "draft.mvxwspdv",
+  "name": "我的设计草稿",
+  "version": "0.1.0",
+  "author": "本地作者",
+  "description": "由编辑器生成的本地内容草稿。",
+  "dependencies": [],
+  "countDefs": {},
+  "content": {
+    "units": [
+      {
+        "id": "draft.mvxwspdv_unit_1",
+        "packId": "draft.mvxwspdv",
+        "name": "遐蝶",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "starrail",
+        "counted": true,
+        "hp": 32,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 1
+        },
+        "skills": [
+          "draft.mvxwspdv_skill_1",
+          "draft.mvxwspdv_skill_2",
+          "draft.mvxwspdv_skill_3",
+          "draft.mvxwspdv_skill_4",
+          "draft.mvxwspdv_skill_6"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/starrail/castorice.png",
+        "flavor": "再寒冷的彼岸，也会有花香",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
+      },
+      {
+        "id": "draft.mvxwspdv_unit_2",
+        "packId": "draft.mvxwspdv",
+        "name": "死龙",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 42,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 2
+        },
+        "skills": [
+          "draft.mvxwspdv_skill_7"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
+      },
+      {
+        "id": "draft.mvxwspdv_unit_3",
+        "packId": "draft.mvxwspdv",
+        "name": "木头人",
+        "quality": "white",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 96,
+        "attack": 1,
+        "resistance": {
+          "type": "general",
+          "value": 0
+        },
+        "skills": [
+          "slime_strike"
+        ],
+        "equip": [],
+        "autoAttack": true,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100
+      }
+    ],
+    "skills": [
+      {
+        "id": "draft.mvxwspdv_skill_1",
+        "packId": "draft.mvxwspdv",
+        "name": "哀悼，死海之涟漪",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "造成15%自身生命上限的精神伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "({self}.maxHp)*0.15",
+            "ignoreResistance": false
+          }
+        ]
+      },
+      {
+        "id": "draft.mvxwspdv_skill_2",
+        "packId": "draft.mvxwspdv",
+        "name": "缄默，幽蝶之轻抚",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "消耗我方全体当前30%的生命值，群攻相当于自己12%生命上限的角色伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "({target}.hp)*0.3",
+            "ignoreResistance": true,
+            "expressionMode": "formula",
+            "targetExpression": "all({friendly})",
+            "legacyTarget": "chosen",
+            "bonus": true
+          },
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "({self}.maxHp)*0.12",
+            "ignoreResistance": false,
+            "bonus": false
+          }
+        ]
+      },
+      {
+        "id": "draft.mvxwspdv_skill_3",
+        "packId": "draft.mvxwspdv",
+        "name": "月茧之庇",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "全场只能触发一次的名刀",
+        "trigger": {
+          "event": "continuous"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "branch",
+            "condition": "{satisfy({friendly}, {unit}.name==遐蝶)}.effect[draft.mvxwspdv_effect_3].count < 1",
+            "then": [
+              {
+                "kind": "branch",
+                "condition": "{satisfy({friendly}, {unit}.effect[draft.mvxwspdv_effect_2].count == 0)}.count > 0",
+                "then": [
+                  {
+                    "kind": "addEffect",
+                    "target": "{target}",
+                    "effectId": "draft.mvxwspdv_effect_2",
+                    "stacks": "1",
+                    "expressionMode": "formula",
+                    "targetExpression": "{friendly}",
+                    "legacyTarget": "chosen"
+                  }
+                ],
+                "elseSteps": [],
+                "expressionMode": "formula"
+              }
+            ],
+            "elseSteps": [
+              {
+                "kind": "removeEffect",
+                "target": "{self}",
+                "effectId": "draft.mvxwspdv_effect_2",
+                "stacks": "9999",
+                "force": true,
+                "expressionMode": "formula",
+                "targetExpression": "{friendly}",
+                "legacyTarget": "self"
+              }
+            ],
+            "expressionMode": "formula"
+          }
+        ]
+      },
+      {
+        "id": "draft.mvxwspdv_skill_4",
+        "packId": "draft.mvxwspdv",
+        "name": "掌心淌过的荒芜",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "记录我方生命值变动，附加等量新蕊",
+        "trigger": {
+          "event": "allyHpChange"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "{target}",
+            "effectId": "draft.mvxwspdv_effect_4",
+            "stacks": "$event.amount",
+            "expressionMode": "legacy",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          }
+        ]
+      },
+      {
+        "id": "draft.mvxwspdv_skill_6",
+        "packId": "draft.mvxwspdv",
+        "name": "亡喉怒哮，苏生之颂铃",
+        "type": "active",
+        "op": "special",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "消耗42层新蕊，召唤「死龙」",
+        "trigger": {
+          "event": "manual",
+          "condition": "{self}.effect[draft.mvxwspdv_effect_4].count == 42 and {self}.effect[draft.mvxwspdv_effect_5].count == 0"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "draft.mvxwspdv_effect_4",
+            "stacks": "9999",
+            "force": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          },
+          {
+            "kind": "addEffect",
+            "target": "{target}",
+            "effectId": "draft.mvxwspdv_effect_5",
+            "stacks": "1",
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen"
+          },
+          {
+            "kind": "summon",
+            "unitId": "draft.mvxwspdv_unit_2",
+            "count": "1",
+            "ignoreFieldLimit": true,
+            "summonAsChild": true,
+            "childId": "",
+            "childTag": "cast"
+          }
+        ]
+      },
+      {
+        "id": "draft.mvxwspdv_skill_7",
+        "packId": "draft.mvxwspdv",
+        "name": "燎尽黯泽的焰息",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "allEnemies",
+        "multiplier": 100,
+        "description": "消耗14点生命，群攻6点精神伤害",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "6",
+            "ignoreResistance": false,
+            "bonus": false
+          },
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "true",
+            "formula": "14",
+            "ignoreResistance": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen",
+            "bonus": true
+          }
+        ]
+      },
+      {
+        "id": "draft.mvxwspdv_skill_5",
+        "packId": "draft.mvxwspdv",
+        "name": "灼掠幽墟的晦翼",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "解除遐蝶的遗世冥域",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "draft.mvxwspdv_effect_5",
+            "stacks": "9999",
+            "force": true,
+            "expressionMode": "formula",
+            "targetExpression": "{parent}",
+            "legacyTarget": "self"
+          }
+        ]
+      }
+    ],
+    "effects": [
+      {
+        "id": "draft.mvxwspdv_effect_1",
+        "packId": "draft.mvxwspdv",
+        "name": "缄默，幽蝶之轻抚",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "rule"
+        },
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "{target}",
+            "damageType": "mental",
+            "formula": "({self}.hp)*0.3",
+            "ignoreResistance": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "chosen",
+            "bonus": true
+          },
+          {
+            "kind": "removeEffect",
+            "target": "{self}",
+            "effectId": "draft.mvxwspdv_effect_1",
+            "stacks": "9999",
+            "force": true,
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          }
+        ],
+        "description": "消耗自身30%生命值"
+      },
+      {
+        "id": "draft.mvxwspdv_effect_2",
+        "packId": "draft.mvxwspdv",
+        "name": "月茧之庇",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "fatalDamage"
+        },
+        "steps": [
+          {
+            "kind": "immuneDamage"
+          },
+          {
+            "kind": "heal",
+            "target": "{self}",
+            "formula": "1-{self}.hp",
+            "expressionMode": "formula",
+            "targetExpression": "{self}",
+            "legacyTarget": "self"
+          },
+          {
+            "kind": "addEffect",
+            "target": "{target}",
+            "effectId": "draft.mvxwspdv_effect_3",
+            "stacks": "1",
+            "expressionMode": "formula",
+            "targetExpression": "{satisfy({friendly}, {unit}.name==遐蝶)}",
+            "legacyTarget": "chosen"
+          }
+        ],
+        "description": ""
+      },
+      {
+        "id": "draft.mvxwspdv_effect_3",
+        "packId": "draft.mvxwspdv",
+        "name": "用掉了名刀",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 1,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      },
+      {
+        "id": "draft.mvxwspdv_effect_4",
+        "packId": "draft.mvxwspdv",
+        "name": "新蕊",
+        "type": "special",
+        "removable": false,
+        "stackable": true,
+        "stackMax": 42,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      },
+      {
+        "id": "draft.mvxwspdv_effect_5",
+        "packId": "draft.mvxwspdv",
+        "name": "遗世冥域",
+        "type": "special",
+        "removable": false,
+        "stackable": false,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      }
+    ],
+    "equipment": [],
+    "runes": []
+  },
+  "rogueEvents": [],
+  "rogueConfig": null
+}
