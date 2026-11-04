@@ -2,7 +2,7 @@
   "format": "caerogue.expansion",
   "id": "starrail",
   "name": "starrail扩展",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "author": "caeleticia",
   "description": "添加了一些星角色",
   "dependencies": [],
@@ -270,7 +270,8 @@
             "ignoreFieldLimit": true,
             "summonAsChild": true,
             "childId": "deathdragon",
-            "childTag": "summon"
+            "childTag": "summon",
+            "notActed": true
           }
         ]
       },
@@ -365,7 +366,7 @@
         "quality": "white",
         "targetMode": "none",
         "multiplier": 100,
-        "description": "死龙无法被选中；其他我方单位受到伤害或消耗生命时，生命最多降至 1，死龙代替承受并消耗原数值 500% 的生命。",
+        "description": "死龙无法被选中；其他我方单位不会被击败；仅有生命值为 1 的我方单位受到伤害或消耗生命时，溢出部分由死龙承担并消耗原数值 500% 的生命。",
         "trigger": {
           "event": "rule"
         },

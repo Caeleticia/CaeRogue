@@ -82,7 +82,7 @@
         "id": "philia093",
         "packId": "core",
         "name": "Philia093",
-        "quality": "gold",
+        "quality": "rainbow",
         "type": "unit",
         "faction": "choir",
         "counted": false,
@@ -422,9 +422,9 @@
         "quality": "gold",
         "targetMode": "self",
         "multiplier": 100,
-        "description": "被动技。受到致命伤害时，免疫此次伤害，强制回复生命至上限，然后获得一层「执念」。",
+        "description": "被动技。退场时触发，免疫退场并强制回复生命至上限，然后获得一层「执念」。持有者因此完全无法被击败。",
         "trigger": {
-          "event": "fatalDamage"
+          "event": "retreat"
         },
         "requirements": [],
         "steps": [
@@ -764,7 +764,7 @@
         },
         "grantedSkills": [],
         "trigger": {
-          "event": "fatalDamage"
+          "event": "retreat"
         },
         "steps": [
           {
@@ -776,7 +776,7 @@
             "formula": "$hpMax - $hp"
           }
         ],
-        "description": "持有者视为不计数单位，造成的最终伤害被削减至极限。受到致命伤害或处决时，免疫伤害并强制回复生命至上限。若持有者造成伤害，伤害归零。"
+        "description": "持有者视为不计数单位，造成的最终伤害被削减至极限。退场时触发，免疫退场并强制回复生命至上限，因此完全无法被击败。若持有者造成伤害，伤害归零。"
       },
       {
         "id": "mimi_cheer",
