@@ -465,7 +465,7 @@
         "quality": "white",
         "targetMode": "allEnemies",
         "multiplier": 150,
-        "description": "消耗40%生命，群攻15%生命上限精神伤害",
+        "description": "消耗40%生命，群攻1.5%生命上限精神伤害",
         "trigger": {
           "event": "manual"
         },
@@ -481,7 +481,7 @@
             "useSkillValue": true,
             "rawDamage": false,
             "valueFormula": "{self}.maxHp",
-            "multiplier": "15"
+            "multiplier": "1.5"
           },
           {
             "kind": "damage",
@@ -529,7 +529,7 @@
             "useSkillValue": false,
             "rawDamage": false,
             "valueFormula": "{self}.maxHp",
-            "multiplier": "15"
+            "multiplier": "1.5"
           },
           {
             "kind": "heal",
@@ -586,7 +586,7 @@
         "element": "physical",
         "valueType": "atk",
         "valueFormula": "{self}.atk",
-        "description": "自爆，群攻30%生命上限",
+        "description": "自爆，群攻3%生命上限",
         "trigger": {
           "event": "manual"
         },
@@ -596,18 +596,18 @@
             "kind": "damage",
             "target": "{target}",
             "damageType": "mental",
-            "formula": "{self}.maxHp*0.3",
+            "formula": "{self}.maxHp*0.03",
             "useSkillValue": true,
             "rawDamage": false,
             "valueFormula": "{self}.maxHp",
-            "multiplier": "30",
+            "multiplier": "3",
             "ignoreResistance": false
           },
           {
             "kind": "damage",
             "target": "{target}",
             "damageType": "true",
-            "formula": "0",
+            "formula": "{self}.maxHp",
             "useSkillValue": true,
             "rawDamage": false,
             "valueFormula": "{self}.maxHp",
@@ -644,6 +644,15 @@
             "rawDamage": false,
             "ignoreResistance": false,
             "bonus": false
+          },
+          {
+            "kind": "addEffect",
+            "target": "{target}",
+            "effectId": "ica_horse_ready",
+            "stacks": "1",
+            "expressionMode": "formula",
+            "targetExpression": "{child}",
+            "legacyTarget": "chosen"
           }
         ],
         "element": "physical",
