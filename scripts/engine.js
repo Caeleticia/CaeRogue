@@ -723,18 +723,27 @@ class Battle {
     if (Number(card.maxHpCap) > 0) unit.maxHp = Math.min(unit.maxHp, Number(card.maxHpCap));
     if (unit.maxHp < oldMax) unit.hp = Math.min(unit.hp, unit.maxHp);
     unit.hp = Math.max(0, Math.min(unit.hp, unit.maxHp));
-    unit.damageBonus = (Number(card.damageBonus) || 0) + (Number(mods.dmgPct) || 0) + (Number(mods.finalDmgPct) || 0);
-    unit.damageBonusFlat = (Number(card.damageBonusFlat) || 0) + (Number(mods.dmgFlat) || 0) + (Number(mods.finalDmgFlat) || 0);
+    unit.damageBonus = (Number(card.damageBonus) || 0) + (Number(mods.damageBonus) || 0) + (Number(mods.dmgPct) || 0) + (Number(mods.finalDmgPct) || 0);
+    unit.damageBonusFlat = (Number(card.damageBonusFlat) || 0) + (Number(mods.damageBonusFlat) || 0) + (Number(mods.dmgFlat) || 0) + (Number(mods.finalDmgFlat) || 0);
     unit.elementBonus = Object.assign({ physical: 0, mental: 0, true: 0 }, card.elementBonus || {});
+    unit.elementBonus.physical += Number(mods.physicalDmgPct) || 0;
+    unit.elementBonus.mental += Number(mods.mentalDmgPct) || 0;
+    unit.elementBonus.true += Number(mods.trueDmgPct) || 0;
     unit.critRate = Math.max(0, (Number(card.critRate) || 0) + (Number(mods.critRate) || 0));
     unit.critDamage = Math.max(0, (Number(card.critDamage) || 0) + (Number(mods.critDamage) || 0));
     unit.luckyRate = Math.max(0, (Number(card.luckyRate) || 0) + (Number(mods.luckyRate) || 0));
     unit.luckyDamage = Math.max(0, (Number(card.luckyDamage) || 0) + (Number(mods.luckyDamage) || 0));
     unit.resistances = Object.assign({ physical: 5, mental: 5, true: 5 }, card.resistances || {});
+    unit.resistances.physical += Number(mods.physicalResist) || 0;
+    unit.resistances.mental += Number(mods.mentalResist) || 0;
+    unit.resistances.true += Number(mods.trueResist) || 0;
     unit.penetration = Object.assign({ physical: 0, mental: 0, true: 0 }, card.penetration || {});
+    unit.penetration.physical += Number(mods.physicalPen) || 0;
+    unit.penetration.mental += Number(mods.mentalPen) || 0;
+    unit.penetration.true += Number(mods.truePen) || 0;
     unit.defensePen = Math.max(0, (Number(card.defensePen) || 0) + (Number(mods.defensePen) || 0));
-    unit.resistanceReduction = Math.max(0, (Number(card.resistanceReduction) || 0) + (Number(mods.resistFlat) || 0) * 100);
-    unit.damageTakenBonus = (Number(card.damageTakenBonus) || 0) + (Number(mods.takenPct) || 0);
+    unit.resistanceReduction = (Number(card.resistanceReduction) || 0) + (Number(mods.resistanceReduction) || 0);
+    unit.damageTakenBonus = (Number(card.damageTakenBonus) || 0) + (Number(mods.damageTakenBonus) || 0) + (Number(mods.takenPct) || 0);
     unit.vulnerability = (Number(card.vulnerability) || 0) + (Number(mods.vulnerability) || 0);
     unit.level = Number(card.level) || 90;
     unit.resistance.current = this.getResistance(unit, 'physical');
@@ -885,6 +894,7 @@ class Battle {
     const mods = this.getMods(unit);
     if (type === 'physical') value += Number(mods.physicalResist) || 0;
     if (type === 'mental') value += Number(mods.mentalResist) || 0;
+    if (type === 'true') value += Number(mods.trueResist) || 0;
     return Math.max(0, value);
   }
 

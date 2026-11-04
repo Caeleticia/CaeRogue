@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.9.21';
+const APP_VERSION = '1.9.24';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -81,6 +81,29 @@ const COUNT_SCOPES = {
 const STAT_KEYS = {
   atkFlat:       L('ui.783f186b88b9'),
   atkPct:        L('ui.6c64d44c3584'),
+  defFlat:       L('ui.783f186b88b9').replace(L('ui.8669d2926958'), L('ui.2029e612c90d')),
+  defPct:        L('ui.6c64d44c3584').replace(L('ui.8669d2926958'), L('ui.2029e612c90d')),
+  hpFlat:        L('ui.783f186b88b9').replace(L('ui.8669d2926958'), L('ui.b894a8c9982d')),
+  hpPct:         L('ui.6c64d44c3584').replace(L('ui.8669d2926958'), L('ui.b894a8c9982d')),
+  damageBonus:   L('ui.4bd8ed2c962b'),
+  damageBonusFlat:L('ui.68e544367d2b'),
+  physicalDmgPct:L('ui.5c44ad9cb59f'),
+  mentalDmgPct:  L('ui.32bdf299a118'),
+  trueDmgPct:    L('ui.d9f5c61baa64'),
+  critRate:      L('ui.1f12be66bf59'),
+  critDamage:    L('ui.f9752740590f'),
+  luckyRate:     L('ui.6fa3c17fa62e'),
+  luckyDamage:   L('ui.00eb79354774'),
+  defensePen:    L('ui.c952fc2b048a'),
+  resistanceReduction:L('ui.3c43230536ce'),
+  damageTakenBonus:L('ui.9da800e2a440'),
+  vulnerability: L('ui.ebb32a3138c2'),
+  physicalResist:L('ui.6833054c2f95'),
+  mentalResist:  L('ui.625d25dc148b'),
+  trueResist:    L('ui.e8713ef66248'),
+  physicalPen:   L('ui.31039ba8f0e5'),
+  mentalPen:     L('ui.ff6a0f3273be'),
+  truePen:       L('ui.354bd15118e5'),
   dmgFlat:       L('ui.92d635744318'),
   dmgPct:        L('ui.ea36267c3557'),
   finalDmgFlat:  L('ui.bd760096803a'),
@@ -88,13 +111,11 @@ const STAT_KEYS = {
   healFlat:      L('ui.4ee4be018404'),
   healPct:       L('ui.f4baecc2fd1a'),
   resistFlat:    L('ui.69868a22f242'),
-  resistPct:     L('ui.1ba1a941e395'),
-  physicalResist:L('ui.6833054c2f95'),
-  mentalResist:  L('ui.625d25dc148b'),
   takenFlat:     L('ui.b76f5482f3b0'),
   takenPct:      L('ui.4079290660a3'),
   maxHpFlat:     L('ui.04cc6f3f9867')
 };
+
 
 const STEP_LIBRARY = [
   { kind: 'damage', name: L('ui.3b73d2c1c392'), group: L('ui.bc5a114f901a'), hint: L('ui.bf7246a06d6a') },
@@ -124,6 +145,12 @@ const VARIABLE_PALETTE = [
   { token: '$lastHitCount', label: L('ui.fcd9aa7f6568'), hint: L('ui.9222edcb9382') },
   { token: '$multiplier', label: L('ui.7fd7f5dcb8e6'), hint: L('ui.db2c43d5d869') },
   { token: '$targetCount', label: L('ui.41162519d223'), hint: L('ui.84ba22780f49') },
+  { token: '{self}.atk', label: L('ui.6f288f758a71'), hint: L('ui.59a60a9339d9') },
+  { token: '{self}.max_hp', label: L('ui.6a8755e70791'), hint: L('ui.8c7bd1b88ecf') },
+  { token: '{self}.res', label: L('ui.0dc4340c6d0d'), hint: L('ui.718cf4fac7d9') },
+  { token: '{target}.hp', label: L('ui.64f3491b3ab6'), hint: L('ui.81ae7b637a62') },
+  { token: '{target}.effect[love].count', label: L('ui.bea1991040b9'), hint: L('ui.a7f4417ce1ec') },
+  { token: '{eventTarget}.name', label: L('ui.607a5e4f8794'), hint: L('ui.f354a745e741') },
   { token: '$event.amount', label: L('ui.335ab62809a4'), hint: L('ui.76389d13b36b') },
   { token: '$event.changeType', label: L('ui.5b2d75aa54d1'), hint: L('ui.e3dda53bb2af') },
   { token: '$target.hp', label: L('ui.64f3491b3ab6'), hint: L('ui.a8ab4fb9c7d4') },

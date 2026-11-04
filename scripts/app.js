@@ -70,8 +70,11 @@ function stepLabel(step) {
 function stepSummary(step) {
   if (!step) return '';
   switch (step.kind) {
-    case 'damage':
-      return (step.bonus ? L('ui.8eaa1a49d5e7') : '') + (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.formula || '0') + '，' + (TARGET_MODES[step.target || 'chosen'] ? (step.target === 'chosen' ? L('ui.eb7098eca082') : step.target) : (step.target || L('ui.eb7098eca082')));
+    case 'damage': {
+      const targetText = TARGET_MODES[step.target || 'chosen'] ? (step.target === 'chosen' ? L('ui.eb7098eca082') : step.target) : (step.target || L('ui.eb7098eca082'));
+      if (step.useSkillValue) return (step.rawDamage ? L('ui.683a6ce05a97') : '') + (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.valueFormula || '{self}.atk') + ' ×' + (step.multiplier == null ? 100 : step.multiplier) + '%，' + targetText;
+      return (step.bonus ? L('ui.8eaa1a49d5e7') : '') + (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.formula || '0') + '，' + targetText;
+    }
     case 'heal': return L('ui.0fe992a5e20d') + (step.formula || '0');
     case 'addEffect': return L('ui.bdf8e628c405') + (step.effectId || L('ui.2c6270bccebb')) + ' ×' + (step.stacks || '1');
     case 'removeEffect': return L('ui.0c209cd06895') + (step.effectId || L('ui.c70c2b103ba2'));

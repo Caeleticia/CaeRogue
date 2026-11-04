@@ -486,11 +486,14 @@ const EditorUI = {
       op: 'attack',
       quality: 'white',
       targetMode: 'enemy',
-      multiplier: 100,
+      multiplier: 250,
+      element: 'physical',
+      valueType: 'atk',
+      valueFormula: '{self}.atk',
       description: '',
       trigger: { event: 'manual' },
       requirements: [],
-      steps: [{ kind: 'damage', target: '{target}', damageType: 'physical', formula: '1', ignoreResistance: false }]
+      steps: [{ kind: 'damage', target: '{target}', damageType: 'physical', formula: '{self}.atk', useSkillValue: true, rawDamage: false, valueFormula: '{self}.atk', multiplier: 250, ignoreResistance: false }]
     };
     pack.content.skills.push(item);
     this.mode = 'skills';
@@ -545,6 +548,7 @@ const EditorUI = {
       hpPct: 0,
       hpFlat: 0,
       damageBonus: 0,
+      damageBonusFlat: 0,
       elementBonus: { physical: 0, mental: 0, true: 0 },
       critRate: 5,
       critDamage: 50,
@@ -821,8 +825,12 @@ const EditorUI = {
         return '<div class="step-fields">' +
           this.stepTargetField(step, listPath, index, readOnly) +
           this.fieldRow(L('ui.c8078d8a7256'), this.stepInput(listPath, index, 'damageType', step.damageType || 'physical', { type: 'select', options: Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), disabled })) +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'useSkillValue', !!step.useSkillValue, L('ui.61791f13fd80'), disabled) + '</div>' +
+          this.fieldRow(L('ui.3fe475f7b233'), this.stepInput(listPath, index, 'valueFormula', step.valueFormula || '{self}.atk', { mono: true, disabled }), L('ui.389b292d27c0')) +
+          this.fieldRow(L('ui.5e98c432057f'), this.stepInput(listPath, index, 'multiplier', step.multiplier == null ? '' : step.multiplier, { type: 'number', disabled }), L('ui.08c8a895638f')) +
           this.fieldRow(L('ui.edb1fa0b195a'), this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), L('ui.1b24c9b4ef8c')) +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'ignoreResistance', !!step.ignoreResistance, L('ui.63d383e14a49'), disabled) + '</div>' +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'rawDamage', !!step.rawDamage, L('ui.a7a8c2ad57f3'), disabled) + '</div>' +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'bonus', !!step.bonus, L('ui.00e12d3558e4'), disabled) + '</div>' +
         '</div>';
       case 'heal':
@@ -956,6 +964,9 @@ const EditorUI = {
       L('ui.9ff547a2306b') + (readOnly ? ' disabled' : '') + '>' + this.optionList(triggerOptions, item.trigger && item.trigger.event || 'manual') + '</select><div class="field-hint">' + (skill && item.type === 'active' ? L('ui.4ad699aba869') : skill && item.type === 'extra' ? L('ui.6c041caa42ff') : L('ui.8f4ebf634322')) + '</div></div>' +
       (skill ? L('ui.38835eff0bdb') + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(TARGET_MODES).map(key => ({ value: key, label: TARGET_MODES[key].label })), item.targetMode || 'none') + '</select></div>' +
         L('ui.e79e3118cc71') + attr(item.multiplier == null ? 100 : item.multiplier) + '" data-meta-field="multiplier"' + (readOnly ? ' disabled' : '') + L('ui.2fdfdf7b0297') : '') +
+        L('ui.29723f6b797e') + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), item.element || 'physical') + '</select></div>' +
+        L('ui.b6137bfb41d6') + (readOnly ? ' disabled' : '') + '>' + this.optionList([{ value: 'atk', label: L('ui.ef28aed2341d') }, { value: 'formula', label: L('ui.64b12d5550b8') }], item.valueType || 'atk') + '</select></div>' +
+        L('ui.ef73633f571d') + attr(item.valueFormula || '{self}.atk') + '" data-meta-field="valueFormula"' + (readOnly ? ' disabled' : '') + '></div>' +
       (skill ? L('ui.4727c405de40') + attr(item.trigger && item.trigger.condition || '') + '" data-meta-field="triggerCondition"' + (readOnly ? ' disabled' : '') + L('ui.e50e8d596a73') : '') +
       L('ui.ccf99943ddb0') + (readOnly ? ' disabled' : '') + L('ui.3087d3d543a2') + esc(item.description || '') + '</textarea></div>' +
       (!skill ? L('ui.096f09158028') + this.effectToggle('stackable', item.stackable, L('ui.9fcbcbc1d6b5'), readOnly) + '<input class="input compact mono" style="width:74px" type="number" min="1" max="99" value="' + attr(item.stackMax == null ? 1 : item.stackMax) + '" data-meta-field="stackMax"' + (readOnly ? ' disabled' : '') + L('ui.567df4920729') +
@@ -1034,6 +1045,11 @@ const EditorUI = {
       if (item.type === 'extra' && !(item.requirements && item.requirements.length) && !(item.trigger && item.trigger.condition)) errors.push(L('ui.f4f8eab6af0b'));
       if (item.type === 'active' && item.trigger && item.trigger.event && !['manual', 'actionStart'].includes(item.trigger.event)) warnings.push(L('ui.3c6c401f098e'));
       if (!(item.steps || []).length) warnings.push(L('ui.dc09ef254881'));
+      const hasDamageStep = (list) => (list || []).some(step => step.kind === 'damage' || ['then','elseSteps','steps'].some(key => Array.isArray(step[key]) && hasDamageStep(step[key])));
+      const hasDamage = hasDamageStep(item.steps || []);
+      if (hasDamage && !DAMAGE_TYPES[item.element || 'physical']) errors.push(L('ui.0a0f5e6d2f98'));
+      if (!Number.isFinite(Number(item.multiplier)) || Number(item.multiplier) < 0) errors.push(L('ui.46cbcd699466'));
+      if (hasDamage && !String(item.valueFormula || '').trim()) errors.push(L('ui.97e359f41150'));
       if (!String(item.description || '').trim()) warnings.push(L('ui.a06a5f75494a'));
       const referenced = Store.index.units.some(unit => (unit.skills || []).includes(item.id)) ||
         Store.index.equipment.some(gear => (gear.grantedSkills || []).includes(item.id)) ||
@@ -1052,6 +1068,17 @@ const EditorUI = {
       const resist = item.resistance || {};
       if (!Number.isFinite(hp) || hp < 1 || !Number.isInteger(hp)) errors.push(L('ui.17ed8d9d076b'));
       if (!Number.isFinite(attack) || attack < 0) errors.push(L('ui.4c6dfc0d69c0'));
+      if (item.defense != null && (!Number.isFinite(Number(item.defense)) || Number(item.defense) < 0)) errors.push(L('ui.895a1dc96a4b'));
+      if (item.level != null && (!Number.isFinite(Number(item.level)) || Number(item.level) < 1)) errors.push(L('ui.257a8341e07c'));
+      const statFields = ['atkPct','atkFlat','defPct','defFlat','hpPct','hpFlat','damageBonus','damageBonusFlat','critRate','critDamage','luckyRate','luckyDamage','defensePen','resistanceReduction','damageTakenBonus','vulnerability'];
+      for (const field of statFields) {
+        if (item[field] != null && item[field] !== '' && !Number.isFinite(Number(item[field]))) errors.push(L('ui.8814d56646a1') + field);
+      }
+      for (const mapField of ['elementBonus','resistances','penetration']) {
+        for (const key of Object.keys(item[mapField] || {})) {
+          if (!Number.isFinite(Number(item[mapField][key]))) errors.push(L('ui.8814d56646a1') + mapField + '.' + key);
+        }
+      }
       if (!RESISTANCE_TYPES[resist.type]) errors.push(L('ui.9775dc9eb377'));
       if (!Number.isFinite(Number(resist.value)) || Number(resist.value) < 0) errors.push(L('ui.a901a114c657'));
       if (item.maxHpCap != null && item.maxHpCap !== '' && (!Number.isFinite(Number(item.maxHpCap)) || Number(item.maxHpCap) < 0)) errors.push(L('ui.962ed3551b34'));
@@ -1162,6 +1189,33 @@ const EditorUI = {
     return '<div class="form-row span-2"><div class="toggle-row"><div class="toggle-copy"><strong>' + esc(label) + '</strong>' + (hint ? '<small>' + esc(hint) + '</small>' : '') + '</div><button class="toggle' + (active ? ' on' : '') + '" type="button" aria-pressed="' + (active ? 'true' : 'false') + '" data-action="ed-toggle-meta" data-field="' + attr(field) + '" aria-label="' + attr(label) + '"' + (readOnly ? ' disabled' : '') + '></button></div></div>';
   },
 
+  metaPathValue(item, path) {
+    let value = item;
+    for (const key of String(path).split('.')) {
+      if (!value || typeof value !== 'object') return undefined;
+      value = value[key];
+    }
+    return value;
+  },
+
+  setMetaPathValue(item, path, value) {
+    const parts = String(path).split('.');
+    let target = item;
+    for (let i = 0; i < parts.length - 1; i += 1) {
+      const key = parts[i];
+      if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+      target = target[key];
+    }
+    target[parts[parts.length - 1]] = value;
+  },
+
+  unitStatField(item, field, label, readOnly, options) {
+    options = options || {};
+    const value = this.metaPathValue(item, field);
+    const min = options.min == null ? 0 : options.min;
+    return '<div class="form-row"><label class="field-label">' + esc(label) + '</label><input class="input mono" type="number" step="' + attr(options.step || '1') + '" min="' + attr(min) + '" value="' + attr(value == null ? (options.fallback == null ? 0 : options.fallback) : value) + '" data-meta-field="' + attr(field) + '"' + (readOnly ? ' disabled' : '') + '></div>';
+  },
+
   renderCardMetadata(app, item, readOnly) {
     const disabled = readOnly ? ' disabled' : '';
     const mode = this.mode;
@@ -1176,8 +1230,33 @@ const EditorUI = {
         L('ui.8e3232d487ca') + attr(item.faction || '') + '" data-meta-field="faction"' + disabled + L('ui.fe2506bc3ef0') +
         L('ui.b6ee21a2d52b') + attr(item.hp == null ? 4 : item.hp) + '" data-meta-field="hp"' + disabled + '></div>' +
         L('ui.3405d40e7f81') + attr(item.attack == null ? 0 : item.attack) + '" data-meta-field="attack"' + disabled + '></div>' +
-        L('ui.bddf6db72a26') + disabled + '>' + this.optionList(Object.keys(RESISTANCE_TYPES).map(key => ({ value: key, label: RESISTANCE_TYPES[key].label })), (item.resistance || {}).type || 'general') + '</select></div>' +
-        L('ui.7bf52bf73d66') + attr((item.resistance || {}).value || 0) + '" data-meta-field="resistanceValue"' + disabled + '></div>' +
+        L('ui.8a82aca45a19') + attr(item.defense == null ? 10 : item.defense) + '" data-meta-field="defense"' + disabled + '></div>' +
+        this.unitStatField(item, 'level', L('ui.5c42c048ea24'), readOnly, { fallback: 90, min: 1 }) +
+        this.unitStatField(item, 'atkPct', L('ui.609cd3c09215'), readOnly, { step: '0.01', min: -99999 }) +
+        this.unitStatField(item, 'atkFlat', L('ui.b99f853a24ae'), readOnly, { step: '0.01', min: -99999 }) +
+        this.unitStatField(item, 'defPct', L('ui.3c2978bc7916'), readOnly, { step: '0.01', min: -99999 }) +
+        this.unitStatField(item, 'defFlat', L('ui.b4bf65c79507'), readOnly, { step: '0.01', min: -99999, fallback: 8 }) +
+        this.unitStatField(item, 'hpPct', L('ui.989f4e1b4b61'), readOnly, { step: '0.01', min: -99999 }) +
+        this.unitStatField(item, 'hpFlat', L('ui.6f01bbb67792'), readOnly, { step: '0.01', min: -99999 }) +
+        this.unitStatField(item, 'damageBonus', L('ui.4bd8ed2c962b'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'damageBonusFlat', L('ui.68e544367d2b'), readOnly, { step: '0.01', min: -99999 }) +
+        this.unitStatField(item, 'elementBonus.physical', L('ui.5c44ad9cb59f'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'elementBonus.mental', L('ui.32bdf299a118'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'elementBonus.true', L('ui.d9f5c61baa64'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'critRate', L('ui.1f12be66bf59'), readOnly, { step: '0.01', fallback: 5 }) +
+        this.unitStatField(item, 'critDamage', L('ui.f9752740590f'), readOnly, { step: '0.01', fallback: 50 }) +
+        this.unitStatField(item, 'luckyRate', L('ui.6fa3c17fa62e'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'luckyDamage', L('ui.00eb79354774'), readOnly, { step: '0.01', fallback: 100 }) +
+        this.unitStatField(item, 'resistances.physical', L('ui.eec072596024'), readOnly, { step: '0.01', fallback: 5 }) +
+        this.unitStatField(item, 'resistances.mental', L('ui.cf2b8b83b627'), readOnly, { step: '0.01', fallback: 5 }) +
+        this.unitStatField(item, 'resistances.true', L('ui.e8713ef66248'), readOnly, { step: '0.01', fallback: 5 }) +
+        this.unitStatField(item, 'penetration.physical', L('ui.31039ba8f0e5'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'penetration.mental', L('ui.ff6a0f3273be'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'penetration.true', L('ui.354bd15118e5'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'defensePen', L('ui.c952fc2b048a'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'resistanceReduction', L('ui.3c43230536ce'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'damageTakenBonus', L('ui.9da800e2a440'), readOnly, { step: '0.01' }) +
+        this.unitStatField(item, 'vulnerability', L('ui.ebb32a3138c2'), readOnly, { step: '0.01' }) +
         L('ui.81fa19452a94') + attr(item.maxHpCap || 0) + '" data-meta-field="maxHpCap"' + disabled + L('ui.21839d09c67b') +
         artRow +
         this.renderToggleRow(L('ui.64e904249960'), 'counted', item.counted !== false, readOnly, L('ui.f8a1ac1d6b1d')) +
@@ -1300,6 +1379,8 @@ const EditorUI = {
         L('ui.7f3926af18ab') +
       '</ul>' +
       L('ui.426f02826aa2') +
+      L('ui.1dc3edfba1c0') +
+      L('ui.b8801b19e44e') +
       L('ui.868a6e971afc') +
     '</div>';
     return '<aside class="editor-aside">' +
@@ -1395,7 +1476,7 @@ const EditorUI = {
 
   createStep(kind) {
     switch (kind) {
-      case 'damage': return { kind, target: '{target}', damageType: 'physical', formula: '1', ignoreResistance: false };
+      case 'damage': return { kind, target: '{target}', damageType: 'physical', formula: '{self}.atk', useSkillValue: true, rawDamage: false, valueFormula: '{self}.atk', ignoreResistance: false };
       case 'heal': return { kind, target: '{self}', formula: '{self}.max_hp - {self}.hp' };
       case 'addEffect': return { kind, target: '{target}', effectId: '', stacks: '1' };
       case 'removeEffect': return { kind, target: '{self}', effectId: '', stacks: '9999', force: false };
@@ -1625,7 +1706,7 @@ const EditorUI = {
     if (!item || this.isReadOnly(app)) return;
     if (target.matches('[data-meta-field]')) {
       const field = target.dataset.metaField;
-      const numericFields = ['multiplier', 'stackMax', 'hp', 'attack', 'defense', 'maxHpCap', 'resistanceValue'];
+      const numericFields = ['multiplier', 'stackMax', 'hp', 'attack', 'defense', 'level', 'atkPct', 'atkFlat', 'defPct', 'defFlat', 'hpPct', 'hpFlat', 'damageBonus', 'damageBonusFlat', 'critRate', 'critDamage', 'luckyRate', 'luckyDamage', 'defensePen', 'resistanceReduction', 'damageTakenBonus', 'vulnerability', 'maxHpCap', 'resistanceValue'];
       if (field === 'triggerEvent') {
         item.trigger = item.trigger || {};
         item.trigger.event = target.value;
@@ -1638,9 +1719,13 @@ const EditorUI = {
       } else if (field === 'resistanceValue') {
         item.resistance = item.resistance || { type: 'general', value: 0 };
         item.resistance.value = Math.max(0, Number(target.value) || 0);
-      } else if (numericFields.includes(field)) {
-        const minimum = field === 'hp' || field === 'stackMax' ? 1 : 0;
-        item[field] = Math.max(minimum, Number(target.value) || (field === 'hp' ? 1 : 0));
+      } else if (numericFields.includes(field) || String(field).includes('.')) {
+        const allowNegative = ['atkPct','atkFlat','defPct','defFlat','hpPct','hpFlat','damageBonus','damageBonusFlat','critDamage','luckyDamage','defensePen','resistanceReduction','damageTakenBonus','vulnerability'].includes(field) || String(field).includes('.');
+        const minimum = field === 'hp' || field === 'stackMax' || field === 'level' ? 1 : (allowNegative ? -99999 : 0);
+        const numeric = Number(target.value);
+        const applied = Math.max(minimum, Number.isFinite(numeric) ? numeric : 0);
+        if (String(field).includes('.')) this.setMetaPathValue(item, field, applied);
+        else item[field] = applied;
       } else {
         item[field] = target.value;
       }
