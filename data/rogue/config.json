@@ -1,20 +1,20 @@
 {
-  "version": 1,
+  "version": 2,
   "startingGold": 30,
   "battleRules": {
     "initialDraw": 10,
-    "maxField": 3,
+    "maxField": 4,
     "allowDuplicates": true,
     "defeatedToDeck": false,
     "drawDuringBattle": false
   },
   "characterShop": {
     "offerCount": 5,
-    "refreshCost": 10,
+    "refreshCost": 8,
     "autoRefreshPerNode": true,
     "qualityWeights": {
-      "white": 50,
-      "blue": 40,
+      "white": 55,
+      "blue": 35,
       "gold": 10,
       "rainbow": 0
     },
@@ -100,29 +100,22 @@
             "slime_small",
             "slime_small",
             "slime_big",
-            "catgirl_jk",
             "catgirl_jk"
           ]
         },
         {
           "minPower": 3,
           "units": [
-            "philia093"
+            "castorice",
+            "trainingdummy",
+            "catgirl_jk"
           ]
         },
         {
-          "minPower": 5,
+          "minPower": 6,
           "units": [
-            "yonava",
-            "slime_big"
-          ]
-        },
-        {
-          "minPower": 7,
-          "units": [
-            "philia093",
-            "catgirl_jk",
-            "yonava"
+            "castorice",
+            "catgirl_jk"
           ]
         }
       ],
@@ -142,15 +135,7 @@
           "id": "war_spirit"
         }
       ],
-      "startingEffects": [
-        {
-          "minPower": 5,
-          "unitId": "philia093",
-          "effectId": "poem",
-          "stacks": 2,
-          "bossStacks": 4
-        }
-      ],
+      "startingEffects": [],
       "fallbackCounted": "catgirl_jk"
     },
     "elite": {
@@ -167,31 +152,22 @@
           "minPower": 0,
           "units": [
             "slime_small",
-            "slime_small",
             "slime_big",
-            "catgirl_jk",
             "catgirl_jk"
           ]
         },
         {
           "minPower": 3,
           "units": [
-            "philia093"
+            "castorice",
+            "trainingdummy"
           ]
         },
         {
-          "minPower": 5,
+          "minPower": 6,
           "units": [
-            "yonava",
-            "slime_big"
-          ]
-        },
-        {
-          "minPower": 7,
-          "units": [
-            "philia093",
-            "catgirl_jk",
-            "yonava"
+            "castorice",
+            "catgirl_jk"
           ]
         }
       ],
@@ -211,15 +187,7 @@
           "id": "war_spirit"
         }
       ],
-      "startingEffects": [
-        {
-          "minPower": 5,
-          "unitId": "philia093",
-          "effectId": "poem",
-          "stacks": 2,
-          "bossStacks": 4
-        }
-      ],
+      "startingEffects": [],
       "fallbackCounted": "catgirl_jk"
     },
     "boss": {
@@ -236,31 +204,22 @@
           "minPower": 0,
           "units": [
             "slime_small",
-            "slime_small",
             "slime_big",
-            "catgirl_jk",
             "catgirl_jk"
           ]
         },
         {
           "minPower": 3,
           "units": [
-            "philia093"
+            "castorice",
+            "trainingdummy"
           ]
         },
         {
-          "minPower": 5,
+          "minPower": 6,
           "units": [
-            "yonava",
-            "slime_big"
-          ]
-        },
-        {
-          "minPower": 7,
-          "units": [
-            "philia093",
-            "catgirl_jk",
-            "yonava"
+            "castorice",
+            "catgirl_jk"
           ]
         }
       ],
@@ -280,22 +239,14 @@
           "id": "war_spirit"
         }
       ],
-      "startingEffects": [
-        {
-          "minPower": 5,
-          "unitId": "philia093",
-          "effectId": "poem",
-          "stacks": 2,
-          "bossStacks": 4
-        }
-      ],
+      "startingEffects": [],
       "fallbackCounted": "catgirl_jk"
     }
   },
   "shop": {
     "qualityWeights": {
-      "white": 50,
-      "blue": 40,
+      "white": 55,
+      "blue": 35,
       "gold": 10,
       "rainbow": 0
     },
@@ -351,8 +302,8 @@
     "maxEquipment": 6,
     "maxRunes": 6,
     "qualityWeights": {
-      "white": 50,
-      "blue": 40,
+      "white": 55,
+      "blue": 35,
       "gold": 10,
       "rainbow": 0
     },

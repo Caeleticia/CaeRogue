@@ -1,61 +1,34 @@
 {
-  "version": 1,
+  "version": 2,
   "events": [
     {
-      "id": "rogue.poem",
-      "title": "拾起一页诗",
-      "text": "纸页从空中落下，上面的字迹在你触碰时改变了排列。你可以收下它，也可以让某个尚未成形的人进入队伍。",
+      "id": "starrail.memory",
+      "title": "折下的记忆",
+      "text": "一片发光的记忆落在掌心，里面传来遥远列车的鸣笛。你可以把它换成盘缠，或让陌生旅人加入队伍。",
       "weight": 1,
       "choices": [
-        {
-          "text": "收下残页",
-          "hint": "获得 10 金币。",
-          "effect": "gold",
-          "value": 10
-        },
-        {
-          "text": "让诗篇入队",
-          "hint": "随机获得一名当前牌组中没有的计数角色。",
-          "effect": "unit"
-        }
+        {"text": "收起记忆", "hint": "获得 12 金币。", "effect": "gold", "value": 12},
+        {"text": "邀请旅人", "hint": "随机获得一名当前牌组中没有的计数角色。", "effect": "unit"}
       ]
     },
     {
-      "id": "rogue.trial",
+      "id": "starrail.trial",
       "title": "无主试炼",
-      "text": "折断的兵器围成一圈，中央留出了一块干净的场地。这里仍然认得战斗。",
+      "text": "断裂的星轨围成一圈，中央仍残留着战斗的回声。",
       "weight": 1,
       "choices": [
-        {
-          "text": "接受试炼",
-          "hint": "立即进入一场普通战斗，胜利后继续前进。",
-          "effect": "battle"
-        },
-        {
-          "text": "拒绝并整理装备",
-          "hint": "本局生命上限 +1。",
-          "effect": "hp",
-          "value": 1
-        }
+        {"text": "接受试炼", "hint": "立即进入一场普通战斗，胜利后继续前进。", "effect": "battle"},
+        {"text": "整备离开", "hint": "本局生命上限 +1。", "effect": "hp", "value": 1}
       ]
     },
     {
-      "id": "rogue.signpost",
-      "title": "改写路标",
-      "text": "路标上写着尚未发生的下一层。墨迹仍然湿润，你可以在它干透前重写。",
+      "id": "starrail.signpost",
+      "title": "改写航路",
+      "text": "星图上的下一站还没有名字。你可以在它熄灭前重新标记。",
       "weight": 1,
       "choices": [
-        {
-          "text": "改道商队",
-          "hint": "将下一层的节点改为商店。",
-          "effect": "rewrite-shop"
-        },
-        {
-          "text": "带走补给",
-          "hint": "获得 15 金币。",
-          "effect": "gold",
-          "value": 15
-        }
+        {"text": "改道商队", "hint": "将下一层的节点改为商店。", "effect": "rewrite-shop"},
+        {"text": "带走补给", "hint": "获得 15 金币。", "effect": "gold", "value": 15}
       ]
     }
   ]
