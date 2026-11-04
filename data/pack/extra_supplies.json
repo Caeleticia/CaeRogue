@@ -5,7 +5,9 @@
   "version": "1.0.0",
   "author": "本地文件",
   "description": "从 data/pack/ 读取的示例扩展包，提供两件可在牌组与模式中获得的装备和符文。",
-  "dependencies": ["core"],
+  "dependencies": [
+    "core"
+  ],
   "countDefs": {},
   "content": {
     "units": [],
@@ -19,7 +21,9 @@
         "quality": "blue",
         "type": "equipment",
         "slot": "accessory",
-        "mods": { "maxHpFlat": 2 },
+        "mods": {
+          "maxHpFlat": 2
+        },
         "grantedSkills": [],
         "description": "数值：生命上限提升值 +2。从旅途中捡到的护符，能让佩戴者多撑一会儿。",
         "art": "assets/pictures/equipment-soap.svg"
@@ -33,7 +37,9 @@
         "quality": "white",
         "type": "rune",
         "faction": "any",
-        "mods": { "takenFlat": 1 },
+        "mods": {
+          "takenFlat": 1
+        },
         "grantedSkills": [],
         "description": "数值：受伤降低值 +1。所属阵营全体单位有效。",
         "art": "assets/pictures/rune-art.svg"

@@ -44,8 +44,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 7,
         "critDamage": 60,
@@ -53,13 +52,11 @@
         "luckyDamage": 120,
         "resistances": {
           "physical": 6,
-          "mental": 10,
-          "true": 6
+          "mental": 10
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -100,8 +97,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 5,
         "critDamage": 50,
@@ -109,13 +105,11 @@
         "luckyDamage": 100,
         "resistances": {
           "physical": 8,
-          "mental": 3,
-          "true": 4
+          "mental": 3
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -157,8 +151,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 7,
         "critDamage": 60,
@@ -166,13 +159,11 @@
         "luckyDamage": 120,
         "resistances": {
           "physical": 11,
-          "mental": 6,
-          "true": 7
+          "mental": 6
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -217,8 +208,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 7,
         "critDamage": 60,
@@ -226,13 +216,11 @@
         "luckyDamage": 120,
         "resistances": {
           "physical": 8,
-          "mental": 8,
-          "true": 8
+          "mental": 8
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -276,8 +264,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 7,
         "critDamage": 60,
@@ -285,13 +272,11 @@
         "luckyDamage": 120,
         "resistances": {
           "physical": 7,
-          "mental": 6,
-          "true": 6
+          "mental": 6
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -334,8 +319,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 6,
         "critDamage": 55,
@@ -343,13 +327,11 @@
         "luckyDamage": 110,
         "resistances": {
           "physical": 5,
-          "mental": 5,
-          "true": 5
+          "mental": 5
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -391,8 +373,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 6,
         "critDamage": 55,
@@ -400,13 +381,11 @@
         "luckyDamage": 110,
         "resistances": {
           "physical": 6,
-          "mental": 7,
-          "true": 7
+          "mental": 7
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -447,8 +426,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 6,
         "critDamage": 55,
@@ -456,13 +434,11 @@
         "luckyDamage": 110,
         "resistances": {
           "physical": 5,
-          "mental": 5,
-          "true": 4
+          "mental": 5
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -689,7 +665,9 @@
             "formula": "4",
             "ignoreResistance": true,
             "bonus": true,
-            "rawDamage": true
+            "rawDamage": false,
+            "fixedValue": 4,
+            "useSkillValue": false
           }
         ]
       },
@@ -975,11 +953,12 @@
             "damageType": "true",
             "formula": "{self}.atk",
             "ignoreResistance": false,
-            "useSkillValue": true,
+            "useSkillValue": false,
             "rawDamage": false,
             "valueFormula": "({target}.max_hp - {target}.hp)/2 + {self}.atk",
             "bonus": false,
-            "multiplier": 100
+            "multiplier": 100,
+            "fixedValue": 25
           }
         ],
         "valueType": "atk",

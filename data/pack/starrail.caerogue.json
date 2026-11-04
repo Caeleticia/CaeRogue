@@ -47,8 +47,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 7,
         "critDamage": 60,
@@ -56,13 +55,11 @@
         "luckyDamage": 120,
         "resistances": {
           "physical": 7,
-          "mental": 7,
-          "true": 8
+          "mental": 7
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -106,8 +103,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 8,
         "critDamage": 65,
@@ -115,13 +111,11 @@
         "luckyDamage": 130,
         "resistances": {
           "physical": 8,
-          "mental": 9,
-          "true": 9
+          "mental": 9
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -162,8 +156,7 @@
         "damageBonusFlat": 0,
         "elementBonus": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "critRate": 5,
         "critDamage": 50,
@@ -171,13 +164,11 @@
         "luckyDamage": 100,
         "resistances": {
           "physical": 4,
-          "mental": 4,
-          "true": 4
+          "mental": 4
         },
         "penetration": {
           "physical": 0,
-          "mental": 0,
-          "true": 0
+          "mental": 0
         },
         "defensePen": 0,
         "resistanceReduction": 0,
@@ -427,7 +418,9 @@
             "targetExpression": "{self}",
             "legacyTarget": "chosen",
             "bonus": true,
-            "rawDamage": true
+            "rawDamage": false,
+            "fixedValue": 14,
+            "useSkillValue": false
           }
         ],
         "valueType": "atk",
