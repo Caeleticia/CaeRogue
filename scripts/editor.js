@@ -540,6 +540,9 @@ const EditorUI = {
       skills: [],
       equip: [],
       autoAttack: false,
+      noFieldSlot: false,
+      untargetable: false,
+      invincible: false,
       maxHpCap: 0,
       art: 'assets/pictures/brand-mark.svg',
       flavor: ''

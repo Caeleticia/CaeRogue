@@ -537,7 +537,7 @@ class Battle {
     this.config = config;
     this.mode = config.mode || 'versus';
     this.rules = Object.assign({}, DEFAULT_RULES, config.rules || {});
-    this.rules.maxField = Math.max(1, Number(this.rules.maxField) || 3);
+    this.rules.maxField = Math.max(1, Number(this.rules.maxField) || 4);
     this.rules.initialDraw = Math.max(0, Number(this.rules.initialDraw) || 0);
     this.drawFromPool = !!(config.drawFromPool || this.rules.drawFromPool);
     this.controllers = Object.assign({ A: 'human', B: 'human' }, config.controllers || {});
@@ -784,9 +784,21 @@ class Battle {
     return this.sides[sideId].units.filter(unit => unit.alive && unit.onField && (!options || options.includePending || !unit.pendingDefeat));
   }
 
+  unitNoFieldSlot(unit) {
+    return !!(unit && ((unit.card && unit.card.noFieldSlot) || unit.noFieldSlot));
+  }
+
+  occupiedFieldCount(sideId) {
+    return this.sides[sideId].units.filter(unit => unit.alive && unit.onField && !this.unitNoFieldSlot(unit)).length;
+  }
+
+  isInvincible(unit) {
+    return !!(unit && ((unit.card && unit.card.invincible) || unit.invincible));
+  }
+
   isUntargetable(unit) {
     if (!unit) return false;
-    if (unit.untargetable) return true;
+    if (unit.untargetable || (unit.card && unit.card.untargetable)) return true;
     return this.getUnitSkills(unit).some(skill => skill.untargetable);
   }
 
@@ -1339,7 +1351,7 @@ class Battle {
 
   musterSide(sideId) {
     const side = this.sides[sideId];
-    while (side.units.length < this.rules.maxField) {
+    while (this.occupiedFieldCount(sideId) < this.rules.maxField) {
       const candidates = this.handUnits(sideId);
       if (!candidates.length) break;
       candidates.sort((a, b) => {
@@ -1385,7 +1397,7 @@ class Battle {
     const card = this.deckUnitCard(cardId);
     if (!card) return null;
     const side = this.sides[sideId];
-    if (side.units.length >= this.rules.maxField) return null;
+    if (!this.unitNoFieldSlot({ card }) && this.occupiedFieldCount(sideId) >= this.rules.maxField) return null;
     if (fromHand !== false) {
       const idx = side.hand.indexOf(cardId);
       if (idx < 0) return null;
@@ -1449,7 +1461,7 @@ class Battle {
         return card && card.counted !== false;
       });
       if (!cardIds.length) break;
-      if (side.units.length >= this.rules.maxField) {
+      if (this.occupiedFieldCount(sideId) >= this.rules.maxField) {
         const uncounted = side.units.filter(unit => unit.alive && !unit.counted && !unit.pendingDefeat);
         if (!uncounted.length) break;
         const recalled = uncounted[uncounted.length - 1];
@@ -1477,8 +1489,9 @@ class Battle {
     const side = this.sides[sideId];
     const index = Number(handIndex);
     if (!side || !Number.isInteger(index) || index < 0 || index >= side.hand.length) return { ok: false, error: L('ui.a46924a9796e') };
-    if (side.units.length >= this.rules.maxField) return { ok: false, error: L('ui.61a07d811cd8') };
     const cardId = side.hand[index];
+    const card = this.deckUnitCard(cardId);
+    if (card && !this.unitNoFieldSlot({ card }) && this.occupiedFieldCount(sideId) >= this.rules.maxField) return { ok: false, error: L('ui.61a07d811cd8') };
     this.beginBatch();
     const unit = this.deployUnit(sideId, cardId, true);
     this.endBatch();
@@ -1551,7 +1564,22 @@ class Battle {
   removeUnit(unit, reason, options) {
     options = options || {};
     if (!unit || !unit.alive) return;
-    if (!options.force && this.runRetreatGuards(unit, null)) {
+    if (this.isInvincible(unit)) {
+      this.log('effect', unit.name + L('ui.1150e54ba90b'), { side: unit.side });
+      unit.pendingDefeat = false;
+      unit.hp = Math.max(1, unit.hp);
+      return;
+    }
+    if (reason === 'defeat') {
+      const protector = this.getDamageRedirectProtector(unit);
+      if (protector && protector !== unit) {
+        unit.pendingDefeat = false;
+        unit.hp = Math.max(1, unit.hp);
+        this.log('effect', protector.name + L('ui.abf48a53b802') + unit.name + L('ui.6d850a6891f2'), { side: protector.side });
+        return;
+      }
+    }
+    if (!options.skipGuards && !options.force && this.runRetreatGuards(unit, null)) {
       unit.pendingDefeat = false;
       this.log('effect', unit.name + L('ui.a324f653ff74'), { side: unit.side });
       return;
@@ -1568,7 +1596,7 @@ class Battle {
     }
     this.log('defeat', unit.name + (reason === 'retreat' ? L('ui.cd7e8d1e52bf') : L('ui.2bbd49a1eca3')), { side: unit.side });
     const equipmentSnapshot = { weapon: unit.equipment.weapon, accessory: unit.equipment.accessory };
-    this.triggerDefeated(unit);
+    if (!options.skipDefeated) this.triggerDefeated(unit);
     this.returnEquipment(unit);
     if (this.rules.defeatedToDeck) {
       side.deck.push(unit.cardId);
@@ -2050,12 +2078,15 @@ class Battle {
         case 'forceRetreat': {
           const targets = this.getTargetsForStep(ctx.unit, { target: this.stepTargetExpression(step), ownerEffectId: step.ownerEffectId }, ctx);
           for (const target of targets) {
-            if (!target.alive) continue;
+            if (!target.alive || this.isInvincible(target)) continue;
             const guards = this.getFatalGuardCandidates(target);
             for (const guard of guards) {
               this.runFatalGuard(guard, target, ctx.unit, { retreat: true });
             }
-            if (target.alive) this.removeUnit(target, 'retreat');
+            if (!target.alive) continue;
+            if (this.runRetreatGuards(target, ctx.unit)) continue;
+            this.triggerDefeated(target);
+            if (target.alive) this.removeUnit(target, 'retreat', { skipGuards: true, skipDefeated: true });
           }
           break;
         }
@@ -2065,7 +2096,8 @@ class Battle {
           const ignoreFieldLimit = !!step.ignoreFieldLimit;
           const fromDefeat = !!(ctx.unit && (!ctx.unit.alive || ctx.unit.hp <= 0));
           for (let i = 0; i < amount; i += 1) {
-            if (!ignoreFieldLimit && this.sides[sideId].units.length >= this.rules.maxField) {
+            const summonCard = this.maps.units.get(step.unitId);
+            if (!ignoreFieldLimit && !this.unitNoFieldSlot({ card: summonCard }) && this.occupiedFieldCount(sideId) >= this.rules.maxField) {
               this.log('summon', L('ui.3b5c6b31cd32') + ((this.maps.units.get(step.unitId) || {}).name || step.unitId) + L('ui.2a30f9f06957'), { side: sideId });
               break;
             }
@@ -2075,6 +2107,7 @@ class Battle {
               parentUid: ctx.unit ? ctx.unit.battleId : null,
               childId: step.childId || '',
               childTag: step.childTag || '',
+              notActed: !!step.notActed,
               sourceUid: ctx.unit ? ctx.unit.battleId : null,
               sourceName: ctx.unit ? ctx.unit.name : side.name,
               summonIndex: i,
@@ -2139,7 +2172,7 @@ class Battle {
     const card = this.maps.units.get(unitId);
     if (!card) { this.log('summon', L('ui.0f7d4b2e2528')); return null; }
     const side = this.sides[sideId];
-    if (!options.ignoreFieldLimit && side.units.length >= this.rules.maxField) return null;
+    if (!options.ignoreFieldLimit && !this.unitNoFieldSlot({ card }) && this.occupiedFieldCount(sideId) >= this.rules.maxField) return null;
     const unit = this.createBattleUnit(card);
     unit.side = sideId;
     let parent = null;
@@ -2157,7 +2190,7 @@ class Battle {
     this.recalcUnit(unit);
     unit.hp = unit.maxHp;
     this.recalcSide(sideId);
-    unit.acted = true;
+    unit.acted = options.notActed ? false : true;
     this.log('summon', side.name + L('ui.33c221414492') + card.name + '」。', { side: sideId });
     this.recordVisual({
       kind: 'summon',
@@ -2250,8 +2283,10 @@ class Battle {
     const redirectSkill = this.getUnitSkills(protector).find(skill => skill.damageRedirect) || {};
     const ratio = Math.max(1, Number(redirectSkill.damageRedirectRatio) || 5);
     const floor = Math.max(0, Number(redirectSkill.damageRedirectFloor) || 1);
+    const atOne = target.hp <= floor;
     const first = this.dealDamage(source, target, baseAmount, damageType, Object.assign({}, options, { skipIntercept: true, hpFloor: floor }));
     if (!first.hit) return first;
+    if (!atOne) return first;
     const cost = Math.max(0, Math.round(first.amount * ratio));
     let protectorResult = null;
     if (cost > 0 && protector.alive && protector.onField) {
@@ -2268,6 +2303,10 @@ class Battle {
   dealDamage(source, target, baseAmount, damageType, options) {
     options = options || {};
     if (!target || !target.alive || !target.onField) return { hit: false, amount: 0 };
+    if (this.isInvincible(target)) {
+      this.log('effect', target.name + L('ui.fb5cabb9a748'), { side: target.side });
+      return { hit: true, target, amount: 0, actualAmount: 0, invincible: true };
+    }
     if (!options.skipIntercept) {
       const protector = this.getDamageRedirectProtector(target);
       if (protector) return this.dealProtectedDamage(source, target, protector, baseAmount, damageType, options);

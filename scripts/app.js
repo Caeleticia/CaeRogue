@@ -1349,7 +1349,8 @@ App.renderBattleField = function (sideId) {
   const units = side.units.filter(unit => unit.alive && unit.onField);
   const activeSkills = this.battleSkillContext();
   const isHuman = battle.controllers[sideId] === 'human';
-  const emptySlots = Math.max(0, battle.rules.maxField - units.length);
+  const occupied = battle.occupiedFieldCount(sideId);
+  const emptySlots = Math.max(0, battle.rules.maxField - occupied);
   const canDeploy = isHuman && battle.status === 'active' && (battle.phase === 'awaiting' || battle.phase === 'muster') && side.hand.length > 0;
   const slotHtml = Array.from({ length: emptySlots }).map(() => canDeploy
     ? '<button class="unit-empty-slot deployable" type="button" data-action="battle-deploy-open" data-side="' + sideId + '">' + (battle.phase === 'muster' ? L('ui.a2b3787c398d') : L('ui.93e91308f357')) + '<small>' + side.hand.length + L('ui.5276fb3453e2')
@@ -1365,7 +1366,7 @@ App.renderBattleField = function (sideId) {
       '<div class="panel field-panel' + (isActive ? ' side-active' : '') + '">' +
         '<div class="field-head">' +
           '<div class="field-head-left"><span class="field-side-mark">' + esc((this.isHotseatBattle() ? (sideId === 'A' ? L('ui.5e3127724b85') : L('ui.a44c5936fb41')) : (sideId === 'A' ? L('ui.34f201bc507e') : L('ui.1729f61b01d3')))) + '</span><div><h2>' + esc(sideLabel) + '</h2><div class="field-sub">' + esc(side.name) + ' · ' + (isHuman ? L('ui.34ef7b8af0de') : L('ui.769bc169aa9f')) + '</div></div></div>' +
-          '<div class="field-status"><span class="chip ' + (isActive ? 'gold' : '') + '">' + esc(activeLabel || L('ui.8dead12de75a')) + '</span><span class="chip' + (units.length > battle.rules.maxField ? ' over-limit' : '') + '">' + units.length + '/' + battle.rules.maxField + (units.length > battle.rules.maxField ? L('ui.3a8a18220440') : '') + '</span></div>' +
+          '<div class="field-status"><span class="chip ' + (isActive ? 'gold' : '') + '">' + esc(activeLabel || L('ui.8dead12de75a')) + '</span><span class="chip' + (occupied > battle.rules.maxField ? ' over-limit' : '') + '">' + occupied + '/' + battle.rules.maxField + (occupied > battle.rules.maxField ? L('ui.3a8a18220440') : '') + '</span></div>' +
         '</div>' +
         '<div class="field-body"><div class="unit-stack">' + (units.length ? units.map(unit => this.renderBattleUnit(unit)).join('') : L('ui.b333a1a4c84e')) + slotHtml + '</div></div>' +
         L('ui.35a18cda82c9') + side.equipmentPool.length + L('ui.967450fee80c') + side.hand.length + '</span>' + runeFooter + '</div>' +
@@ -1497,7 +1498,11 @@ App.renderBattleActionPanel = function () {
       const state = battle.getSkillState(unit, skill);
       return '<button class="extra-skill-btn" type="button" data-action="battle-extra" data-uid="' + attr(unit.battleId) + '" data-skill="' + attr(skill.id) + '"' + (state.usable ? '' : ' disabled title="' + attr(state.reason) + '"') + '>' + esc(unit.name) + ' · ' + esc(skill.name) + '</button>';
     }).join('') + '</div></div>' : '';
-    const canRefill = current && battle.controllers[current.id] === 'human' && current.hand.length && battle.getFieldUnits(current.id).length < battle.rules.maxField;
+    const canRefill = current && battle.controllers[current.id] === 'human' && current.hand.length &&
+      (battle.occupiedFieldCount(current.id) < battle.rules.maxField || current.hand.some(id => {
+        const card = battle.deckUnitCard(id);
+        return card && card.noFieldSlot;
+      }));
     const autoText = autoUnits.length ? L('ui.9264d69190a3') : '';
     body = autoUnits.length
       ? L('ui.e9c70634db5c') + autoText + (canRefill ? L('ui.eaa76bc67e25') : '') + '</div>'
@@ -1997,7 +2002,11 @@ App.openDeployMenu = function (sideId) {
   if (!battle || battle.status !== 'active' || (battle.phase !== 'awaiting' && battle.phase !== 'muster') || this._battleFxActive) return;
   const side = battle.sides[sideId];
   if (!side || battle.controllers[sideId] !== 'human') return;
-  if (battle.getFieldUnits(sideId).length >= battle.rules.maxField) return;
+  const deployableNoSlot = side.hand.some(id => {
+    const card = battle.deckUnitCard(id);
+    return card && card.noFieldSlot;
+  });
+  if (!deployableNoSlot && battle.occupiedFieldCount(sideId) >= battle.rules.maxField) return;
   if (!side.hand.length) { this.toast(L('ui.3a30f27c492a'), 'error'); return; }
   this.pauseBattleInteraction();
   this._deploySide = sideId;
@@ -2015,7 +2024,7 @@ App.openDeployMenu = function (sideId) {
     title: L('ui.cbef2ad72c4e') + side.name,
     subtitle: L('ui.473821832462'),
     size: 'large',
-    body: L('ui.6fe09e95aeb6') + Math.max(0, battle.rules.maxField - battle.getFieldUnits(sideId).length) + L('ui.fc81b9a37919') + (cards || L('ui.71849a3372fd')) + '</div>',
+    body: L('ui.6fe09e95aeb6') + Math.max(0, battle.rules.maxField - battle.occupiedFieldCount(sideId)) + L('ui.fc81b9a37919') + (cards || L('ui.71849a3372fd')) + '</div>',
     foot: L('ui.406b7353bd9e') + side.hand.length + L('ui.3ab3ebdfd3c9') + battle.rules.maxField + L('ui.1fbf3761b1df')
   });
 };

@@ -40,6 +40,19 @@ const ModesUI = {
   enter(route, app) {
     // A pending rogue or endless reward survives reloads; offer it again after the screen exists.
     this.clearRewardTimer();
+    const configVersion = modeNumber(this.rogueConfig().version, 1);
+    for (const mode of ['rogue', 'endless']) {
+      const stale = Store.state.runs[mode];
+      if (stale && stale.active && modeNumber(stale.configVersion, 1) !== configVersion) {
+        Store.state.runs[mode] = null;
+        Store.save();
+      }
+    }
+    const challengeRun = Store.state.runs.challenge;
+    if (challengeRun && challengeRun.active && !this.getChallenge(challengeRun.challengeId)) {
+      Store.state.runs.challenge = null;
+      Store.save();
+    }
     if (route === 'rogue') {
       const run = Store.state.runs.rogue;
       if (run && run.active && run.awaitingReward) {
@@ -204,9 +217,10 @@ const ModesUI = {
     const owned = new Set((run.deck && run.deck.units) || []);
     const used = new Set();
     const offers = [];
+    const shopUnits = Store.index.units.filter(unit => unit.quality !== 'rainbow');
     for (let i = 0; i < modeNumber(shop.offerCount, 5); i += 1) {
-      const unit = this.pickWeightedCard(Store.index.units, shop.qualityWeights || this.qualityWeights('characterShop'), candidate => !used.has(candidate.id) && !owned.has(candidate.id))
-        || this.pickWeightedCard(Store.index.units, shop.qualityWeights, candidate => !used.has(candidate.id));
+      const unit = this.pickWeightedCard(shopUnits, shop.qualityWeights || this.qualityWeights('characterShop'), candidate => !used.has(candidate.id) && !owned.has(candidate.id))
+        || this.pickWeightedCard(shopUnits, shop.qualityWeights, candidate => !used.has(candidate.id));
       if (!unit) break;
       used.add(unit.id);
       offers.push({ unitId: unit.id, quality: unit.quality, price: this.qualityPrice(unit.quality, shop.prices), sold: false });
@@ -304,7 +318,7 @@ const ModesUI = {
   makeBattleRules(extra) {
     return Object.assign({}, DEFAULT_RULES, {
       initialDraw: 10,
-      maxField: 3,
+      maxField: 4,
       allowDuplicates: true,
       defeatedToDeck: false,
       drawDuringBattle: false
@@ -320,17 +334,19 @@ const ModesUI = {
     const power = layer + modeNumber(enc.powerOffset, 0);
     const defaultPools = [
       { minPower: 0, units: ['slime_small', 'slime_small', 'slime_big', 'catgirl_jk', 'catgirl_jk'] },
-      { minPower: 3, units: ['philia093'] },
-      { minPower: 5, units: ['yonava', 'slime_big'] },
-      { minPower: 7, units: ['philia093', 'catgirl_jk', 'yonava'] }
+      { minPower: 3, units: ['castorice', 'trainingdummy'] },
+      { minPower: 5, units: ['catgirl_jk', 'slime_big'] }
     ];
     const pools = Array.isArray(enc.pools) ? enc.pools : defaultPools;
     const available = [];
     for (const pool of pools) {
       if (power < modeNumber(pool.minPower, 0)) continue;
-      for (const id of pool.units || []) if (Store.index.maps.units.has(id)) available.push(id);
+      for (const id of pool.units || []) {
+        const card = Store.index.maps.units.get(id);
+        if (card && card.quality !== 'rainbow') available.push(id);
+      }
     }
-    if (!available.length) available.push(...Store.index.units.map(unit => unit.id));
+    if (!available.length) available.push(...Store.index.units.filter(unit => unit.quality !== 'rainbow').map(unit => unit.id));
     const targetCount = Math.max(1, modeNumber(enc.targetCount, kind === 'boss' ? 5 : kind === 'elite' ? 4 : 3));
     const avoidDuplicates = enc.avoidDuplicates !== false;
     const picked = [];
@@ -463,7 +479,7 @@ const ModesUI = {
     for (const entry of entries) {
       if (!entry || entry.enabled === false) continue;
       if (entry.kind === 'unit') {
-        const unit = this.pickWeightedCard(Store.index.units, weights, candidate => !ownedUnits.has(candidate.id));
+        const unit = this.pickWeightedCard(Store.index.units.filter(item => item.quality !== 'rainbow'), weights, candidate => !ownedUnits.has(candidate.id));
         if (!unit) continue;
         rewards.push({ kind: 'unit', id: unit.id, title: unit.name, desc: L('ui.21a4cc465cf8') + unit.hp + '，' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '。' });
       } else if (entry.kind === 'equipment' || entry.kind === 'rune') {
@@ -701,6 +717,7 @@ const ModesUI = {
     this._shop = null;
     const run = {
       active: true,
+      configVersion: modeNumber(this.rogueConfig().version, 2),
       completed: false,
       failed: false,
       map: { layers: this.createRogueMap() },
@@ -896,7 +913,7 @@ const ModesUI = {
         const isRune = entry.kind === 'rune';
         const max = modeNumber(isRune ? shop.maxRunes : shop.maxEquipment, 6);
         if ((isRune ? (run.deck.runes || []).length : (run.deck.equipment || []).length) >= max) continue;
-        const collection = isRune ? Store.index.runes : Store.index.equipment;
+        const collection = (isRune ? Store.index.runes : Store.index.equipment).filter(item => item.quality !== 'rainbow');
         const card = this.pickWeightedCard(collection, weights);
         if (!card) continue;
         add(entry, {
@@ -1317,7 +1334,7 @@ const ModesUI = {
           L('ui.1fa1dd178d12') +
           this.challengeList().map((challenge, index) => {
             const customUnit = challenge.custom && challenge.stages && challenge.stages[0] && challenge.stages[0].opponent && challenge.stages[0].opponent.units && challenge.stages[0].opponent.units[0];
-            const artUnit = customUnit || (challenge.id === 'challenge_curse' ? 'yonava' : challenge.id === 'challenge_endless' ? 'catgirl_jk' : 'philia093');
+            const artUnit = customUnit || 'castorice';
             const art = (Store.index.maps.units.get(artUnit) || {}).art || 'assets/pictures/unit-philia.svg';
             const isActive = activeRun && activeRun.challengeId === challenge.id;
             const blockedByOther = activeRun && !isActive;
@@ -1458,9 +1475,6 @@ const ModesUI = {
     const stage = challenge.stages[run.stageIndex];
     if (!stage) return;
     const modifiers = { A: { hpFlat: 0, dmgFlat: 0 }, B: this.challengeModifiers(stage) };
-    if (challenge.id === 'challenge_curse' && run.stageIndex === 0) {
-      modifiers.B.startingEffects.push({ unitId: 'yonava', effectId: 'undying', stacks: 1 });
-    }
     app.startBattle({
       loadouts: { A: run.deck, B: stage.opponent },
       rules: this.makeBattleRules({ allowDuplicates: true }),
@@ -1575,6 +1589,7 @@ const ModesUI = {
   startEndless(app) {
     const run = {
       active: true,
+      configVersion: modeNumber(this.rogueConfig().version, 2),
       layer: 1,
       wins: 0,
       gold: 30,

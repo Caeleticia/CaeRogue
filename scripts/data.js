@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.9.16';
+const APP_VERSION = '1.9.19';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -159,37 +159,37 @@ const DEFAULT_RULES = {
   drawDuringBattle: false,
   drawInterval: 2,
   drawCount: 2,
-  maxField: 3
+  maxField: 4
 };
 
 const CHALLENGE_DEFINITIONS = [
   {
-    id: 'challenge_poem', name: L('ui.f08bc98a90ad'), tag: L('ui.8beedd9bb9fe'),
-    description: L('ui.6e95b41ad776'),
+    id: 'challenge_starrail', name: L('ui.3045483a9fa3'), tag: L('ui.529943f784b7'),
+    description: L('ui.20156a44eff0'),
     stages: [
-      { name: L('ui.ac3311a0398b'), opponent: DEFAULT_LOADOUT_B, rule: { modifier: L('ui.5d273d2d2887'), enemyDmg: 1 } },
-      { name: L('ui.d9001d74d507'), opponent: { units: ['philia093', 'catgirl_jk', 'slime_big'], equipment: [], runes: ['war_spirit'] }, rule: { modifier: L('ui.1d7cd30ebddd'), enemyStartEffect: { target: 'philia093', effect: 'poem', stacks: 2 } } },
-      { name: L('ui.40343d724a73'), opponent: { units: ['philia093', 'yonava', 'slime_big', 'catgirl_jk'], equipment: ['soap'], runes: ['war_spirit', 'agility'] }, rule: { modifier: L('ui.78f625803e44'), enemyHp: 2 } }
+      { name: L('ui.43cf4d571824'), opponent: { units: ['slime_small', 'slime_big', 'catgirl_jk'], equipment: [], runes: [] }, rule: { modifier: L('ui.bbd87f778cd3'), enemyDmg: 1 } },
+      { name: L('ui.49bd567add5f'), opponent: { units: ['castorice', 'trainingdummy', 'catgirl_jk'], equipment: [], runes: ['agility'] }, rule: { modifier: L('ui.88162073c793'), enemyHp: 1 } },
+      { name: L('ui.f24f0a322181'), opponent: { units: ['castorice', 'trainingdummy', 'catgirl_jk', 'slime_big'], equipment: ['soap'], runes: ['war_spirit', 'agility'] }, rule: { modifier: L('ui.9e1c3bc42abb'), enemyDmg: 1, enemyHp: 2 } }
     ]
   },
   {
-    id: 'challenge_curse', name: L('ui.5803d25c04ed'), tag: L('ui.d35d42d71bb1'),
-    description: L('ui.4c7cf484e2e4'),
+    id: 'challenge_moon', name: L('ui.234dd1123ce0'), tag: L('ui.8cf843346916'),
+    description: L('ui.174412b24bb8'),
     stages: [
-      { name: L('ui.ced3ce778adc'), opponent: { units: ['yonava', 'philia093', 'slime_small'], equipment: [], runes: [] }, rule: { modifier: L('ui.e35533f406cc') } },
-      { name: L('ui.4a95b8a56ee6'), opponent: { units: ['yonava', 'slime_big', 'slime_big', 'philia093'], equipment: ['soap'], runes: ['agility'] }, rule: { modifier: L('ui.69ba47fc4b23'), enemyDmg: 1 } }
+      { name: L('ui.e36ee4d2eaa7'), opponent: { units: ['castorice', 'catgirl_jk', 'slime_big'], equipment: [], runes: [] }, rule: { modifier: L('ui.bbd87f778cd3'), enemyDmg: 1 } },
+      { name: L('ui.58b721f9f147'), opponent: { units: ['castorice', 'trainingdummy', 'catgirl_jk'], equipment: ['soap'], runes: ['agility'] }, rule: { modifier: L('ui.8366f2d10dba'), enemyHp: 2 } }
     ]
   },
   {
-    id: 'challenge_endless', name: L('ui.a03a1b1587cc'), tag: L('ui.76608bf5af4b'),
-    description: L('ui.d398ec3972f2'),
+    id: 'challenge_nectar', name: L('ui.79c95a201348'), tag: L('ui.1471787fb5be'),
+    description: L('ui.4311489da66e'),
     stages: [
-      { name: L('ui.c895597a47d1'), opponent: DEFAULT_LOADOUT_B, rule: { modifier: L('ui.9893559d041c') } },
-      { name: L('ui.638e97774e38'), opponent: { units: ['catgirl_jk', 'slime_big', 'slime_small'], equipment: ['soap'], runes: ['war_spirit'] }, rule: { modifier: L('ui.9893559d041c') } },
-      { name: L('ui.795ffbee858a'), opponent: { units: ['yonava', 'philia093', 'catgirl_jk'], equipment: [], runes: ['agility'] }, rule: { modifier: L('ui.9893559d041c') } }
+      { name: L('ui.b72ceeb99ab3'), opponent: { units: ['slime_small', 'slime_big', 'trainingdummy'], equipment: [], runes: ['agility'] }, rule: { modifier: L('ui.88162073c793'), enemyHp: 1 } },
+      { name: L('ui.1f20f0636c87'), opponent: { units: ['castorice', 'catgirl_jk', 'trainingdummy', 'slime_big'], equipment: ['soap'], runes: ['war_spirit'] }, rule: { modifier: L('ui.cc5189615234'), enemyDmg: 1, enemyHp: 1 } }
     ]
   }
 ];
+
 
 const GAME_MODES = {
   versus:    { name: L('ui.6dbf1f702a07'), short: L('ui.883524f86de6'), icon: 'assets/icons/versus.svg', desc: L('ui.10affce00163') },
