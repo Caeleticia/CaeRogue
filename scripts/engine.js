@@ -705,15 +705,39 @@ class Battle {
 
   recalcUnit(unit) {
     const mods = this.getMods(unit);
+    const card = unit.card || {};
     const oldMax = unit.maxHp;
-    unit.atk = Math.max(0, (Number(unit.card.attack) || 0) + (mods.atkFlat || 0));
-    unit.atk = Math.max(0, unit.atk * (1 + (mods.atkPct || 0) / 100));
+    const baseAtk = Number(card.attack) || 10;
+    const baseDef = Number(card.defense) || 10;
+    const baseHp = Number(card.hp) || 100;
+    const atkPct = (Number(card.atkPct) || 0) + (Number(mods.atkPct) || 0);
+    const atkFlat = (Number(card.atkFlat) || 0) + (Number(mods.atkFlat) || 0);
+    const defPct = (Number(card.defPct) || 0) + (Number(mods.defPct) || 0);
+    const defFlat = (Number(card.defFlat) || 0) + (Number(mods.defFlat) || 0);
+    const hpPct = (Number(card.hpPct) || 0) + (Number(mods.hpPct) || 0);
+    const hpFlat = (Number(card.hpFlat) || 0) + (Number(mods.hpFlat) || 0) + (Number(mods.maxHpFlat) || 0);
     const sideMod = this.externalModsForSide[unit.side] || {};
-    unit.maxHp = Math.max(1, (Number(unit.card.hp) || 1) + (mods.maxHpFlat || 0) + (sideMod.hpFlat || 0));
-    if (Number(unit.card.maxHpCap) > 0) unit.maxHp = Math.min(unit.maxHp, Number(unit.card.maxHpCap));
+    unit.atk = Math.max(0, baseAtk * (1 + atkPct / 100) + atkFlat);
+    unit.defense = Math.max(0, baseDef * (1 + defPct / 100) + defFlat);
+    unit.maxHp = Math.max(1, baseHp * (1 + hpPct / 100) + hpFlat + (Number(sideMod.hpFlat) || 0));
+    if (Number(card.maxHpCap) > 0) unit.maxHp = Math.min(unit.maxHp, Number(card.maxHpCap));
     if (unit.maxHp < oldMax) unit.hp = Math.min(unit.hp, unit.maxHp);
     unit.hp = Math.max(0, Math.min(unit.hp, unit.maxHp));
-    unit.resistance.current = this.getResistance(unit, unit.card.resistance.type);
+    unit.damageBonus = (Number(card.damageBonus) || 0) + (Number(mods.dmgPct) || 0) + (Number(mods.finalDmgPct) || 0);
+    unit.damageBonusFlat = (Number(card.damageBonusFlat) || 0) + (Number(mods.dmgFlat) || 0) + (Number(mods.finalDmgFlat) || 0);
+    unit.elementBonus = Object.assign({ physical: 0, mental: 0, true: 0 }, card.elementBonus || {});
+    unit.critRate = Math.max(0, (Number(card.critRate) || 0) + (Number(mods.critRate) || 0));
+    unit.critDamage = Math.max(0, (Number(card.critDamage) || 0) + (Number(mods.critDamage) || 0));
+    unit.luckyRate = Math.max(0, (Number(card.luckyRate) || 0) + (Number(mods.luckyRate) || 0));
+    unit.luckyDamage = Math.max(0, (Number(card.luckyDamage) || 0) + (Number(mods.luckyDamage) || 0));
+    unit.resistances = Object.assign({ physical: 5, mental: 5, true: 5 }, card.resistances || {});
+    unit.penetration = Object.assign({ physical: 0, mental: 0, true: 0 }, card.penetration || {});
+    unit.defensePen = Math.max(0, (Number(card.defensePen) || 0) + (Number(mods.defensePen) || 0));
+    unit.resistanceReduction = Math.max(0, (Number(card.resistanceReduction) || 0) + (Number(mods.resistFlat) || 0) * 100);
+    unit.damageTakenBonus = (Number(card.damageTakenBonus) || 0) + (Number(mods.takenPct) || 0);
+    unit.vulnerability = (Number(card.vulnerability) || 0) + (Number(mods.vulnerability) || 0);
+    unit.level = Number(card.level) || 90;
+    unit.resistance.current = this.getResistance(unit, 'physical');
     return mods;
   }
 
@@ -738,10 +762,11 @@ class Battle {
       alive: true,
       onField: true,
       pendingDefeat: false,
-      hp: Number(card.hp) || 1,
-      maxHp: Number(card.hp) || 1,
-      atk: Number(card.attack) || 0,
-      resistance: { type: card.resistance && card.resistance.type || 'general', value: Number(card.resistance && card.resistance.value) || 0, current: 0 },
+      hp: Number(card.hp) || 100,
+      maxHp: Number(card.hp) || 100,
+      atk: Number(card.attack) || 10,
+      defense: Number(card.defense) || 10,
+      resistance: { type: card.resistance && card.resistance.type || 'general', value: Number(card.resistance && card.resistance.value) || 5, current: 0 },
       effects: [],
       counts: {},
       equipment: { weapon: null, accessory: null },
@@ -853,16 +878,14 @@ class Battle {
   }
 
   getResistance(unit, damageType) {
-    if (damageType === 'true') return 0;
-    const res = unit.card.resistance || { type: 'general', value: 0 };
-    let value = 0;
-    if (res.type === 'general' || res.type === damageType) value += Number(res.value) || 0;
+    const type = DAMAGE_TYPES[damageType] ? damageType : 'physical';
+    const map = Object.assign({ physical: 5, mental: 5, true: 5 }, (unit && (unit.resistances || (unit.card && unit.card.resistances))) || {});
+    let value = Number(map[type]);
+    if (!Number.isFinite(value)) value = 0;
     const mods = this.getMods(unit);
-    value += mods.resistFlat || 0;
-    if (damageType === 'physical') value += mods.physicalResist || 0;
-    if (damageType === 'mental') value += mods.mentalResist || 0;
-    value *= 1 + (mods.resistPct || 0) / 100;
-    return Math.max(0, Math.round(value));
+    if (type === 'physical') value += Number(mods.physicalResist) || 0;
+    if (type === 'mental') value += Number(mods.mentalResist) || 0;
+    return Math.max(0, value);
   }
 
   resistanceSummary(unit) {
@@ -1898,11 +1921,22 @@ class Battle {
           const isBonus = !!step.bonus;
           for (const target of targets) {
             if (!target.alive || !target.onField) continue;
-            const formulaValue = this.evalFormula(step.formula, Object.assign({}, ctx, { target }));
-            const result = this.dealDamage(ctx.unit, target, formulaValue, step.damageType || 'physical', {
+            let formulaValue;
+            if (step.useSkillValue) {
+              const skill = ctx.skill || {};
+              const valueFormula = step.valueFormula || skill.valueFormula || '{self}.atk';
+              const rawValue = this.evalFormula(valueFormula, Object.assign({}, ctx, { target }));
+              const multiplier = Number(step.multiplier != null ? step.multiplier : (skill.multiplier != null ? skill.multiplier : 100)) || 100;
+              formulaValue = rawValue * multiplier / 100;
+            } else {
+              formulaValue = this.evalFormula(step.formula, Object.assign({}, ctx, { target }));
+            }
+            const damageType = step.damageType || (ctx.skill && ctx.skill.element) || 'physical';
+            const result = this.dealDamage(ctx.unit, target, formulaValue, damageType, {
               ignoreResistance: !!step.ignoreResistance || isBonus,
               isAttack: !isBonus && !!(ctx.skill && ctx.skill.op === 'attack' && (ctx.skill.type === 'active' || ctx.skill.type === 'extra')),
               bonus: isBonus,
+              rawDamage: !!step.rawDamage,
               isBurn: !!step.burn
             });
             if (result.hit) {
@@ -2313,23 +2347,41 @@ class Battle {
     }
     const type = DAMAGE_TYPES[damageType] ? damageType : 'physical';
     const isBonus = !!options.bonus;
+    const raw = !!(options.rawDamage || isBonus);
     const isAttack = !!options.isAttack && !isBonus;
     const base = Math.max(0, Number(baseAmount) || 0);
     const beforeHp = target.hp;
     const maxHp = target.maxHp;
+    const attacker = source || target;
+    const mods = attacker ? this.getMods(attacker) : {};
     let finalAmount = 0;
     let resistance = 0;
-    let mods = {};
-    if (isBonus) {
+    let crit = false;
+    let lucky = false;
+    let defenseMultiplier = 1;
+    let vulnerabilityRate = 0;
+    if (raw) {
       finalAmount = Math.max(0, Math.round(base));
     } else {
-      mods = this.getMods(source);
-      const outgoing1 = base * (1 + (mods.dmgPct || 0) / 100) + (mods.dmgFlat || 0);
-      const outgoing2 = outgoing1 * (1 + (mods.finalDmgPct || 0) / 100) + (mods.finalDmgFlat || 0);
-      resistance = options.ignoreResistance || type === 'true' ? 0 : this.getResistance(target, type);
-      const targetMods = this.getMods(target);
-      const takenScale = 1 - (targetMods.takenPct || 0) / 100;
-      finalAmount = Math.max(0, Math.round(outgoing2 * takenScale - (targetMods.takenFlat || 0) - resistance));
+      let damageValue = base + (Number(attacker.damageBonusFlat) || 0);
+      damageValue *= 1 + (Number(attacker.damageBonus) || 0) / 100;
+      damageValue *= 1 + (Number(attacker.elementBonus && attacker.elementBonus[type]) || 0) / 100;
+      crit = Math.random() * 100 < (Number(attacker.critRate) || 0);
+      lucky = Math.random() * 100 < (Number(attacker.luckyRate) || 0);
+      if (crit) damageValue *= 1 + (Number(attacker.critDamage) || 0) / 100;
+      if (lucky) damageValue *= 1 + (Number(attacker.luckyDamage) || 0) / 100;
+      const level = Number(attacker.level) || 90;
+      const defense = Math.max(0, Number(target.defense) || 0);
+      const defensePen = Math.max(0, Number(attacker.defensePen) || 0);
+      defenseMultiplier = options.ignoreDefense ? 1 : (level + 10) / (level + 10 + defense * (1 - defensePen / 100));
+      resistance = options.ignoreResistance ? 0 : this.getResistance(target, type) / 100;
+      const targetReduction = Math.max(0, Number(target.resistanceReduction) || 0) / 100;
+      const penetration = Math.max(0, Number(attacker.penetration && attacker.penetration[type]) || 0) / 100;
+      resistance = resistance * (1 - targetReduction) - penetration;
+      const taken = (Number(target.damageTakenBonus) || 0) / 100;
+      const vulnerable = (Number(target.vulnerability) || 0) / 100;
+      vulnerabilityRate = taken * vulnerable;
+      finalAmount = Math.max(0, Math.round(damageValue * defenseMultiplier * (1 - resistance) * (1 + vulnerabilityRate)));
     }
 
     // Apply the hit first so hits on fatal-guard units still produce a visible
@@ -2358,6 +2410,12 @@ class Battle {
       damageType: type,
       isAttack,
       bonus: isBonus,
+      raw,
+      crit,
+      lucky,
+      defenseMultiplier,
+      resistanceRate: resistance,
+      vulnerabilityRate,
       burn: !!options.isBurn || (!isAttack && !isBonus && !options.rider),
       rider: !!options.rider,
       sourceSide: source ? source.side : null,
@@ -2383,10 +2441,11 @@ class Battle {
       this.log('damage', target.name + L('ui.da3a3fdf431f') + finalAmount + L('ui.3fa855be48bb') + DAMAGE_TYPES[type].label + L('ui.f494d63aef59') + beforeHp + ' → ' + target.hp + '）。', { side: target.side });
       if (this.rules.showFormula !== false) {
         const modsText = [];
-        if (mods.dmgFlat) modsText.push(L('ui.58985e01828c') + mods.dmgFlat);
-        if (mods.dmgPct) modsText.push(L('ui.6297d678916e') + mods.dmgPct + '%');
-        if (mods.finalDmgPct) modsText.push(L('ui.b78f637a503c') + mods.finalDmgPct + '%');
-        if (resistance) modsText.push(L('ui.3c091c518028') + resistance);
+        if (crit) modsText.push(L('ui.5e5427d6751f'));
+        if (lucky) modsText.push(L('ui.b824742329e0'));
+        if (defenseMultiplier !== 1) modsText.push(L('ui.5b1e1e2b8bb3') + defenseMultiplier.toFixed(3));
+        if (resistance) modsText.push(L('ui.aa8457052a32') + (resistance * 100).toFixed(1) + '%');
+        if (vulnerabilityRate) modsText.push(L('ui.c5a59cde4d38') + (vulnerabilityRate * 100).toFixed(1) + '%');
         this.log('formula', L('ui.ae7bb2ee42bc') + base + L('ui.cec11c90e7bd') + (modsText.length ? modsText.join('，') : L('ui.72077749f794')) + L('ui.29429cfaa38a') + finalAmount + '。', { side: target.side });
       }
     }

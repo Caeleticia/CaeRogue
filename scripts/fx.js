@@ -453,7 +453,7 @@ const BattleFX = {
       };
       this.effects.push(effect);
     }
-    if (event) this.spawnFloater(position, event.amount, { type: event.type, bonus: event.bonus, prefix: '-' });
+    if (event) this.spawnFloater(position, event.amount, { type: event.type, bonus: event.bonus, crit: event.crit, lucky: event.lucky, prefix: '-' });
     this.spawnShockwave(position, type === 'burn' ? '#7A1811' : this.color(type === 'bonus' ? 'true' : type, 0));
   },
 
@@ -703,7 +703,8 @@ const BattleFX = {
     options = options || {};
     const color = options.type === 'heal' ? '#3C985F' : this.damageColor({ type: options.type });
     const prefix = options.prefix || '-';
-    const label = options.bonus ? L('ui.6f5160294870') : '';
+    const specialLabel = options.crit && options.lucky ? L('ui.d857c9afef83') : options.crit ? L('ui.5e5427d6751f') : options.lucky ? L('ui.b824742329e0') : '';
+    const label = specialLabel || (options.bonus ? L('ui.6f5160294870') : '');
     const life = 1.05;
     let age = 0;
     const stackKey = Math.round(position.x) + ':' + Math.round(position.y);

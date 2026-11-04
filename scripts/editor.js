@@ -534,9 +534,29 @@ const EditorUI = {
       type: 'unit',
       faction: 'general',
       counted: true,
-      hp: 4,
-      attack: 1,
-      resistance: { type: 'general', value: 0 },
+      level: 90,
+      hp: 100,
+      attack: 10,
+      defense: 10,
+      atkPct: 0,
+      atkFlat: 0,
+      defPct: 0,
+      defFlat: 8,
+      hpPct: 0,
+      hpFlat: 0,
+      damageBonus: 0,
+      elementBonus: { physical: 0, mental: 0, true: 0 },
+      critRate: 5,
+      critDamage: 50,
+      luckyRate: 0,
+      luckyDamage: 100,
+      resistances: { physical: 5, mental: 5, true: 5 },
+      penetration: { physical: 0, mental: 0, true: 0 },
+      defensePen: 0,
+      resistanceReduction: 0,
+      damageTakenBonus: 0,
+      vulnerability: 0,
+      resistance: { type: 'general', value: 5 },
       skills: [],
       equip: [],
       autoAttack: false,
@@ -1605,7 +1625,7 @@ const EditorUI = {
     if (!item || this.isReadOnly(app)) return;
     if (target.matches('[data-meta-field]')) {
       const field = target.dataset.metaField;
-      const numericFields = ['multiplier', 'stackMax', 'hp', 'attack', 'maxHpCap', 'resistanceValue'];
+      const numericFields = ['multiplier', 'stackMax', 'hp', 'attack', 'defense', 'maxHpCap', 'resistanceValue'];
       if (field === 'triggerEvent') {
         item.trigger = item.trigger || {};
         item.trigger.event = target.value;
