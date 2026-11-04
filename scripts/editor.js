@@ -1228,21 +1228,10 @@ const EditorUI = {
     if (mode === 'units') {
       return '<div class="form-grid">' + commonTop +
         L('ui.8e3232d487ca') + attr(item.faction || '') + '" data-meta-field="faction"' + disabled + L('ui.fe2506bc3ef0') +
-        L('ui.b6ee21a2d52b') + attr(item.hp == null ? 4 : item.hp) + '" data-meta-field="hp"' + disabled + '></div>' +
-        L('ui.3405d40e7f81') + attr(item.attack == null ? 0 : item.attack) + '" data-meta-field="attack"' + disabled + '></div>' +
+        L('ui.b6ee21a2d52b') + attr(item.hp == null ? 100 : item.hp) + '" data-meta-field="hp"' + disabled + '></div>' +
+        L('ui.3405d40e7f81') + attr(item.attack == null ? 10 : item.attack) + '" data-meta-field="attack"' + disabled + '></div>' +
         L('ui.8a82aca45a19') + attr(item.defense == null ? 10 : item.defense) + '" data-meta-field="defense"' + disabled + '></div>' +
         this.unitStatField(item, 'level', L('ui.5c42c048ea24'), readOnly, { fallback: 90, min: 1 }) +
-        this.unitStatField(item, 'atkPct', L('ui.609cd3c09215'), readOnly, { step: '0.01', min: -99999 }) +
-        this.unitStatField(item, 'atkFlat', L('ui.b99f853a24ae'), readOnly, { step: '0.01', min: -99999 }) +
-        this.unitStatField(item, 'defPct', L('ui.3c2978bc7916'), readOnly, { step: '0.01', min: -99999 }) +
-        this.unitStatField(item, 'defFlat', L('ui.b4bf65c79507'), readOnly, { step: '0.01', min: -99999, fallback: 8 }) +
-        this.unitStatField(item, 'hpPct', L('ui.989f4e1b4b61'), readOnly, { step: '0.01', min: -99999 }) +
-        this.unitStatField(item, 'hpFlat', L('ui.6f01bbb67792'), readOnly, { step: '0.01', min: -99999 }) +
-        this.unitStatField(item, 'damageBonus', L('ui.4bd8ed2c962b'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'damageBonusFlat', L('ui.68e544367d2b'), readOnly, { step: '0.01', min: -99999 }) +
-        this.unitStatField(item, 'elementBonus.physical', L('ui.5c44ad9cb59f'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'elementBonus.mental', L('ui.32bdf299a118'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'elementBonus.true', L('ui.d9f5c61baa64'), readOnly, { step: '0.01' }) +
         this.unitStatField(item, 'critRate', L('ui.1f12be66bf59'), readOnly, { step: '0.01', fallback: 5 }) +
         this.unitStatField(item, 'critDamage', L('ui.f9752740590f'), readOnly, { step: '0.01', fallback: 50 }) +
         this.unitStatField(item, 'luckyRate', L('ui.6fa3c17fa62e'), readOnly, { step: '0.01' }) +
@@ -1250,14 +1239,6 @@ const EditorUI = {
         this.unitStatField(item, 'resistances.physical', L('ui.eec072596024'), readOnly, { step: '0.01', fallback: 5 }) +
         this.unitStatField(item, 'resistances.mental', L('ui.cf2b8b83b627'), readOnly, { step: '0.01', fallback: 5 }) +
         this.unitStatField(item, 'resistances.true', L('ui.e8713ef66248'), readOnly, { step: '0.01', fallback: 5 }) +
-        this.unitStatField(item, 'penetration.physical', L('ui.31039ba8f0e5'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'penetration.mental', L('ui.ff6a0f3273be'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'penetration.true', L('ui.354bd15118e5'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'defensePen', L('ui.c952fc2b048a'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'resistanceReduction', L('ui.3c43230536ce'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'damageTakenBonus', L('ui.9da800e2a440'), readOnly, { step: '0.01' }) +
-        this.unitStatField(item, 'vulnerability', L('ui.ebb32a3138c2'), readOnly, { step: '0.01' }) +
-        L('ui.81fa19452a94') + attr(item.maxHpCap || 0) + '" data-meta-field="maxHpCap"' + disabled + L('ui.21839d09c67b') +
         artRow +
         this.renderToggleRow(L('ui.64e904249960'), 'counted', item.counted !== false, readOnly, L('ui.f8a1ac1d6b1d')) +
         this.renderToggleRow(L('ui.9456ff9f51bf'), 'autoAttack', !!item.autoAttack, readOnly, L('ui.ed09a5fcb674')) +

@@ -1401,7 +1401,7 @@ App.renderBattleUnit = function (unit) {
   const canSelect = isOwnTurn && !unit.acted && isHuman && !ui.skillId && !isAutoUnit && !autoWaiting;
   const res = battle.resistanceSummary(unit);
   const effects = unit.effects.map(inst => {
-    const def = battle.maps.effects.get(inst.effectId);
+    const def = battle.effectDef(inst);
     if (!def) return '';
     return '<span class="unit-effect-chip ' + esc(def.type) + '" title="' + attr(def.description || '') + '"><span>' + esc(def.name) + '</span>' + (def.stackable ? '<b>×' + inst.stacks + '</b>' : '') + '</span>';
   }).join('');
@@ -1719,10 +1719,9 @@ App.renderBattleRail = function () {
     if (!units.length) return L('ui.c0d8d0599ef5');
     return units.map(unit => {
       const countText = Object.keys(unit.counts).filter(key => unit.counts[key]).map(key => battle.countLabel(key) + ' ' + unit.counts[key]).join(' · ');
-      const effectText = unit.effects.map(inst => (battle.maps.effects.get(inst.effectId) || {}).name + (inst.stacks > 1 ? '×' + inst.stacks : '')).filter(Boolean).join(' · ');
-      const tempText = Object.keys(unit.tempMods || {}).filter(key => unit.tempMods[key]).map(key => (STAT_KEYS[key] || key) + ' ' + unit.tempMods[key]).join(' · ');
+      const effectText = unit.effects.map(inst => (battle.effectDef(inst) || {}).name + (inst.stacks > 1 ? '×' + inst.stacks : '')).filter(Boolean).join(' · ');
       return '<div class="status-unit-entry"><div class="status-unit-name"><span>' + esc(unit.name) + '</span><span>' + esc(unit.battleId) + '</span></div><div class="status-unit-name"><span class="tiny">HP ' + unit.hp + '/' + unit.maxHp + '</span><span class="tiny">' + (unit.counted ? L('ui.37802b1dfc26') : L('ui.79b46e5f7db7')) + '</span></div>' +
-        ((countText || effectText || tempText) ? '<div class="status-unit-meta">' + (countText ? '<span class="chip gold">' + esc(countText) + '</span>' : '') + (effectText ? '<span class="chip violet">' + esc(effectText) + '</span>' : '') + (tempText ? '<span class="chip">' + esc(tempText) + '</span>' : '') + '</div>' : '') +
+        ((countText || effectText) ? '<div class="status-unit-meta">' + (countText ? '<span class="chip gold">' + esc(countText) + '</span>' : '') + (effectText ? '<span class="chip violet">' + esc(effectText) + '</span>' : '') + '</div>' : '') +
       '</div>';
     }).join('');
   };
@@ -1735,7 +1734,7 @@ App.renderBattleRail = function () {
         }
       }
       for (const inst of unit.effects) {
-        const def = battle.maps.effects.get(inst.effectId);
+        const def = battle.effectDef(inst);
         if (def && def.trigger && def.trigger.event && def.trigger.event !== 'none') {
           listenerItems.push({ owner: unit.name, uid: unit.battleId, name: def.name, event: triggerLabel(def.trigger.event), type: L('ui.151ddd4f1f9f') });
         }
@@ -2196,7 +2195,7 @@ App.openBattleUnitInfo = function (uid) {
   if (!unit) return;
   const skillRows = battle.getUnitSkills(unit).map(skill => '<div class="skill-detail-card"><div class="skill-detail-head"><span class="chip ' + opClass(skill.op) + '">' + esc(skillTypeLabel(skill.type)) + '</span><strong>' + esc(skill.name) + '</strong></div><div class="skill-detail-desc">' + esc(skill.description || '') + L('ui.0239c2b12d6c') + esc(triggerLabel(skill.trigger && skill.trigger.event)) + '</span></div></div>').join('');
   const effects = unit.effects.map(inst => {
-    const def = battle.maps.effects.get(inst.effectId);
+    const def = battle.effectDef(inst);
     return def ? '<div class="kv"><span class="k">' + esc(def.name) + ' ×' + inst.stacks + '</span><span class="v">' + esc(EFFECT_TYPES[def.type] ? EFFECT_TYPES[def.type].label : L('ui.971b6e5a0a75')) + (def.removable === false ? L('ui.d0357e1e5a5f') : '') + '</span></div>' : '';
   }).join('') || L('ui.8fa4b8172042');
   const counts = Object.keys(unit.counts).filter(key => unit.counts[key]).map(key => '<div class="kv"><span class="k">' + esc(battle.countLabel(key)) + '</span><span class="v">' + unit.counts[key] + '</span></div>').join('') || L('ui.047129e16fb1');
@@ -2215,7 +2214,7 @@ App.openBattleCounts = function (uid) {
   if (!unit) return;
   const counts = Object.keys(unit.counts).filter(key => unit.counts[key]).map(key => '<div class="kv"><span class="k">' + esc(battle.countLabel(key)) + '</span><span class="v">' + unit.counts[key] + '</span></div>').join('') || L('ui.047129e16fb1');
   const effectRows = unit.effects.map(inst => {
-    const def = battle.maps.effects.get(inst.effectId);
+    const def = battle.effectDef(inst);
     return def ? '<div class="kv"><span class="k">' + esc(def.name) + '</span><span class="v">' + inst.stacks + L('ui.83e4f0bdf862') : '';
   }).join('') || L('ui.8fa4b8172042');
   this.openModal({ title: unit.name + L('ui.9085f785979c'), subtitle: unit.battleId + L('ui.ababe7c638e6'), size: 'small', body: L('ui.ce98958cdb46') + counts + L('ui.057d13701c9c') + effectRows });

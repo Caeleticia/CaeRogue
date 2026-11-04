@@ -673,26 +673,11 @@ class Battle {
         acc[key] = (acc[key] || 0) + num * factor;
       }
     };
-    add(unit.card.mods, 1);
-    for (const slot of ['weapon', 'accessory']) {
-      const gear = unit.equipment[slot];
-      if (gear) add(gear.mods, 1);
-    }
-    if (unit.tempMods) add(unit.tempMods, 1);
-    for (const rune of this.getSideOf(unit).runes) {
-      if (rune.faction === 'any' || rune.faction === unit.card.faction) add(rune.mods, 1);
-    }
     for (const inst of unit.effects) {
       const def = this.maps.effects.get(inst.effectId);
+      if (inst.mods) add(inst.mods, 1);
       if (!def || !def.mods) continue;
       add(def.mods, def.stackable ? inst.stacks : 1);
-    }
-    const side = this.getSideOf(unit);
-    for (const ally of side.units) {
-      if (!ally.alive || !ally.onField) continue;
-      for (const skill of this.getUnitSkills(ally)) {
-        if (skill.type === 'passive' && skill.aura) add(skill.aura, 1);
-      }
     }
     const sideMod = this.externalModsForSide[unit.side];
     if (sideMod) add({ dmgFlat: sideMod.dmgFlat || 0, hpFlat: sideMod.hpFlat || 0, dmgPct: sideMod.dmgPct || 0, takenFlat: sideMod.takenFlat || 0 }, 1);
@@ -779,7 +764,6 @@ class Battle {
       effects: [],
       counts: {},
       equipment: { weapon: null, accessory: null },
-      tempMods: {},
       acted: false,
       actionStarted: false,
       extraActionUsed: false,
@@ -884,6 +868,11 @@ class Battle {
   getEffectStacks(unit, effectId) {
     const inst = unit.effects.find(item => item.effectId === effectId);
     return inst ? inst.stacks : 0;
+  }
+
+  effectDef(inst) {
+    if (!inst) return null;
+    return this.maps.effects.get(inst.effectId) || (inst.synthetic ? inst : null);
   }
 
   getResistance(unit, damageType) {
@@ -1440,6 +1429,9 @@ class Battle {
     unit.side = sideId;
     unit.resistance.current = card.resistance.value;
     side.units.push(unit);
+    this.applyModBundle(unit, 'card:' + card.id, card.name, card.mods, { silent: true });
+    this.applyRuneEffects(unit, { silent: true });
+    this.syncAuraEffects(sideId);
     this.recalcUnit(unit);
     unit.hp = unit.maxHp;
     this.recalcSide(sideId);
@@ -1547,6 +1539,7 @@ class Battle {
     if (unit.equipment[gear.slot]) return { ok: false, error: L('ui.0d92e1a6a3b2') + (gear.slot === 'weapon' ? L('ui.6f0f16e0c098') : L('ui.2074803effdd')) + L('ui.51a181a1f18f') };
     side.equipmentPool.splice(index, 1);
     unit.equipment[gear.slot] = gear;
+    this.applyModBundle(unit, 'equip:' + gear.id, gear.name, gear.mods, { silent: true });
     this.recalcUnit(unit);
     this.log('effect', unit.name + L('ui.76124baa7f69') + gear.name + L('ui.a8f34e4831b8'), { side: sideId });
     return { ok: true, unit, gear };
@@ -1562,6 +1555,7 @@ class Battle {
     if (!['weapon', 'accessory'].includes(slot)) return { ok: false, error: L('ui.9fae33288867') };
     const gear = unit.equipment[slot];
     if (!gear) return { ok: false, error: L('ui.df0e2794bdb5') };
+    this.removeSourceEffects(unit, 'equip:' + gear.id);
     unit.equipment[slot] = null;
     side.equipmentPool.push(gear.id);
     this.recalcUnit(unit);
@@ -1589,7 +1583,8 @@ class Battle {
     const selected = [...new Set((runeIds || []).filter(id => allowed.has(id)))];
     if (selected.length > 3) return { ok: false, error: L('ui.98e100fd718b') };
     side.runes = selected.map(id => this.maps.runes.get(id)).filter(Boolean);
-    for (const unit of side.units) this.recalcUnit(unit);
+    this.syncRuneEffects(sideId);
+    this.syncAuraEffects(sideId);
     this.log('effect', side.name + L('ui.632583ffd105') + (side.runes.map(rune => rune.name).join('、') || L('ui.72077749f794')) + '。', { side: sideId });
     return { ok: true };
   }
@@ -1622,6 +1617,7 @@ class Battle {
     unit.pendingDefeat = false;
     const side = this.getSideOf(unit);
     side.units = side.units.filter(item => item !== unit);
+    this.syncAuraEffects(unit.side);
     this.recalcSide(unit.side);
     const children = this.getChildUnits(unit, true).slice();
     for (const child of children) {
@@ -2024,7 +2020,7 @@ class Battle {
               if (this.removeEffect(target, step.effectId, amount, step.force)) recordRemoval(target, def);
             } else {
               for (const inst of target.effects.slice()) {
-                const def = this.maps.effects.get(inst.effectId);
+                const def = this.maps.effects.get(inst.effectId) || (inst.synthetic ? inst : null);
                 if (def && (def.removable !== false || step.force) && this.removeEffect(target, inst.effectId, amount, step.force)) {
                   recordRemoval(target, def);
                 }
@@ -2167,10 +2163,7 @@ class Battle {
           const stat = step.stat || 'atkFlat';
           for (const target of targets) {
             const amount = this.evalFormula(step.formula || '0', Object.assign({}, ctx, { target }));
-            target.tempMods[stat] = (target.tempMods[stat] || 0) + amount;
-            this.recalcUnit(target);
-            this.log('effect', target.name + L('ui.9718591ae2b7') + (STAT_KEYS[stat] || stat) + L('ui.94e935dbc13d') + target.tempMods[stat] + '。', { side: target.side });
-            if (Number(amount) !== 0) this.notifyUnitChanged(target, 'stat', { stat, amount });
+            this.applyStatEffect(target, stat, amount, step.effectSourceId || (ctx.effectId || (ctx.skill && ctx.skill.id) || 'system'), step.effectSourceName || '');
           }
           break;
         }
@@ -2551,6 +2544,109 @@ class Battle {
     return healed;
   }
 
+  applyStatEffect(target, stat, amount, sourceKey, sourceName, options) {
+    options = options || {};
+    if (!target || !target.alive) return null;
+    const numeric = Number(amount);
+    if (!numeric) return null;
+    const key = '__stat__' + stat + '__' + String(sourceKey || 'system');
+    let inst = target.effects.find(item => item.effectId === key);
+    if (!inst) {
+      inst = {
+        effectId: key,
+        synthetic: true,
+        name: (STAT_KEYS[stat] || stat) + (numeric > 0 ? L('ui.cbc82da9bee4') : L('ui.c64b01b4d2ae')),
+        type: numeric > 0 ? 'positive' : 'negative',
+        removable: true,
+        stackable: false,
+        stackMax: 1,
+        stacks: 1,
+        mods: {},
+        sourceUid: null,
+        sourceKey: String(sourceKey || 'system'),
+        description: ''
+      };
+      target.effects.push(inst);
+    }
+    inst.mods[stat] = (inst.mods[stat] || 0) + numeric;
+    if (!inst.mods[stat]) {
+      target.effects = target.effects.filter(item => item !== inst);
+    } else {
+      inst.name = (STAT_KEYS[stat] || stat) + (inst.mods[stat] > 0 ? L('ui.cbc82da9bee4') : L('ui.c64b01b4d2ae'));
+      inst.type = inst.mods[stat] > 0 ? 'positive' : 'negative';
+    }
+    this.recalcUnit(target);
+    if (!options.silent) {
+      this.log('effect', target.name + (numeric > 0 ? L('ui.aab9ff183368') : L('ui.e586a196d931')) + (STAT_KEYS[stat] || stat) + L('ui.a9cd3239527f'), { side: target.side });
+      this.notifyUnitChanged(target, 'stat', { stat, amount: numeric });
+    }
+    return inst;
+  }
+
+  statModKey(key) {
+    const map = {
+      dmgFlat: 'damageBonusFlat', finalDmgFlat: 'damageBonusFlat',
+      dmgPct: 'damageBonus', finalDmgPct: 'damageBonus',
+      maxHpFlat: 'hpFlat',
+      takenPct: 'damageTakenBonus', takenFlat: 'damageTakenBonus'
+    };
+    return map[key] || key;
+  }
+
+  applyModBundle(target, sourceKey, name, mods, options) {
+    if (!target || !mods) return;
+    for (const key of Object.keys(mods)) {
+      let value = Number(mods[key]);
+      if (!Number.isFinite(value) || !value) continue;
+      if (key === 'takenFlat') value = -value * 10;
+      this.applyStatEffect(target, this.statModKey(key), value, sourceKey, name, options);
+    }
+  }
+
+  removeSourceEffects(target, sourcePrefix) {
+    if (!target) return;
+    const ids = target.effects
+      .filter(inst => inst.synthetic && String(inst.sourceKey || '').startsWith(sourcePrefix))
+      .map(inst => inst.effectId);
+    for (const id of ids) this.removeEffect(target, id, 999, true);
+    if (ids.length) this.recalcUnit(target);
+  }
+
+  applyRuneEffects(unit, options) {
+    if (!unit) return;
+    const side = this.getSideOf(unit);
+    for (const rune of side.runes) {
+      if (rune.faction !== 'any' && rune.faction !== unit.card.faction) continue;
+      this.applyModBundle(unit, 'rune:' + rune.id, rune.name, rune.mods, options);
+    }
+  }
+
+  syncRuneEffects(sideId) {
+    const side = this.sides[sideId];
+    if (!side) return;
+    for (const unit of side.units) {
+      this.removeSourceEffects(unit, 'rune:');
+      this.applyRuneEffects(unit, { silent: true });
+      this.recalcUnit(unit);
+    }
+  }
+
+  syncAuraEffects(sideId) {
+    const side = this.sides[sideId];
+    if (!side) return;
+    for (const unit of side.units) this.removeSourceEffects(unit, 'aura:');
+    for (const unit of side.units) {
+      for (const ally of side.units) {
+        if (!ally.alive || !ally.onField) continue;
+        for (const skill of this.getUnitSkills(ally)) {
+          if (skill.type !== 'passive' || !skill.aura) continue;
+          this.applyModBundle(unit, 'aura:' + skill.id, skill.name, skill.aura, { silent: true });
+        }
+      }
+      this.recalcUnit(unit);
+    }
+  }
+
   addEffect(target, effectId, stacks, sourceUnit, options) {
     options = options || {};
     const def = this.maps.effects.get(effectId);
@@ -2610,14 +2706,14 @@ class Battle {
   }
 
   removeEffect(target, effectId, amount, force) {
-    const def = this.maps.effects.get(effectId);
-    if (!def || !target) return false;
+    if (!target) return false;
+    const inst = target.effects.find(item => item.effectId === effectId);
+    const def = this.maps.effects.get(effectId) || (inst && inst.synthetic ? inst : null);
+    if (!def || !inst) return false;
     if (def.removable === false && !force) {
       this.log('effect', '「' + def.name + L('ui.65ee0b6d9296'), { side: target.side });
       return false;
     }
-    const inst = target.effects.find(item => item.effectId === effectId);
-    if (!inst) return false;
     inst.stacks -= Math.max(0, Number(amount) || 0);
     if (inst.stacks <= 0) {
       target.effects = target.effects.filter(item => item !== inst);
