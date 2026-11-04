@@ -17,8 +17,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 156,
-        "attack": 12,
+        "hp": 170,
+        "attack": 13,
         "resistance": {
           "type": "general",
           "value": 5
@@ -33,227 +33,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 19,
-        "atkPct": 0,
-        "atkFlat": 0,
-        "defPct": 0,
-        "defFlat": 8,
-        "hpPct": 0,
-        "hpFlat": 0,
-        "damageBonus": 0,
-        "damageBonusFlat": 0,
-        "elementBonus": {
-          "physical": 0,
-          "mental": 0
-        },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
-        "resistances": {
-          "physical": 6,
-          "mental": 10
-        },
-        "penetration": {
-          "physical": 0,
-          "mental": 0
-        },
-        "defensePen": 0,
-        "resistanceReduction": 0,
-        "damageTakenBonus": 0,
-        "vulnerability": 0
-      },
-      {
-        "id": "ger_unit_45",
-        "packId": "ger",
-        "name": "希特勒（1945）",
-        "quality": "white",
-        "type": "unit",
-        "faction": "general",
-        "counted": true,
-        "hp": 125,
-        "attack": 8,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "ger_skill_15"
-        ],
-        "equip": [],
-        "autoAttack": false,
-        "maxHpCap": 0,
-        "art": "assets/pictures/brand-mark.svg",
-        "flavor": "",
-        "level": 90,
-        "defense": 14,
-        "atkPct": 0,
-        "atkFlat": 0,
-        "defPct": 0,
-        "defFlat": 8,
-        "hpPct": 0,
-        "hpFlat": 0,
-        "damageBonus": 0,
-        "damageBonusFlat": 0,
-        "elementBonus": {
-          "physical": 0,
-          "mental": 0
-        },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
-        "resistances": {
-          "physical": 8,
-          "mental": 3
-        },
-        "penetration": {
-          "physical": 0,
-          "mental": 0
-        },
-        "defensePen": 0,
-        "resistanceReduction": 0,
-        "damageTakenBonus": 0,
-        "vulnerability": 0
-      },
-      {
-        "id": "ger_unit_1",
-        "packId": "ger",
-        "name": "曼施坦因",
-        "quality": "gold",
-        "type": "unit",
-        "faction": "general",
-        "counted": true,
-        "hp": 165,
-        "attack": 17,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "ger_skill_15",
-          "ger_skill_1"
-        ],
-        "equip": [],
-        "autoAttack": false,
-        "maxHpCap": 0,
-        "art": "assets/pictures/brand-mark.svg",
-        "flavor": "",
-        "level": 90,
-        "defense": 20,
-        "atkPct": 0,
-        "atkFlat": 0,
-        "defPct": 0,
-        "defFlat": 8,
-        "hpPct": 0,
-        "hpFlat": 0,
-        "damageBonus": 0,
-        "damageBonusFlat": 0,
-        "elementBonus": {
-          "physical": 0,
-          "mental": 0
-        },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
-        "resistances": {
-          "physical": 11,
-          "mental": 6
-        },
-        "penetration": {
-          "physical": 0,
-          "mental": 0
-        },
-        "defensePen": 0,
-        "resistanceReduction": 0,
-        "damageTakenBonus": 0,
-        "vulnerability": 0
-      },
-      {
-        "id": "ger_unit_42",
-        "packId": "ger",
-        "name": "希特勒（1942）",
-        "quality": "gold",
-        "type": "unit",
-        "faction": "general",
-        "counted": true,
-        "hp": 145,
-        "attack": 11,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "ger_skill_4",
-          "ger_skill_6",
-          "ger_skill_7",
-          "ger_skill_3",
-          "ger_skill_2"
-        ],
-        "equip": [],
-        "autoAttack": false,
-        "maxHpCap": 0,
-        "art": "assets/pictures/brand-mark.svg",
-        "flavor": "",
-        "level": 90,
-        "defense": 14,
-        "atkPct": 0,
-        "atkFlat": 0,
-        "defPct": 0,
-        "defFlat": 8,
-        "hpPct": 0,
-        "hpFlat": 0,
-        "damageBonus": 0,
-        "damageBonusFlat": 0,
-        "elementBonus": {
-          "physical": 0,
-          "mental": 0
-        },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
-        "resistances": {
-          "physical": 8,
-          "mental": 8
-        },
-        "penetration": {
-          "physical": 0,
-          "mental": 0
-        },
-        "defensePen": 0,
-        "resistanceReduction": 0,
-        "damageTakenBonus": 0,
-        "vulnerability": 0
-      },
-      {
-        "id": "ger_unit_3",
-        "packId": "ger",
-        "name": "希特勒（1939）",
-        "quality": "gold",
-        "type": "unit",
-        "faction": "general",
-        "counted": true,
-        "hp": 156,
-        "attack": 7,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "ger_skill_4",
-          "ger_skill_6",
-          "ger_skill_8",
-          "ger_skill_3"
-        ],
-        "equip": [],
-        "autoAttack": false,
-        "maxHpCap": 0,
-        "art": "assets/pictures/brand-mark.svg",
-        "flavor": "",
-        "level": 90,
-        "defense": 11,
+        "defense": 21,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -272,7 +52,227 @@
         "luckyDamage": 100,
         "resistances": {
           "physical": 7,
-          "mental": 6
+          "mental": 11
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
+      },
+      {
+        "id": "ger_unit_45",
+        "packId": "ger",
+        "name": "希特勒（1945）",
+        "quality": "white",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 110,
+        "attack": 7,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_15"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 13,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 7,
+          "mental": 2
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
+      },
+      {
+        "id": "ger_unit_1",
+        "packId": "ger",
+        "name": "曼施坦因",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 180,
+        "attack": 19,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_15",
+          "ger_skill_1"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 22,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 12,
+          "mental": 7
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
+      },
+      {
+        "id": "ger_unit_42",
+        "packId": "ger",
+        "name": "希特勒（1942）",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 160,
+        "attack": 12,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_4",
+          "ger_skill_6",
+          "ger_skill_7",
+          "ger_skill_3",
+          "ger_skill_2"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 15,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 9,
+          "mental": 9
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
+      },
+      {
+        "id": "ger_unit_3",
+        "packId": "ger",
+        "name": "希特勒（1939）",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 170,
+        "attack": 8,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_4",
+          "ger_skill_6",
+          "ger_skill_8",
+          "ger_skill_3"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 12,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 8,
+          "mental": 7
         },
         "penetration": {
           "physical": 0,
@@ -291,7 +291,7 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 127,
+        "hp": 130,
         "attack": 6,
         "resistance": {
           "type": "general",
@@ -346,7 +346,7 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 138,
+        "hp": 140,
         "attack": 22,
         "resistance": {
           "type": "general",
@@ -400,7 +400,7 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 137,
+        "hp": 140,
         "attack": 11,
         "resistance": {
           "type": "general",
@@ -666,7 +666,6 @@
             "ignoreResistance": true,
             "bonus": true,
             "rawDamage": false,
-            "fixedValue": 4,
             "useSkillValue": false
           }
         ]
@@ -951,14 +950,13 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "true",
-            "formula": "{self}.atk",
+            "formula": "({target}.max_hp - {target}.hp)/2 + {self}.atk",
             "ignoreResistance": false,
             "useSkillValue": false,
             "rawDamage": false,
             "valueFormula": "({target}.max_hp - {target}.hp)/2 + {self}.atk",
             "bonus": false,
-            "multiplier": 100,
-            "fixedValue": 25
+            "multiplier": 100
           }
         ],
         "valueType": "atk",

@@ -21,8 +21,8 @@
         "type": "unit",
         "faction": "slime",
         "counted": true,
-        "hp": 96,
-        "attack": 9,
+        "hp": 90,
+        "attack": 8,
         "resistance": {
           "type": "general",
           "value": 5
@@ -34,7 +34,7 @@
         "art": "assets/pictures/unit-slime-small.svg",
         "flavor": "常见的黏液生物。它并没有恶意，只是挡在了路上。",
         "level": 90,
-        "defense": 9,
+        "defense": 8,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -53,8 +53,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 4,
-          "mental": 4
+          "physical": 3,
+          "mental": 3
         },
         "penetration": {
           "physical": 0,
@@ -73,7 +73,7 @@
         "type": "unit",
         "faction": "slime",
         "counted": true,
-        "hp": 118,
+        "hp": 120,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -126,7 +126,7 @@
         "type": "unit",
         "faction": "sakura",
         "counted": true,
-        "hp": 135,
+        "hp": 140,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -179,8 +179,8 @@
         "type": "unit",
         "faction": "choir",
         "counted": false,
-        "hp": 130,
-        "attack": 8,
+        "hp": 160,
+        "attack": 10,
         "maxHpCap": 0,
         "resistance": {
           "type": "general",
@@ -196,7 +196,7 @@
         "art": "assets/pictures/unit-philia.svg",
         "flavor": "因为，人家的魅力，就是始终如一呀♪",
         "level": 90,
-        "defense": 12,
+        "defense": 14,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -214,8 +214,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 7,
-          "mental": 7
+          "physical": 9,
+          "mental": 9
         },
         "penetration": {
           "physical": 0,
@@ -234,8 +234,8 @@
         "type": "unit",
         "faction": "covenant",
         "counted": false,
-        "hp": 201,
-        "attack": 9,
+        "hp": 240,
+        "attack": 11,
         "resistance": {
           "type": "general",
           "value": 5
@@ -247,7 +247,7 @@
         "art": "assets/pictures/unit-yonava.svg",
         "flavor": "天理之影，死之执政",
         "level": 90,
-        "defense": 20,
+        "defense": 24,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -266,8 +266,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 10,
-          "mental": 11
+          "physical": 12,
+          "mental": 13
         },
         "penetration": {
           "physical": 0,
@@ -286,8 +286,8 @@
         "type": "unit",
         "faction": "caterpillar",
         "counted": true,
-        "hp": 134,
-        "attack": 8,
+        "hp": 160,
+        "attack": 10,
         "autoAttack": true,
         "resistance": {
           "type": "general",
@@ -300,59 +300,6 @@
         "equip": [],
         "art": "assets/pictures/unit-qu.svg",
         "flavor": "？!区区!？",
-        "level": 90,
-        "defense": 11,
-        "atkPct": 0,
-        "atkFlat": 0,
-        "defPct": 0,
-        "defFlat": 8,
-        "hpPct": 0,
-        "hpFlat": 0,
-        "maxHpCap": 0,
-        "damageBonus": 0,
-        "damageBonusFlat": 0,
-        "elementBonus": {
-          "physical": 0,
-          "mental": 0
-        },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
-        "resistances": {
-          "physical": 7,
-          "mental": 7
-        },
-        "penetration": {
-          "physical": 0,
-          "mental": 0
-        },
-        "defensePen": 0,
-        "resistanceReduction": 0,
-        "damageTakenBonus": 0,
-        "vulnerability": 0
-      },
-      {
-        "id": "mimi",
-        "packId": "core",
-        "name": "迷迷",
-        "quality": "gold",
-        "type": "unit",
-        "faction": "fae",
-        "counted": true,
-        "hp": 126,
-        "attack": 9,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "mimi_bond",
-          "mimi_help"
-        ],
-        "equip": [],
-        "art": "assets/pictures/unit-mimi.svg",
-        "flavor": "当然啦，这可是「昔涟」写下的第一个故事。哆、徕、咪、发、嗦、啦、嘻，七种音符谱写出数不尽的歌谣，就像一成不变的岁月，也能创造不同以往的故事♪",
         "level": 90,
         "defense": 13,
         "atkPct": 0,
@@ -373,8 +320,61 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 7,
-          "mental": 7
+          "physical": 9,
+          "mental": 9
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
+      },
+      {
+        "id": "mimi",
+        "packId": "core",
+        "name": "迷迷",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "fae",
+        "counted": true,
+        "hp": 140,
+        "attack": 10,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "mimi_bond",
+          "mimi_help"
+        ],
+        "equip": [],
+        "art": "assets/pictures/unit-mimi.svg",
+        "flavor": "当然啦，这可是「昔涟」写下的第一个故事。哆、徕、咪、发、嗦、啦、嘻，七种音符谱写出数不尽的歌谣，就像一成不变的岁月，也能创造不同以往的故事♪",
+        "level": 90,
+        "defense": 14,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "maxHpCap": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 8,
+          "mental": 8
         },
         "penetration": {
           "physical": 0,
@@ -393,7 +393,7 @@
         "type": "unit",
         "faction": "street",
         "counted": true,
-        "hp": 119,
+        "hp": 120,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -446,8 +446,8 @@
         "type": "unit",
         "faction": "elderwood",
         "counted": true,
-        "hp": 200,
-        "attack": 10,
+        "hp": 240,
+        "attack": 12,
         "resistance": {
           "type": "general",
           "value": 5
@@ -460,7 +460,7 @@
         "art": "assets/pictures/unit-rimple.svg",
         "flavor": "那…就像初遇时那样，再一次呼唤我「昔涟」，好吗？",
         "level": 90,
-        "defense": 11,
+        "defense": 13,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -479,8 +479,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 7,
-          "mental": 7
+          "physical": 9,
+          "mental": 9
         },
         "penetration": {
           "physical": 0,
@@ -499,8 +499,8 @@
         "type": "unit",
         "faction": "klee",
         "counted": true,
-        "hp": 105,
-        "attack": 9,
+        "hp": 90,
+        "attack": 8,
         "resistance": {
           "type": "general",
           "value": 5
@@ -512,7 +512,7 @@
         "art": "assets/pictures/unit-kele-missing.svg",
         "flavor": "图片被可莱吃掉了。这张卡只好使用灰色提示图。",
         "level": 90,
-        "defense": 10,
+        "defense": 9,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -531,8 +531,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 4,
-          "mental": 5
+          "physical": 3,
+          "mental": 4
         },
         "penetration": {
           "physical": 0,
@@ -551,7 +551,7 @@
         "type": "unit",
         "faction": "klee",
         "counted": true,
-        "hp": 116,
+        "hp": 120,
         "attack": 12,
         "resistance": {
           "type": "general",
@@ -827,14 +827,13 @@
             "kind": "damage",
             "target": "eventTarget",
             "damageType": "true",
-            "formula": "{self}.atk",
+            "formula": "min($effect.poem, 9) * 2",
             "ignoreResistance": false,
             "useSkillValue": false,
             "rawDamage": false,
             "valueFormula": "min($effect.poem, 9) * 2",
             "bonus": false,
-            "multiplier": 100,
-            "fixedValue": 25
+            "multiplier": 100
           }
         ],
         "valueType": "atk",
@@ -974,14 +973,13 @@
             "kind": "damage",
             "target": "allEnemies",
             "damageType": "true",
-            "formula": "{self}.atk",
+            "formula": "15",
             "useSkillValue": false,
             "rawDamage": false,
             "valueFormula": "{self}.atk",
             "bonus": false,
             "ignoreResistance": false,
-            "multiplier": 150,
-            "fixedValue": 15
+            "multiplier": 150
           }
         ],
         "valueType": "atk",
@@ -1071,14 +1069,13 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "true",
-            "formula": "{self}.atk",
+            "formula": "15",
             "bonus": false,
             "useSkillValue": false,
             "rawDamage": false,
             "valueFormula": "{self}.atk",
             "ignoreResistance": false,
-            "multiplier": 150,
-            "fixedValue": 15
+            "multiplier": 150
           }
         ],
         "valueType": "atk",

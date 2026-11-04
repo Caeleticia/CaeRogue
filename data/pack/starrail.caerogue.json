@@ -2,7 +2,7 @@
   "format": "caerogue.expansion",
   "id": "starrail",
   "name": "starrail扩展",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "author": "caeleticia",
   "description": "添加了一些星角色",
   "dependencies": [],
@@ -17,8 +17,8 @@
         "type": "unit",
         "faction": "starrail",
         "counted": true,
-        "hp": 161,
-        "attack": 9,
+        "hp": 180,
+        "attack": 10,
         "resistance": {
           "type": "general",
           "value": 5
@@ -36,63 +36,7 @@
         "art": "assets/pictures/starrail/castorice.png",
         "flavor": "再寒冷的彼岸，也会有花香",
         "level": 90,
-        "defense": 12,
-        "atkPct": 0,
-        "atkFlat": 0,
-        "defPct": 0,
-        "defFlat": 8,
-        "hpPct": 0,
-        "hpFlat": 0,
-        "damageBonus": 0,
-        "damageBonusFlat": 0,
-        "elementBonus": {
-          "physical": 0,
-          "mental": 0
-        },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
-        "resistances": {
-          "physical": 7,
-          "mental": 7
-        },
-        "penetration": {
-          "physical": 0,
-          "mental": 0
-        },
-        "defensePen": 0,
-        "resistanceReduction": 0,
-        "damageTakenBonus": 0,
-        "vulnerability": 0
-      },
-      {
-        "id": "deathdragon",
-        "packId": "starrail",
-        "name": "死龙",
-        "quality": "rainbow",
-        "type": "unit",
-        "faction": "general",
-        "counted": true,
-        "hp": 183,
-        "attack": 12,
-        "resistance": {
-          "type": "general",
-          "value": 5
-        },
-        "skills": [
-          "deathdragon_flame",
-          "deathdragon_guard",
-          "deathdragon_reset"
-        ],
-        "equip": [],
-        "autoAttack": false,
-        "maxHpCap": 0,
-        "art": "assets/pictures/brand-mark.svg",
-        "flavor": "",
-        "description": "其实是遐蝶的妹妹来着(",
-        "level": 90,
-        "defense": 14,
+        "defense": 13,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -111,7 +55,63 @@
         "luckyDamage": 100,
         "resistances": {
           "physical": 8,
-          "mental": 9
+          "mental": 8
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
+      },
+      {
+        "id": "deathdragon",
+        "packId": "starrail",
+        "name": "死龙",
+        "quality": "rainbow",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 220,
+        "attack": 14,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "deathdragon_flame",
+          "deathdragon_guard",
+          "deathdragon_reset"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "description": "其实是遐蝶的妹妹来着(",
+        "level": 90,
+        "defense": 17,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 10,
+          "mental": 11
         },
         "penetration": {
           "physical": 0,
@@ -130,8 +130,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 159,
-        "attack": 8,
+        "hp": 140,
+        "attack": 7,
         "resistance": {
           "type": "general",
           "value": 5
@@ -145,7 +145,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 9,
+        "defense": 8,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -163,8 +163,8 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 4,
-          "mental": 4
+          "physical": 3,
+          "mental": 3
         },
         "penetration": {
           "physical": 0,
@@ -419,7 +419,6 @@
             "legacyTarget": "chosen",
             "bonus": true,
             "rawDamage": false,
-            "fixedValue": 14,
             "useSkillValue": false
           }
         ],
