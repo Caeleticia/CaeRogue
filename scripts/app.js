@@ -72,6 +72,7 @@ function stepSummary(step) {
   switch (step.kind) {
     case 'damage': {
       const targetText = TARGET_MODES[step.target || 'chosen'] ? (step.target === 'chosen' ? L('ui.eb7098eca082') : step.target) : (step.target || L('ui.eb7098eca082'));
+      if (step.damageType === 'true') return L('ui.bf3d98c8bb4e') + ' ' + (step.fixedValue == null ? 0 : step.fixedValue) + '，' + targetText;
       if (step.useSkillValue) return (step.rawDamage ? L('ui.683a6ce05a97') : '') + (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.valueFormula || '{self}.atk') + ' ×' + (step.multiplier == null ? 100 : step.multiplier) + '%，' + targetText;
       return (step.bonus ? L('ui.8eaa1a49d5e7') : '') + (DAMAGE_TYPES[step.damageType] || DAMAGE_TYPES.physical).label + ' ' + (step.formula || '0') + '，' + targetText;
     }
@@ -980,11 +981,9 @@ const App = {
       this.toast(validation.errors.join('；'), 'error', L('ui.90972156f4cc'));
       return;
     }
-    Store.saveDeck(this.builder.side, this.builder.deck);
     const side = this.builder.side;
-    const returnRoute = this.builder.returnRoute || 'home';
-    this.builder = null;
-    this.go(returnRoute);
+    Store.saveDeck(side, this.builder.deck);
+    this.render();
     this.toast(this.builderSideName(side) + L('ui.0bf5a48144df'), 'success');
   },
 

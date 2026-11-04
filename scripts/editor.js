@@ -821,10 +821,19 @@ const EditorUI = {
     const skillOptions = this.allSkillRefs().map(skill => ({ value: skill.id, label: skill.name + ' · ' + skill.id }));
     const unitOptions = Store.index.units.map(unit => ({ value: unit.id, label: unit.name + ' · ' + unit.id }));
     switch (step.kind) {
-      case 'damage':
+      case 'damage': {
+        const damageTypeField = this.fieldRow(L('ui.c8078d8a7256'), this.stepInput(listPath, index, 'damageType', step.damageType || 'physical', { type: 'select', options: Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), disabled }));
+        if (step.damageType === 'true') {
+          return '<div class="step-fields">' +
+            this.stepTargetField(step, listPath, index, readOnly) +
+            damageTypeField +
+            this.fieldRow(L('ui.c5238fc3e9de'), this.stepInput(listPath, index, 'fixedValue', step.fixedValue == null ? '0' : step.fixedValue, { type: 'number', disabled }), L('ui.b20ea152e534')) +
+            L('ui.a95a08e32326') +
+          '</div>';
+        }
         return '<div class="step-fields">' +
           this.stepTargetField(step, listPath, index, readOnly) +
-          this.fieldRow(L('ui.c8078d8a7256'), this.stepInput(listPath, index, 'damageType', step.damageType || 'physical', { type: 'select', options: Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), disabled })) +
+          damageTypeField +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'useSkillValue', !!step.useSkillValue, L('ui.61791f13fd80'), disabled) + '</div>' +
           this.fieldRow(L('ui.3fe475f7b233'), this.stepInput(listPath, index, 'valueFormula', step.valueFormula || '{self}.atk', { mono: true, disabled }), L('ui.389b292d27c0')) +
           this.fieldRow(L('ui.5e98c432057f'), this.stepInput(listPath, index, 'multiplier', step.multiplier == null ? '' : step.multiplier, { type: 'number', disabled }), L('ui.08c8a895638f')) +
@@ -833,6 +842,7 @@ const EditorUI = {
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'rawDamage', !!step.rawDamage, L('ui.a7a8c2ad57f3'), disabled) + '</div>' +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'bonus', !!step.bonus, L('ui.00e12d3558e4'), disabled) + '</div>' +
         '</div>';
+      }
       case 'heal':
         return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.5ad1fb4006cf'), this.stepInput(listPath, index, 'formula', step.formula || '1', { mono: true, disabled }), L('ui.98a4c7619cff')) + '</div>';
       case 'addEffect':
@@ -1226,7 +1236,7 @@ const EditorUI = {
       this.renderQualityPicker(item, readOnly);
     const artRow = L('ui.2772217f8945') + attr(item.art || '') + '" data-meta-field="art" placeholder="assets/pictures/..."' + disabled + L('ui.953655b0d171');
     if (mode === 'units') {
-      return '<div class="form-grid">' + commonTop +
+      return '<div class="form-grid stat-grid">' + commonTop +
         L('ui.8e3232d487ca') + attr(item.faction || '') + '" data-meta-field="faction"' + disabled + L('ui.fe2506bc3ef0') +
         L('ui.b6ee21a2d52b') + attr(item.hp == null ? 100 : item.hp) + '" data-meta-field="hp"' + disabled + '></div>' +
         L('ui.3405d40e7f81') + attr(item.attack == null ? 10 : item.attack) + '" data-meta-field="attack"' + disabled + '></div>' +
@@ -1238,7 +1248,6 @@ const EditorUI = {
         this.unitStatField(item, 'luckyDamage', L('ui.00eb79354774'), readOnly, { step: '0.01', fallback: 100 }) +
         this.unitStatField(item, 'resistances.physical', L('ui.eec072596024'), readOnly, { step: '0.01', fallback: 5 }) +
         this.unitStatField(item, 'resistances.mental', L('ui.cf2b8b83b627'), readOnly, { step: '0.01', fallback: 5 }) +
-        this.unitStatField(item, 'resistances.true', L('ui.e8713ef66248'), readOnly, { step: '0.01', fallback: 5 }) +
         artRow +
         this.renderToggleRow(L('ui.64e904249960'), 'counted', item.counted !== false, readOnly, L('ui.f8a1ac1d6b1d')) +
         this.renderToggleRow(L('ui.9456ff9f51bf'), 'autoAttack', !!item.autoAttack, readOnly, L('ui.ed09a5fcb674')) +
@@ -1277,10 +1286,10 @@ const EditorUI = {
     if (!item) return '<section class="panel editor-workspace">' + header + L('ui.59eec00d41a0');
     return '<section class="panel editor-workspace">' + header +
       '<form class="editor-form" onsubmit="return false">' +
-        L('ui.29f92cd1b3c2') + this.renderCardMetadata(app, item, readOnly) + '</div>' +
         '<div class="editor-savebar"><span class="autosave-status' + (this.dirty ? ' dirty' : '') + '">' + (readOnly ? L('ui.a87449d09e88') : this.dirty ? L('ui.b035e280075e') : L('ui.9d84cfe84d8b')) + '</span><div class="btn-row">' +
           (!readOnly ? L('ui.4be89e8b92e1') : '') +
         '</div></div>' +
+        L('ui.29f92cd1b3c2') + this.renderCardMetadata(app, item, readOnly) + '</div>' +
       '</form></section>';
   },
 
@@ -1316,12 +1325,12 @@ const EditorUI = {
       (item ? L('ui.59934c503dbc') + (readOnly ? L('ui.198a314aa63f') : L('ui.a11534a1b557')) + '</button>' : '') +
       (!readOnly && item ? L('ui.59d7d27fd1ef') : '') +
       (!readOnly && item ? L('ui.c8b012e16e88') : '') +
-      (!readOnly && item ? L('ui.4be89e8b92e1') : '') +
       '</div></div>';
     if (!item) {
       return '<section class="panel editor-workspace">' + header + L('ui.19bae5bef2d1');
     }
     return '<section class="panel editor-workspace">' + header +
+      '<div class="editor-savebar"><span class="autosave-status' + (this.dirty ? ' dirty' : '') + '">' + (readOnly ? L('ui.a87449d09e88') : this.dirty ? L('ui.b035e280075e') : L('ui.9d84cfe84d8b')) + L('ui.2050d36799da') + (!readOnly ? L('ui.4be89e8b92e1') : '') + '</div></div>' +
       '<form class="editor-form" onsubmit="return false">' +
         L('ui.3ac4e05bace3') + (readOnly ? L('ui.8ec571a90d08') : L('ui.859ff39445de')) + '</div>' + this.renderMetadata(app, item, readOnly) + '</section>' +
         (skill ? L('ui.643d0ad0136b') + this.renderRequirements(item, readOnly) + '</section>' : '') +
@@ -1329,7 +1338,6 @@ const EditorUI = {
       '</form>' +
       L('ui.44a7a90a85a7') + (item.steps || []).length + L('ui.46fdc16ecadb') + (readOnly ? L('ui.34ba2d4c20d1') : L('ui.20b00484bcec')) + '</div></div>' +
       this.renderStepList(item, 'root', item.steps || [], readOnly, L('ui.351e2b1e5784')) +
-      '<div class="editor-savebar"><span class="autosave-status' + (this.dirty ? ' dirty' : '') + '">' + (readOnly ? L('ui.a87449d09e88') : this.dirty ? L('ui.b035e280075e') : L('ui.9d84cfe84d8b')) + L('ui.2050d36799da') + (!readOnly ? L('ui.4be89e8b92e1') : '') + '</div></div>' +
     '</section>';
   },
 
