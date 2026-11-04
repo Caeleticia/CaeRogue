@@ -987,6 +987,7 @@ const EditorUI = {
         L('ui.29723f6b797e') + (readOnly ? ' disabled' : '') + '>' + this.optionList(Object.keys(DAMAGE_TYPES).map(key => ({ value: key, label: DAMAGE_TYPES[key].label })), item.element || 'physical') + '</select></div>' +
         L('ui.b6137bfb41d6') + (readOnly ? ' disabled' : '') + '>' + this.optionList([{ value: 'atk', label: L('ui.ef28aed2341d') }, { value: 'formula', label: L('ui.64b12d5550b8') }], item.valueType || 'atk') + '</select></div>' +
         L('ui.ef73633f571d') + attr(item.valueFormula || '{self}.atk') + '" data-meta-field="valueFormula"' + (readOnly ? ' disabled' : '') + '></div>' +
+      (skill ? this.renderToggleRow(L('ui.e1685b370a52'), 'negativeImmune', !!item.negativeImmune, readOnly, L('ui.b27d05d6e02a')) : '') +
       (skill ? L('ui.4727c405de40') + attr(item.trigger && item.trigger.condition || '') + '" data-meta-field="triggerCondition"' + (readOnly ? ' disabled' : '') + L('ui.e50e8d596a73') : '') +
       L('ui.ccf99943ddb0') + (readOnly ? ' disabled' : '') + L('ui.3087d3d543a2') + esc(item.description || '') + '</textarea></div>' +
       (!skill ? L('ui.096f09158028') + this.effectToggle('stackable', item.stackable, L('ui.9fcbcbc1d6b5'), readOnly) + '<input class="input compact mono" style="width:74px" type="number" min="1" max="99" value="' + attr(item.stackMax == null ? 1 : item.stackMax) + '" data-meta-field="stackMax"' + (readOnly ? ' disabled' : '') + L('ui.567df4920729') +

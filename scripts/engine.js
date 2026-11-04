@@ -813,6 +813,12 @@ class Battle {
     return !!(unit && ((unit.card && unit.card.invincible) || unit.invincible));
   }
 
+  isNegativeImmune(unit) {
+    if (!unit) return false;
+    if (unit.card && unit.card.negativeImmune) return true;
+    return this.getUnitSkills(unit).some(skill => skill.negativeImmune);
+  }
+
   isUntargetable(unit) {
     if (!unit) return false;
     if (unit.untargetable || (unit.card && unit.card.untargetable)) return true;
@@ -1183,7 +1189,7 @@ class Battle {
     return [];
   }
 
-  requirementResult(unit, skill) {
+  requirementResult(unit, skill, context) {
     for (const req of skill.requirements || []) {
       const current = this.getCount(unit, req.scope || 'unit', req.countId);
       const value = Number(req.value) || 0;
@@ -1205,7 +1211,7 @@ class Battle {
       }
     }
     if (skill.trigger && skill.trigger.condition) {
-      const val = this.evalFormula(skill.trigger.condition, { unit, source: unit, chosen: [] });
+      const val = this.evalFormula(skill.trigger.condition, Object.assign({ unit, source: unit, chosen: [] }, context || {}));
       if (!val) return { ok: false, reason: L('ui.357cb11ee45a') };
     }
     return { ok: true, reason: '' };
@@ -1722,7 +1728,7 @@ class Battle {
               const check = this.evalFormula(skill.trigger.condition, { unit, source: unit, chosen: eventData.targets || [], eventData, multiplier: (skill.multiplier || 100) / 100 });
               if (!check) continue;
             }
-            const req = this.requirementResult(unit, skill);
+            const req = this.requirementResult(unit, skill, { eventData, eventName, chosen: eventData.targets || [] });
             if (!req.ok) continue;
             candidates.push({ kind: 'skill', unit, skill });
           }
@@ -2579,6 +2585,10 @@ class Battle {
     if (!target || !target.alive) return null;
     const numeric = Number(amount);
     if (!numeric) return null;
+    if (numeric < 0 && this.isNegativeImmune(target)) {
+      this.log('effect', target.name + L('ui.3d424ea3ac7d') + (STAT_KEYS[stat] || stat) + '」。', { side: target.side });
+      return null;
+    }
     const key = '__stat__' + stat + '__' + String(sourceKey || 'system');
     let inst = target.effects.find(item => item.effectId === key);
     if (!inst) {
@@ -2681,6 +2691,10 @@ class Battle {
     options = options || {};
     const def = this.maps.effects.get(effectId);
     if (!def || !target || !target.alive) return null;
+    if (def.type === 'negative' && this.isNegativeImmune(target)) {
+      this.log('effect', target.name + L('ui.3d424ea3ac7d') + def.name + '」。', { side: target.side });
+      return null;
+    }
     const amount = Math.max(1, Number(stacks) || 1);
     let inst = target.effects.find(item => item.effectId === effectId);
     if (inst) {
