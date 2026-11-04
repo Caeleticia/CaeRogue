@@ -1,0 +1,1127 @@
+{
+  "format": "caerogue.expansion",
+  "id": "ger",
+  "name": "ger",
+  "version": "0.3.0",
+  "author": "zyc",
+  "description": "添加了一些钢四单位",
+  "dependencies": [],
+  "countDefs": {},
+  "content": {
+    "units": [
+      {
+        "id": "ger_unit_7",
+        "packId": "ger",
+        "name": "戈培尔",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 170,
+        "attack": 13,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_16",
+          "study.skill.mental-damage"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 21,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 7,
+          "mental": 11
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_45",
+        "packId": "ger",
+        "name": "希特勒（1945）",
+        "quality": "white",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 110,
+        "attack": 7,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_15"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 13,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 7,
+          "mental": 2
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_1",
+        "packId": "ger",
+        "name": "曼施坦因",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 180,
+        "attack": 19,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_15",
+          "ger_skill_1"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 22,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 12,
+          "mental": 7
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_42",
+        "packId": "ger",
+        "name": "希特勒（1942）",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 160,
+        "attack": 12,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_4",
+          "ger_skill_6",
+          "ger_skill_7",
+          "ger_skill_3",
+          "ger_skill_2"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 15,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 9,
+          "mental": 9
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_3",
+        "packId": "ger",
+        "name": "希特勒（1939）",
+        "quality": "gold",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 170,
+        "attack": 8,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_4",
+          "ger_skill_6",
+          "ger_skill_8",
+          "ger_skill_3"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 12,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 8,
+          "mental": 7
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_36",
+        "packId": "ger",
+        "name": "希特勒（1936）",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 130,
+        "attack": 6,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_4",
+          "ger_skill_9",
+          "ger_skill_10"
+        ],
+        "equip": [],
+        "autoAttack": true,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 11,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_5",
+        "packId": "ger",
+        "name": "海德里希",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 140,
+        "attack": 22,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_11",
+          "ger_skill_12"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 13,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 6,
+          "mental": 7
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      },
+      {
+        "id": "ger_unit_6",
+        "packId": "ger",
+        "name": "罗森伯格",
+        "quality": "blue",
+        "type": "unit",
+        "faction": "general",
+        "counted": true,
+        "hp": 140,
+        "attack": 11,
+        "resistance": {
+          "type": "general",
+          "value": 5
+        },
+        "skills": [
+          "ger_skill_13"
+        ],
+        "equip": [],
+        "autoAttack": false,
+        "maxHpCap": 0,
+        "art": "assets/pictures/brand-mark.svg",
+        "flavor": "",
+        "level": 90,
+        "defense": 9,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0,
+        "noFieldSlot": false,
+        "untargetable": false,
+        "invincible": false,
+        "obtainable": true
+      }
+    ],
+    "skills": [
+      {
+        "id": "ger_skill_14",
+        "packId": "ger",
+        "name": "崩坏",
+        "type": "active",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 150,
+        "description": "",
+        "trigger": {
+          "event": "roundStart"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "physical",
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "bonus": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "multiplier": 150
+          },
+          {
+            "kind": "damage",
+            "target": "allAllies",
+            "damageType": "physical",
+            "formula": "1",
+            "ignoreResistance": true,
+            "bonus": true,
+            "rawDamage": true
+          }
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
+      },
+      {
+        "id": "ger_skill_16",
+        "packId": "ger",
+        "name": "总体战",
+        "type": "active",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "ger_effect_1",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_15",
+        "packId": "ger",
+        "name": "焦土",
+        "type": "active",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "ger_effect_2",
+            "stacks": "1"
+          },
+          {
+            "kind": "addEffect",
+            "target": "allEnemies",
+            "effectId": "ger_effect_2",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_1",
+        "packId": "ger",
+        "name": "突破",
+        "type": "active",
+        "op": "attack",
+        "quality": "gold",
+        "targetMode": "enemy",
+        "multiplier": 250,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "bonus": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "multiplier": 250
+          },
+          {
+            "kind": "branch",
+            "left": "$target.hp",
+            "op": "lte",
+            "right": "$atk",
+            "then": [
+              {
+                "kind": "damage",
+                "target": "allEnemies",
+                "damageType": "physical",
+                "formula": "2",
+                "ignoreResistance": false
+              },
+              {
+                "kind": "damage",
+                "target": "chosen",
+                "damageType": "physical",
+                "formula": "1",
+                "ignoreResistance": false
+              },
+              {
+                "kind": "forceRetreat",
+                "target": "chosen"
+              }
+            ],
+            "elseSteps": []
+          }
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
+      },
+      {
+        "id": "ger_skill_2",
+        "packId": "ger",
+        "name": "毕其功于一役",
+        "type": "passive",
+        "op": "special",
+        "quality": "blue",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "summon",
+            "unitId": "ger_unit_45",
+            "count": "1"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_3",
+        "packId": "ger",
+        "name": "征服经济",
+        "type": "passive",
+        "op": "heal",
+        "quality": "gold",
+        "targetMode": "allAllies",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "allyAttack"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "heal",
+            "target": "allAllies",
+            "formula": "$target.atk"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_4",
+        "packId": "ger",
+        "name": "梅福券",
+        "type": "passive",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "self",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "roundEnd"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "self",
+            "damageType": "true",
+            "formula": "4",
+            "ignoreResistance": true,
+            "bonus": true,
+            "rawDamage": false,
+            "useSkillValue": false
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_5",
+        "packId": "ger",
+        "name": "闪电战",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 250,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
+          },
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "mental",
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
+          },
+          {
+            "kind": "skipAction",
+            "target": "chosen"
+          },
+          {
+            "kind": "removeEffect",
+            "target": "self",
+            "effectId": "ger_effect_3",
+            "stacks": "1"
+          }
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
+      },
+      {
+        "id": "ger_skill_6",
+        "packId": "ger",
+        "name": "战役指令",
+        "type": "active",
+        "op": "support",
+        "quality": "white",
+        "targetMode": "ally",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "chosen",
+            "effectId": "ger_effect_3",
+            "stacks": "1"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_7",
+        "packId": "ger",
+        "name": "总参谋部",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "addEffect",
+            "target": "allAllies",
+            "effectId": "ger_effect_3",
+            "stacks": "1"
+          },
+          {
+            "kind": "skipAction",
+            "target": "allAllies"
+          },
+          {
+            "kind": "modifyStat",
+            "stat": "atkFlat",
+            "target": "self",
+            "formula": "-4"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_8",
+        "packId": "ger",
+        "name": "胜利万岁",
+        "type": "passive",
+        "op": "special",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "summon",
+            "unitId": "ger_unit_42",
+            "count": "1"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_9",
+        "packId": "ger",
+        "name": "重整军备",
+        "type": "passive",
+        "op": "support",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "roundEnd"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "modifyStat",
+            "stat": "atkFlat",
+            "target": "allAllies",
+            "formula": "1"
+          },
+          {
+            "kind": "modifyStat",
+            "stat": "dmgFlat",
+            "target": "allAllies",
+            "formula": "1"
+          },
+          {
+            "kind": "modifyStat",
+            "stat": "maxHpFlat",
+            "target": "allAllies",
+            "formula": "1"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_10",
+        "packId": "ger",
+        "name": "四年计划",
+        "type": "passive",
+        "op": "special",
+        "quality": "gold",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "defeated"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "summon",
+            "unitId": "ger_unit_3",
+            "count": "1"
+          },
+          {
+            "kind": "modifyStat",
+            "stat": "atkFlat",
+            "target": "allAllies",
+            "formula": "2"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_11",
+        "packId": "ger",
+        "name": "屠夫",
+        "type": "active",
+        "op": "attack",
+        "quality": "blue",
+        "targetMode": "enemy",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "branch",
+            "left": "$target.hp",
+            "op": "lte",
+            "right": "$atk",
+            "then": [
+              {
+                "kind": "forceRetreat",
+                "target": "chosen"
+              }
+            ],
+            "elseSteps": [
+              {
+                "kind": "damage",
+                "target": "chosen",
+                "damageType": "true",
+                "formula": "$atk/3",
+                "ignoreResistance": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_12",
+        "packId": "ger",
+        "name": "阿勃维尔",
+        "type": "active",
+        "op": "support",
+        "quality": "white",
+        "targetMode": "none",
+        "multiplier": 100,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "modifyStat",
+            "stat": "takenPct",
+            "target": "allEnemies",
+            "formula": "-100"
+          }
+        ]
+      },
+      {
+        "id": "ger_skill_13",
+        "packId": "ger",
+        "name": "总计划",
+        "type": "active",
+        "op": "heal",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 250,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "heal",
+            "target": "allAllies",
+            "formula": "$atk"
+          },
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "true",
+            "formula": "({target}.max_hp - {target}.hp)/2 + {self}.atk",
+            "ignoreResistance": false,
+            "useSkillValue": false,
+            "rawDamage": false,
+            "valueFormula": "({target}.max_hp - {target}.hp)/2 + {self}.atk",
+            "bonus": false,
+            "multiplier": 100
+          }
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "true"
+      },
+      {
+        "id": "ger_skill_17",
+        "packId": "ger",
+        "name": "新的技能",
+        "type": "active",
+        "op": "attack",
+        "quality": "white",
+        "targetMode": "enemy",
+        "multiplier": 250,
+        "description": "",
+        "trigger": {
+          "event": "manual"
+        },
+        "requirements": [],
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "chosen",
+            "damageType": "physical",
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
+          }
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
+      }
+    ],
+    "effects": [
+      {
+        "id": "ger_effect_1",
+        "packId": "ger",
+        "name": "总动员",
+        "type": "special",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 5,
+        "mods": {
+          "atkPct": 20
+        },
+        "grantedSkills": [],
+        "trigger": {
+          "event": "roundStart"
+        },
+        "steps": [
+          {
+            "kind": "modifyStat",
+            "stat": "maxHpFlat",
+            "target": "self",
+            "formula": "-1"
+          },
+          {
+            "kind": "heal",
+            "target": "self",
+            "formula": "2"
+          },
+          {
+            "kind": "modifyStat",
+            "stat": "atkFlat",
+            "target": "self",
+            "formula": "1"
+          }
+        ],
+        "description": ""
+      },
+      {
+        "id": "ger_effect_2",
+        "packId": "ger",
+        "name": "崩坏",
+        "type": "special",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 5,
+        "mods": {},
+        "grantedSkills": [],
+        "trigger": {
+          "event": "roundStart"
+        },
+        "steps": [
+          {
+            "kind": "damage",
+            "target": "allEnemies",
+            "damageType": "physical",
+            "formula": "$effect.poem",
+            "ignoreResistance": false,
+            "bonus": true
+          },
+          {
+            "kind": "damage",
+            "target": "allAllies",
+            "damageType": "true",
+            "formula": "$effect.poem",
+            "ignoreResistance": false,
+            "bonus": true
+          }
+        ],
+        "description": ""
+      },
+      {
+        "id": "ger_effect_3",
+        "packId": "ger",
+        "name": "战役指令",
+        "type": "positive",
+        "removable": true,
+        "stackable": true,
+        "stackMax": 5,
+        "mods": {
+          "atkFlat": 2
+        },
+        "grantedSkills": [
+          "ger_skill_5"
+        ],
+        "trigger": {
+          "event": "none"
+        },
+        "steps": [],
+        "description": ""
+      }
+    ],
+    "equipment": [],
+    "runes": []
+  },
+  "rogueEvents": [],
+  "rogueConfig": null
+}
