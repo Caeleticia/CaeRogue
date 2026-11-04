@@ -2031,6 +2031,33 @@ class Battle {
           }
           break;
         }
+        case 'removeNegativeOne':
+        case 'removeNegativeAll':
+        case 'removePositiveOne':
+        case 'removePositiveAll': {
+          const targets = this.getTargetsForStep(ctx.unit, step, ctx);
+          const effectType = step.kind.includes('Negative') ? 'negative' : 'positive';
+          const all = step.kind.endsWith('All');
+          for (const target of targets) {
+            const removed = this.removeTypedEffects(target, effectType, all, !!step.force);
+            for (const entry of removed) {
+              this.recordVisual({
+                kind: 'effect',
+                action: 'remove',
+                sourceUid: ctx.unit.battleId,
+                targetUid: target.battleId,
+                sourceName: ctx.unit.name,
+                targetName: target.name,
+                self: target === ctx.unit,
+                name: entry.def.name || (effectType === 'negative' ? L('ui.e174a4a385d6') : L('ui.bbf71aea630d')),
+                effectType: entry.def.type || 'special',
+                sourceSide: ctx.unit.side,
+                targetSide: target.side
+              });
+            }
+          }
+          break;
+        }
         case 'modifyCount': {
           const current = this.getCount(ctx.unit, step.scope || 'unit', step.countId);
           const value = this.evalFormula(step.formula || '0', ctx);
@@ -2706,6 +2733,22 @@ class Battle {
     } finally {
       this.triggerDepth -= 1;
     }
+  }
+
+  removeTypedEffects(target, effectType, all, force) {
+    const removed = [];
+    if (!target) return removed;
+    for (const inst of target.effects.slice()) {
+      const def = this.effectDef(inst);
+      if (!def || def.type !== effectType) continue;
+      if (def.removable === false && !force) continue;
+      const amount = all ? 9999 : 1;
+      if (this.removeEffect(target, inst.effectId, amount, force)) {
+        removed.push({ target, def });
+        if (!all) break;
+      }
+    }
+    return removed;
   }
 
   removeEffect(target, effectId, amount, force) {

@@ -2,7 +2,7 @@
    All runtime state is plain data. Skills and effects are interpreted by engine.js. */
 'use strict';
 
-const APP_VERSION = '1.9.31';
+const APP_VERSION = '1.9.33';
 const CORE_PACK_ID = 'core';
 
 const QUALITIES = {
@@ -122,6 +122,10 @@ const STEP_LIBRARY = [
   { kind: 'heal', name: L('ui.d418d90651aa'), group: L('ui.bc5a114f901a'), hint: L('ui.276aff6947b2') },
   { kind: 'addEffect', name: L('ui.b832e92371f2'), group: L('ui.151ddd4f1f9f'), hint: L('ui.0ba3059bae80') },
   { kind: 'removeEffect', name: L('ui.afbb148eeae6'), group: L('ui.151ddd4f1f9f'), hint: L('ui.91a047e8e7a1') },
+  { kind: 'removeNegativeOne', name: L('ui.0ae118e02a03'), group: L('ui.151ddd4f1f9f'), hint: L('ui.5ccbaaf80e51') },
+  { kind: 'removeNegativeAll', name: L('ui.4d2c57ecd6a6'), group: L('ui.151ddd4f1f9f'), hint: L('ui.370fb8426cd7') },
+  { kind: 'removePositiveOne', name: L('ui.9432f5ee3ae1'), group: L('ui.151ddd4f1f9f'), hint: L('ui.f1f74684b502') },
+  { kind: 'removePositiveAll', name: L('ui.48a223cae9c3'), group: L('ui.151ddd4f1f9f'), hint: L('ui.cc403fd0bfef') },
   { kind: 'modifyCount', name: L('ui.bd2856e29334'), group: L('ui.37802b1dfc26'), hint: L('ui.04fe3ca69379') },
   { kind: 'readCount', name: L('ui.5d7ec4086403'), group: L('ui.37802b1dfc26'), hint: L('ui.1ee816050042') },
   { kind: 'branch', name: L('ui.315a7ec1a389'), group: L('ui.09d316b96552'), hint: L('ui.98c156cbd4a9') },

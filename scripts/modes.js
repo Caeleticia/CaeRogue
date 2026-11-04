@@ -217,7 +217,7 @@ const ModesUI = {
     const owned = new Set((run.deck && run.deck.units) || []);
     const used = new Set();
     const offers = [];
-    const shopUnits = Store.index.units.filter(unit => unit.quality !== 'rainbow');
+    const shopUnits = Store.index.units.filter(unit => unit.quality !== 'rainbow' && unit.obtainable !== false);
     for (let i = 0; i < modeNumber(shop.offerCount, 5); i += 1) {
       const unit = this.pickWeightedCard(shopUnits, shop.qualityWeights || this.qualityWeights('characterShop'), candidate => !used.has(candidate.id) && !owned.has(candidate.id))
         || this.pickWeightedCard(shopUnits, shop.qualityWeights, candidate => !used.has(candidate.id));
@@ -346,7 +346,7 @@ const ModesUI = {
         if (card && card.quality !== 'rainbow') available.push(id);
       }
     }
-    if (!available.length) available.push(...Store.index.units.filter(unit => unit.quality !== 'rainbow').map(unit => unit.id));
+    if (!available.length) available.push(...Store.index.units.filter(unit => unit.quality !== 'rainbow' && unit.obtainable !== false).map(unit => unit.id));
     const targetCount = Math.max(1, modeNumber(enc.targetCount, kind === 'boss' ? 5 : kind === 'elite' ? 4 : 3));
     const avoidDuplicates = enc.avoidDuplicates !== false;
     const picked = [];
@@ -479,7 +479,7 @@ const ModesUI = {
     for (const entry of entries) {
       if (!entry || entry.enabled === false) continue;
       if (entry.kind === 'unit') {
-        const unit = this.pickWeightedCard(Store.index.units.filter(item => item.quality !== 'rainbow'), weights, candidate => !ownedUnits.has(candidate.id));
+        const unit = this.pickWeightedCard(Store.index.units.filter(item => item.quality !== 'rainbow' && item.obtainable !== false), weights, candidate => !ownedUnits.has(candidate.id));
         if (!unit) continue;
         rewards.push({ kind: 'unit', id: unit.id, title: unit.name, desc: L('ui.21a4cc465cf8') + unit.hp + '，' + (unit.counted === false ? L('ui.79b46e5f7db7') : L('ui.37802b1dfc26')) + '。' });
       } else if (entry.kind === 'equipment' || entry.kind === 'rune') {
@@ -619,7 +619,7 @@ const ModesUI = {
       runes: valid('rune', ['war_spirit'])
     };
     if (!draft.units.length) {
-      const first = Store.index.units.filter(unit => unit.counted !== false).slice(0, 3).map(unit => unit.id);
+      const first = Store.index.units.filter(unit => unit.counted !== false && unit.obtainable !== false).slice(0, 3).map(unit => unit.id);
       draft.units = first;
     }
     return draft;
@@ -843,8 +843,9 @@ const ModesUI = {
     }
     if (choice.effect === 'unit') {
       const currentUnits = new Set(run.deck.units);
-      const candidates = Store.index.units.filter(unit => !currentUnits.has(unit.id) && unit.counted !== false);
-      const pick = choice.id ? Store.index.maps.units.get(choice.id) : (candidates.length ? modeRandom(candidates) : null);
+      const candidates = Store.index.units.filter(unit => !currentUnits.has(unit.id) && unit.counted !== false && unit.obtainable !== false);
+      const explicit = choice.id ? Store.index.maps.units.get(choice.id) : null;
+      const pick = explicit && explicit.obtainable !== false ? explicit : (candidates.length ? modeRandom(candidates) : null);
       if (pick) {
         run.deck.units.push(pick.id);
         app.toast('「' + pick.name + L('ui.d1f5c3fd312c'), 'success');
@@ -901,7 +902,7 @@ const ModesUI = {
     for (const entry of entries) {
       if (!entry || entry.enabled === false) continue;
       if (entry.kind === 'unit') {
-        const unit = this.pickWeightedCard(Store.index.units, weights, candidate => !ownedUnits.has(candidate.id));
+        const unit = this.pickWeightedCard(Store.index.units.filter(item => item.obtainable !== false && item.quality !== 'rainbow'), weights, candidate => !ownedUnits.has(candidate.id));
         if (!unit) continue;
         add(entry, {
           kind: 'unit', id: unit.id, title: unit.name,

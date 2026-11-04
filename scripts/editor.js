@@ -567,6 +567,7 @@ const EditorUI = {
       noFieldSlot: false,
       untargetable: false,
       invincible: false,
+      obtainable: true,
       maxHpCap: 0,
       art: 'assets/pictures/brand-mark.svg',
       flavor: ''
@@ -851,6 +852,15 @@ const EditorUI = {
         return '<div class="step-fields">' + this.stepTargetField(step, listPath, index, readOnly) + this.fieldRow(L('ui.151ddd4f1f9f'), this.stepInput(listPath, index, 'effectId', step.effectId || '', { type: 'select', options: effectOptions, placeholder: L('ui.5ac431ae3fea'), disabled })) + this.fieldRow(L('ui.90a0885a60a9'), this.stepInput(listPath, index, 'stacks', step.stacks || '9999', { mono: true, disabled })) +
           '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'force', !!step.force, L('ui.b778a2bd7c51'), disabled) + L('ui.d93883627dab') +
         '</div>';
+      case 'removeNegativeOne':
+      case 'removeNegativeAll':
+      case 'removePositiveOne':
+      case 'removePositiveAll':
+        return '<div class="step-fields">' +
+          this.stepTargetField(step, listPath, index, readOnly) +
+          '<div class="step-field full">' + this.stepCheckbox(listPath, index, 'force', !!step.force, L('ui.ffef974c1c09'), disabled) + '</div>' +
+          '<div class="step-field full"><span class="field-hint">' + (step.kind.endsWith('All') ? L('ui.8ed688ce0936') : L('ui.69a8f078d6da')) + (step.kind.includes('Negative') ? L('ui.1814334f0ae2') : L('ui.70c2195016b7')) + L('ui.3a0e241f2316') +
+        '</div>';
       case 'modifyCount':
         return '<div class="step-fields">' +
           this.fieldRow(L('ui.31618e13034d'), this.stepInput(listPath, index, 'scope', step.scope || 'unit', { type: 'select', options: Object.keys(COUNT_SCOPES).map(key => ({ value: key, label: COUNT_SCOPES[key].label })), disabled })) +
@@ -897,7 +907,7 @@ const EditorUI = {
         return '<div class="step-fields">' +
           this.fieldRow(L('ui.7d3c35c29be1'), this.stepInput(listPath, index, 'stat', step.stat || 'atkFlat', { type: 'select', options: Object.keys(STAT_KEYS).map(key => ({ value: key, label: STAT_KEYS[key] })), disabled })) +
           this.stepTargetField(step, listPath, index, readOnly) +
-          this.fieldRow(L('ui.3fe475f7b233'), this.stepInput(listPath, index, 'formula', step.formula || '0', { mono: true, disabled })) +
+          this.fieldRow(L('ui.3fe475f7b233'), this.stepInput(listPath, index, 'formula', step.formula || '0', { mono: true, disabled }), L('ui.e02ed032b906')) +
         '</div>';
       case 'setVar':
         return '<div class="step-fields">' + this.fieldRow(L('ui.63d5977de669'), this.stepInput(listPath, index, 'varName', step.varName || 'value', { disabled })) + this.fieldRow(L('ui.3f27035af46b'), this.stepInput(listPath, index, 'formula', step.formula || '0', { mono: true, disabled })) + '</div>';
@@ -1251,6 +1261,10 @@ const EditorUI = {
         artRow +
         this.renderToggleRow(L('ui.64e904249960'), 'counted', item.counted !== false, readOnly, L('ui.f8a1ac1d6b1d')) +
         this.renderToggleRow(L('ui.9456ff9f51bf'), 'autoAttack', !!item.autoAttack, readOnly, L('ui.ed09a5fcb674')) +
+        this.renderToggleRow(L('ui.40393c785c89'), 'noFieldSlot', !!item.noFieldSlot, readOnly, L('ui.b9d2acf63ec7')) +
+        this.renderToggleRow(L('ui.04a2ef4abcbc'), 'untargetable', !!item.untargetable, readOnly, L('ui.e47d6456f82b')) +
+        this.renderToggleRow(L('ui.6c4b667376c5'), 'invincible', !!item.invincible, readOnly, L('ui.75d35a3c710f')) +
+        this.renderToggleRow(L('ui.91d9253dfe4f'), 'obtainable', item.obtainable !== false, readOnly, L('ui.65f3e6e0fc70')) +
         L('ui.37e3e7d1a038') + disabled + '>' + esc(item.flavor || '') + '</textarea></div>' +
         L('ui.defbed68f4ea') +
           (skills.length ? skills.map(skill => '<label class="form-check-inline"><input type="checkbox" data-unit-skill="' + attr(skill.id) + '"' + (selectedSkills.has(skill.id) ? ' checked' : '') + (readOnly ? ' disabled' : '') + '> ' + esc(skill.name) + '</label>').join('') : L('ui.441b15fec097')) +
@@ -1481,6 +1495,10 @@ const EditorUI = {
       case 'forceRetreat': return { kind, target: '{self}' };
       case 'summon': return { kind, unitId: '', count: '1', ignoreFieldLimit: false, summonAsChild: false, childId: '', childTag: '' };
       case 'modifyStat': return { kind, stat: 'atkFlat', target: '{self}', formula: '1' };
+      case 'removeNegativeOne':
+      case 'removeNegativeAll':
+      case 'removePositiveOne':
+      case 'removePositiveAll': return { kind, target: '{self}', force: false };
       case 'setVar': return { kind, varName: 'value', formula: '0' };
       default: return { kind };
     }

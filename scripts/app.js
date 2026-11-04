@@ -79,6 +79,10 @@ function stepSummary(step) {
     case 'heal': return L('ui.0fe992a5e20d') + (step.formula || '0');
     case 'addEffect': return L('ui.bdf8e628c405') + (step.effectId || L('ui.2c6270bccebb')) + ' ×' + (step.stacks || '1');
     case 'removeEffect': return L('ui.0c209cd06895') + (step.effectId || L('ui.c70c2b103ba2'));
+    case 'removeNegativeOne': return L('ui.0ae118e02a03');
+    case 'removeNegativeAll': return L('ui.4d2c57ecd6a6');
+    case 'removePositiveOne': return L('ui.9432f5ee3ae1');
+    case 'removePositiveAll': return L('ui.48a223cae9c3');
     case 'modifyCount': return (COUNT_SCOPES[step.scope] || COUNT_SCOPES.unit).label + ' ' + (step.countId || L('ui.55a04b58cd2c')) + ' ' + (step.mode === 'set' ? '=' : '+') + ' ' + (step.formula || '0');
     case 'readCount': return L('ui.9e1cbead6180') + (step.varName || 'value');
     case 'branch': return L('ui.dbde4f0f6336') + (step.left || '0') + ' ' + (step.op || '>=') + ' ' + (step.right || '0');
