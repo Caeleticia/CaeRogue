@@ -17,8 +17,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 156,
+        "attack": 12,
         "resistance": {
           "type": "general",
           "value": 5
@@ -33,7 +33,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 19,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -47,14 +47,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 7,
+        "critDamage": 60,
+        "luckyRate": 2,
+        "luckyDamage": 120,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 6,
+          "mental": 10,
+          "true": 6
         },
         "penetration": {
           "physical": 0,
@@ -74,8 +74,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 125,
+        "attack": 8,
         "resistance": {
           "type": "general",
           "value": 5
@@ -89,7 +89,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 14,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -108,9 +108,9 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 8,
+          "mental": 3,
+          "true": 4
         },
         "penetration": {
           "physical": 0,
@@ -130,8 +130,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 165,
+        "attack": 17,
         "resistance": {
           "type": "general",
           "value": 5
@@ -146,7 +146,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 20,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -160,14 +160,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 7,
+        "critDamage": 60,
+        "luckyRate": 2,
+        "luckyDamage": 120,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 11,
+          "mental": 6,
+          "true": 7
         },
         "penetration": {
           "physical": 0,
@@ -187,8 +187,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 145,
+        "attack": 11,
         "resistance": {
           "type": "general",
           "value": 5
@@ -206,7 +206,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 14,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -220,14 +220,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 7,
+        "critDamage": 60,
+        "luckyRate": 2,
+        "luckyDamage": 120,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 8,
+          "mental": 8,
+          "true": 8
         },
         "penetration": {
           "physical": 0,
@@ -247,8 +247,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 156,
+        "attack": 7,
         "resistance": {
           "type": "general",
           "value": 5
@@ -265,7 +265,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 11,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -279,14 +279,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 7,
+        "critDamage": 60,
+        "luckyRate": 2,
+        "luckyDamage": 120,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 7,
+          "mental": 6,
+          "true": 6
         },
         "penetration": {
           "physical": 0,
@@ -306,8 +306,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 127,
+        "attack": 6,
         "resistance": {
           "type": "general",
           "value": 5
@@ -323,7 +323,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 11,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -337,10 +337,10 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
           "physical": 5,
           "mental": 5,
@@ -364,8 +364,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 138,
+        "attack": 22,
         "resistance": {
           "type": "general",
           "value": 5
@@ -380,7 +380,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 13,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -394,14 +394,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 6,
+          "mental": 7,
+          "true": 7
         },
         "penetration": {
           "physical": 0,
@@ -421,8 +421,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 137,
+        "attack": 11,
         "resistance": {
           "type": "general",
           "value": 5
@@ -436,7 +436,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 9,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -450,14 +450,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
           "physical": 5,
           "mental": 5,
-          "true": 5
+          "true": 4
         },
         "penetration": {
           "physical": 0,

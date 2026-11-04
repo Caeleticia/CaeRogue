@@ -21,8 +21,8 @@
         "type": "unit",
         "faction": "slime",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 96,
+        "attack": 9,
         "resistance": {
           "type": "general",
           "value": 5
@@ -34,7 +34,7 @@
         "art": "assets/pictures/unit-slime-small.svg",
         "flavor": "常见的黏液生物。它并没有恶意，只是挡在了路上。",
         "level": 90,
-        "defense": 10,
+        "defense": 9,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -54,9 +54,9 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 4,
+          "mental": 4,
+          "true": 4
         },
         "penetration": {
           "physical": 0,
@@ -76,7 +76,7 @@
         "type": "unit",
         "faction": "slime",
         "counted": true,
-        "hp": 100,
+        "hp": 118,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -90,7 +90,7 @@
         "art": "assets/pictures/unit-slime-big.svg",
         "flavor": "史莱姆的聚合体。倒下去以后，分裂才刚刚开始。",
         "level": 90,
-        "defense": 10,
+        "defense": 11,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -105,12 +105,12 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
-          "physical": 5,
+          "physical": 6,
           "mental": 5,
           "true": 5
         },
@@ -132,7 +132,7 @@
         "type": "unit",
         "faction": "sakura",
         "counted": true,
-        "hp": 100,
+        "hp": 135,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -146,7 +146,7 @@
         "art": "assets/pictures/unit-catgirl.svg",
         "flavor": "实在不知道写什么了",
         "level": 90,
-        "defense": 10,
+        "defense": 12,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -161,14 +161,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 6,
+          "mental": 6,
+          "true": 6
         },
         "penetration": {
           "physical": 0,
@@ -188,8 +188,8 @@
         "type": "unit",
         "faction": "choir",
         "counted": false,
-        "hp": 100,
-        "attack": 10,
+        "hp": 130,
+        "attack": 8,
         "maxHpCap": 0,
         "resistance": {
           "type": "general",
@@ -205,7 +205,7 @@
         "art": "assets/pictures/unit-philia.svg",
         "flavor": "因为，人家的魅力，就是始终如一呀♪",
         "level": 90,
-        "defense": 10,
+        "defense": 12,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -219,14 +219,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 8,
+        "critDamage": 65,
+        "luckyRate": 3,
+        "luckyDamage": 130,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 7,
+          "mental": 7,
+          "true": 6
         },
         "penetration": {
           "physical": 0,
@@ -246,8 +246,8 @@
         "type": "unit",
         "faction": "covenant",
         "counted": false,
-        "hp": 100,
-        "attack": 10,
+        "hp": 201,
+        "attack": 9,
         "resistance": {
           "type": "general",
           "value": 5
@@ -259,7 +259,7 @@
         "art": "assets/pictures/unit-yonava.svg",
         "flavor": "天理之影，死之执政",
         "level": 90,
-        "defense": 10,
+        "defense": 20,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -274,14 +274,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 8,
+        "critDamage": 65,
+        "luckyRate": 3,
+        "luckyDamage": 130,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 10,
+          "mental": 11,
+          "true": 10
         },
         "penetration": {
           "physical": 0,
@@ -301,8 +301,8 @@
         "type": "unit",
         "faction": "caterpillar",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 134,
+        "attack": 8,
         "autoAttack": true,
         "resistance": {
           "type": "general",
@@ -316,7 +316,7 @@
         "art": "assets/pictures/unit-qu.svg",
         "flavor": "？!区区!？",
         "level": 90,
-        "defense": 10,
+        "defense": 11,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -331,14 +331,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 8,
+        "critDamage": 65,
+        "luckyRate": 3,
+        "luckyDamage": 130,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 7,
+          "mental": 7,
+          "true": 7
         },
         "penetration": {
           "physical": 0,
@@ -358,8 +358,8 @@
         "type": "unit",
         "faction": "fae",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 126,
+        "attack": 9,
         "resistance": {
           "type": "general",
           "value": 5
@@ -372,7 +372,7 @@
         "art": "assets/pictures/unit-mimi.svg",
         "flavor": "当然啦，这可是「昔涟」写下的第一个故事。哆、徕、咪、发、嗦、啦、嘻，七种音符谱写出数不尽的歌谣，就像一成不变的岁月，也能创造不同以往的故事♪",
         "level": 90,
-        "defense": 10,
+        "defense": 13,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -387,14 +387,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 7,
+        "critDamage": 60,
+        "luckyRate": 2,
+        "luckyDamage": 120,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 7,
+          "mental": 7,
+          "true": 7
         },
         "penetration": {
           "physical": 0,
@@ -414,7 +414,7 @@
         "type": "unit",
         "faction": "street",
         "counted": true,
-        "hp": 100,
+        "hp": 119,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -443,14 +443,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
           "physical": 5,
-          "mental": 5,
-          "true": 5
+          "mental": 6,
+          "true": 4
         },
         "penetration": {
           "physical": 0,
@@ -470,7 +470,7 @@
         "type": "unit",
         "faction": "elderwood",
         "counted": true,
-        "hp": 100,
+        "hp": 200,
         "attack": 10,
         "resistance": {
           "type": "general",
@@ -484,7 +484,7 @@
         "art": "assets/pictures/unit-rimple.svg",
         "flavor": "那…就像初遇时那样，再一次呼唤我「昔涟」，好吗？",
         "level": 90,
-        "defense": 10,
+        "defense": 11,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -499,14 +499,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 8,
+        "critDamage": 65,
+        "luckyRate": 3,
+        "luckyDamage": 130,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 7,
+          "mental": 7,
+          "true": 7
         },
         "penetration": {
           "physical": 0,
@@ -526,8 +526,8 @@
         "type": "unit",
         "faction": "klee",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 105,
+        "attack": 9,
         "resistance": {
           "type": "general",
           "value": 5
@@ -559,7 +559,7 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 5,
+          "physical": 4,
           "mental": 5,
           "true": 5
         },
@@ -581,8 +581,8 @@
         "type": "unit",
         "faction": "klee",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 116,
+        "attack": 12,
         "resistance": {
           "type": "general",
           "value": 5
@@ -594,7 +594,7 @@
         "art": "assets/pictures/unit-kele-missing.svg",
         "flavor": "还是那张灰底提示图。看起来可莱又把新图吃掉了。",
         "level": 90,
-        "defense": 10,
+        "defense": 11,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -609,14 +609,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 6,
+        "critDamage": 55,
+        "luckyRate": 1,
+        "luckyDamage": 110,
         "resistances": {
           "physical": 5,
-          "mental": 5,
-          "true": 5
+          "mental": 6,
+          "true": 6
         },
         "penetration": {
           "physical": 0,

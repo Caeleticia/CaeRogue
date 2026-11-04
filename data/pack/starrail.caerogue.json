@@ -17,8 +17,8 @@
         "type": "unit",
         "faction": "starrail",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 161,
+        "attack": 9,
         "resistance": {
           "type": "general",
           "value": 5
@@ -36,7 +36,7 @@
         "art": "assets/pictures/starrail/castorice.png",
         "flavor": "再寒冷的彼岸，也会有花香",
         "level": 90,
-        "defense": 10,
+        "defense": 12,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -50,14 +50,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 7,
+        "critDamage": 60,
+        "luckyRate": 2,
+        "luckyDamage": 120,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 7,
+          "mental": 7,
+          "true": 8
         },
         "penetration": {
           "physical": 0,
@@ -77,8 +77,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 183,
+        "attack": 12,
         "resistance": {
           "type": "general",
           "value": 5
@@ -95,7 +95,7 @@
         "flavor": "",
         "description": "其实是遐蝶的妹妹来着(",
         "level": 90,
-        "defense": 10,
+        "defense": 14,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -109,14 +109,14 @@
           "mental": 0,
           "true": 0
         },
-        "critRate": 5,
-        "critDamage": 50,
-        "luckyRate": 0,
-        "luckyDamage": 100,
+        "critRate": 8,
+        "critDamage": 65,
+        "luckyRate": 3,
+        "luckyDamage": 130,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 8,
+          "mental": 9,
+          "true": 9
         },
         "penetration": {
           "physical": 0,
@@ -136,8 +136,8 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 100,
-        "attack": 10,
+        "hp": 159,
+        "attack": 8,
         "resistance": {
           "type": "general",
           "value": 5
@@ -151,7 +151,7 @@
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
         "level": 90,
-        "defense": 10,
+        "defense": 9,
         "atkPct": 0,
         "atkFlat": 0,
         "defPct": 0,
@@ -170,9 +170,9 @@
         "luckyRate": 0,
         "luckyDamage": 100,
         "resistances": {
-          "physical": 5,
-          "mental": 5,
-          "true": 5
+          "physical": 4,
+          "mental": 4,
+          "true": 4
         },
         "penetration": {
           "physical": 0,
