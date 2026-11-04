@@ -17,11 +17,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 4,
-        "attack": 2,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
-          "type": "mental",
-          "value": 0
+          "type": "general",
+          "value": 5
         },
         "skills": [
           "study.skill.mental-damage",
@@ -31,7 +31,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "妈妈正在给我煎鸡蛋呢"
+        "flavor": "妈妈正在给我煎鸡蛋呢",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.tang-de-mei-bian",
@@ -41,11 +74,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 4,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
-          "type": "mental",
-          "value": 2
+          "type": "general",
+          "value": 5
         },
         "skills": [
           "study.skill.mental-damage",
@@ -55,7 +88,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "予你大唐盛氏"
+        "flavor": "予你大唐盛氏",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.squidward",
@@ -65,11 +131,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 5,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 1
+          "value": 5
         },
         "skills": [
           "study.skill.a-bit-of-number-theory"
@@ -78,7 +144,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "蹦蹦跳跳"
+        "flavor": "蹦蹦跳跳",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.emperor-childhood",
@@ -88,11 +187,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 5,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 1
+          "value": 5
         },
         "skills": [
           "study.skill.then-square",
@@ -102,7 +201,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "向量，如此简单"
+        "flavor": "向量，如此简单",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.my-class-representative",
@@ -112,11 +244,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 5,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 1
+          "value": 5
         },
         "skills": [
           "study.skill.strong-strong-strong"
@@ -125,7 +257,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "这是我的课代表……"
+        "flavor": "这是我的课代表……",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.amazing-attention",
@@ -135,11 +300,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 6,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 1
+          "value": 5
         },
         "skills": [
           "study.skill.sprint-charge",
@@ -149,7 +314,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "……这个也是我的课代表!"
+        "flavor": "……这个也是我的课代表!",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.ct-mecha",
@@ -159,11 +357,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 9,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
-          "type": "physical",
-          "value": 2
+          "type": "general",
+          "value": 5
         },
         "skills": [
           "study.skill.mecha-heavy-strike",
@@ -173,7 +371,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "超模的存在"
+        "flavor": "超模的存在",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.super-ct-mecha",
@@ -183,11 +414,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 18,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
-          "type": "physical",
-          "value": 3
+          "type": "general",
+          "value": 5
         },
         "skills": [
           "study.skill.large-mecha-heavy-strike",
@@ -198,7 +429,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "因为机甲太大了，所以会一直踩自己的队友"
+        "flavor": "因为机甲太大了，所以会一直踩自己的队友",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.hao-ge",
@@ -208,11 +472,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 6,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 0
+          "value": 5
         },
         "skills": [
           "study.skill.basic-physical-attack"
@@ -221,7 +485,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "豪哥"
+        "flavor": "豪哥",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.mortal-enemy",
@@ -231,11 +528,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 4,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 0
+          "value": 5
         },
         "skills": [
           "study.skill.mortal-enemy"
@@ -244,7 +541,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "我和所有人不共戴天"
+        "flavor": "我和所有人不共戴天",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.mutated-chocolate",
@@ -254,11 +584,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 4,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 0
+          "value": 5
         },
         "skills": [
           "study.skill.chocolate-pollution"
@@ -267,7 +597,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "恐怖的污染者"
+        "flavor": "恐怖的污染者",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "study.unit.hates-homosexuals",
@@ -277,11 +640,11 @@
         "type": "unit",
         "faction": "study",
         "counted": true,
-        "hp": 6,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
-          "type": "mental",
-          "value": 2
+          "type": "general",
+          "value": 5
         },
         "skills": [
           "study.skill.punish-male-homosexuals",
@@ -291,7 +654,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": "直接让游戏变成星冰乐"
+        "flavor": "直接让游戏变成星冰乐",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       }
     ],
     "skills": [
@@ -329,7 +725,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 250,
         "description": "",
         "trigger": {
           "event": "manual"
@@ -340,13 +736,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "mental",
-            "formula": "2",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "study.skill.wala-wala",
@@ -356,7 +760,7 @@
         "op": "special",
         "quality": "white",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "",
         "trigger": {
           "event": "allyAttack"
@@ -367,14 +771,21 @@
             "kind": "damage",
             "target": "allEnemies",
             "damageType": "mental",
-            "formula": "1",
-            "ignoreResistance": true,
-            "bonus": true,
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "bonus": false,
             "legacyTarget": "allEnemies",
             "targetExpression": "all({enemy})",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "multiplier": 150
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "study.skill.a-bit-of-number-theory",
@@ -384,7 +795,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "allEnemies",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "",
         "trigger": {
           "event": "manual"
@@ -395,11 +806,16 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "mental",
-            "formula": "1",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 150
           },
           {
             "kind": "addEffect",
@@ -410,7 +826,10 @@
             "targetExpression": "{target}",
             "expressionMode": "formula"
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "study.skill.then-square",
@@ -498,7 +917,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "allEnemies",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "向前冲刺，然后创飞敌人，造成两点物理伤害",
         "trigger": {
           "event": "manual"
@@ -509,13 +928,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "physical",
-            "formula": "2",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 150
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
       },
       {
         "id": "study.skill.i-dont-want-to-do-math",
@@ -551,7 +978,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 250,
         "description": "一拳造成4点物理伤害",
         "trigger": {
           "event": "manual"
@@ -562,13 +989,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "physical",
-            "formula": "4",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
       },
       {
         "id": "study.skill.mecha-artillery",
@@ -578,7 +1013,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "allEnemies",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "发射火炮，群攻2点物理伤害",
         "trigger": {
           "event": "manual"
@@ -589,13 +1024,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "physical",
-            "formula": "2",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 150
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
       },
       {
         "id": "study.skill.large-mecha-heavy-strike",
@@ -605,7 +1048,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 250,
         "description": "操控机甲狠狠的锤爆对手，造成6点物理伤害",
         "trigger": {
           "event": "manual"
@@ -616,13 +1059,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "physical",
-            "formula": "6",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
       },
       {
         "id": "study.skill.large-mecha-artillery",
@@ -632,7 +1083,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "allEnemies",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "进行一个毁灭式的打击，群攻4点物理伤害",
         "trigger": {
           "event": "manual"
@@ -643,13 +1094,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "physical",
-            "formula": "4",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 150
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
       },
       {
         "id": "study.skill.war-stomp",
@@ -694,7 +1153,8 @@
             "ownerEffectId": "study.effect.maybe-stepped-on",
             "legacyTarget": "owner",
             "targetExpression": "{with_effect[study.effect.maybe-stepped-on]}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "rawDamage": true
           }
         ]
       },
@@ -706,7 +1166,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 250,
         "description": "",
         "trigger": {
           "event": "manual"
@@ -717,13 +1177,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "physical",
-            "formula": "2",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "bonus": false,
+            "multiplier": 250
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "physical"
       },
       {
         "id": "study.skill.mortal-enemy",
@@ -777,7 +1245,8 @@
             "bonus": false,
             "legacyTarget": "owner",
             "targetExpression": "{with_effect[study.effect.mortal-enemy-mark]}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "rawDamage": true
           },
           {
             "kind": "removeEffect",
@@ -807,7 +1276,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 250,
         "description": "精神污染，造成20%百分比伤害，不超过4点",
         "trigger": {
           "event": "manual"
@@ -818,13 +1287,21 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "mental",
-            "formula": "min({target}.max_hp*0.2,4)",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
             "legacyTarget": "chosen",
             "targetExpression": "{target}",
-            "expressionMode": "formula"
+            "expressionMode": "formula",
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "min({target}.max_hp*0.2, 4)",
+            "bonus": false,
+            "multiplier": 100
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "study.skill.punish-male-homosexuals",

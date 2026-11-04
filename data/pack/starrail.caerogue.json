@@ -17,11 +17,11 @@
         "type": "unit",
         "faction": "starrail",
         "counted": true,
-        "hp": 32,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 1
+          "value": 5
         },
         "skills": [
           "castorice_wail",
@@ -34,7 +34,40 @@
         "autoAttack": false,
         "maxHpCap": 0,
         "art": "assets/pictures/starrail/castorice.png",
-        "flavor": "再寒冷的彼岸，也会有花香"
+        "flavor": "再寒冷的彼岸，也会有花香",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "deathdragon",
@@ -44,11 +77,11 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 42,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 2
+          "value": 5
         },
         "skills": [
           "deathdragon_flame",
@@ -60,7 +93,40 @@
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
         "flavor": "",
-        "description": "其实是遐蝶的妹妹来着("
+        "description": "其实是遐蝶的妹妹来着(",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       },
       {
         "id": "trainingdummy",
@@ -70,11 +136,11 @@
         "type": "unit",
         "faction": "general",
         "counted": true,
-        "hp": 96,
-        "attack": 1,
+        "hp": 100,
+        "attack": 10,
         "resistance": {
           "type": "general",
-          "value": 0
+          "value": 5
         },
         "skills": [
           "slime_strike"
@@ -83,7 +149,40 @@
         "autoAttack": true,
         "maxHpCap": 0,
         "art": "assets/pictures/brand-mark.svg",
-        "flavor": ""
+        "flavor": "",
+        "level": 90,
+        "defense": 10,
+        "atkPct": 0,
+        "atkFlat": 0,
+        "defPct": 0,
+        "defFlat": 8,
+        "hpPct": 0,
+        "hpFlat": 0,
+        "damageBonus": 0,
+        "damageBonusFlat": 0,
+        "elementBonus": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "critRate": 5,
+        "critDamage": 50,
+        "luckyRate": 0,
+        "luckyDamage": 100,
+        "resistances": {
+          "physical": 5,
+          "mental": 5,
+          "true": 5
+        },
+        "penetration": {
+          "physical": 0,
+          "mental": 0,
+          "true": 0
+        },
+        "defensePen": 0,
+        "resistanceReduction": 0,
+        "damageTakenBonus": 0,
+        "vulnerability": 0
       }
     ],
     "skills": [
@@ -95,7 +194,7 @@
         "op": "attack",
         "quality": "gold",
         "targetMode": "enemy",
-        "multiplier": 100,
+        "multiplier": 250,
         "description": "造成15%自身生命上限的精神伤害",
         "trigger": {
           "event": "manual"
@@ -106,10 +205,18 @@
             "kind": "damage",
             "target": "chosen",
             "damageType": "mental",
-            "formula": "({self}.maxHp)*0.15",
-            "ignoreResistance": false
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.max_hp*0.15",
+            "bonus": false,
+            "multiplier": 100
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "castorice_silence",
@@ -119,7 +226,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "allEnemies",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "消耗我方全体当前30%的生命值，群攻相当于自己12%生命上限的角色伤害",
         "trigger": {
           "event": "manual"
@@ -135,17 +242,25 @@
             "expressionMode": "formula",
             "targetExpression": "all({friendly})",
             "legacyTarget": "chosen",
-            "bonus": true
+            "bonus": true,
+            "rawDamage": true
           },
           {
             "kind": "damage",
             "target": "{target}",
             "damageType": "mental",
-            "formula": "({self}.maxHp)*0.12",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
-            "bonus": false
+            "bonus": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.max_hp*0.12",
+            "multiplier": 100
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "castorice_mooncocoon",
@@ -283,7 +398,7 @@
         "op": "attack",
         "quality": "white",
         "targetMode": "allEnemies",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "消耗14点生命，群攻6点精神伤害",
         "trigger": {
           "event": "manual"
@@ -294,9 +409,13 @@
             "kind": "damage",
             "target": "{target}",
             "damageType": "mental",
-            "formula": "6",
+            "formula": "{self}.atk",
             "ignoreResistance": false,
-            "bonus": false
+            "bonus": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "multiplier": 150
           },
           {
             "kind": "damage",
@@ -307,9 +426,13 @@
             "expressionMode": "formula",
             "targetExpression": "{self}",
             "legacyTarget": "chosen",
-            "bonus": true
+            "bonus": true,
+            "rawDamage": true
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "deathdragon_reset",
@@ -319,7 +442,7 @@
         "op": "special",
         "quality": "white",
         "targetMode": "none",
-        "multiplier": 100,
+        "multiplier": 150,
         "description": "死龙退场时，对敌方全体造成 6 点无视抗性的精神伤害，解除遗世冥域，并为其他我方单位回复各自 50% 生命上限。",
         "trigger": {
           "event": "defeated"
@@ -333,9 +456,13 @@
             "targetExpression": "{enemy}",
             "legacyTarget": "allEnemies",
             "damageType": "mental",
-            "formula": "6",
-            "ignoreResistance": true,
-            "bonus": false
+            "formula": "{self}.atk",
+            "ignoreResistance": false,
+            "bonus": false,
+            "useSkillValue": true,
+            "rawDamage": false,
+            "valueFormula": "{self}.atk",
+            "multiplier": 150
           },
           {
             "kind": "heal",
@@ -355,7 +482,10 @@
             "targetExpression": "{parent}",
             "legacyTarget": "self"
           }
-        ]
+        ],
+        "valueType": "atk",
+        "valueFormula": "{self}.atk",
+        "element": "mental"
       },
       {
         "id": "deathdragon_guard",
