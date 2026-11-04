@@ -2,7 +2,7 @@
   "format": "caerogue.expansion",
   "id": "starrail",
   "name": "starrail扩展",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "author": "caeleticia",
   "description": "添加了一些星角色",
   "dependencies": [],
@@ -409,13 +409,13 @@
             "kind": "damage",
             "target": "{target}",
             "damageType": "mental",
-            "formula": "{self}.atk",
+            "formula": "6",
             "ignoreResistance": false,
             "bonus": false,
             "useSkillValue": true,
             "rawDamage": false,
-            "valueFormula": "{self}.atk",
-            "multiplier": 150
+            "valueFormula": "6",
+            "multiplier": 100
           },
           {
             "kind": "damage",
@@ -456,13 +456,13 @@
             "targetExpression": "{enemy}",
             "legacyTarget": "allEnemies",
             "damageType": "mental",
-            "formula": "{self}.atk",
-            "ignoreResistance": false,
+            "formula": "6",
+            "ignoreResistance": true,
             "bonus": false,
             "useSkillValue": true,
             "rawDamage": false,
-            "valueFormula": "{self}.atk",
-            "multiplier": 150
+            "valueFormula": "6",
+            "multiplier": 100
           },
           {
             "kind": "heal",
